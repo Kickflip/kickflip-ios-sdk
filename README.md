@@ -8,15 +8,15 @@ The [Kickflip](http://kickflip.io) platform provides a complete video broadcasti
 
 Launch Kickflip's default `KFBroadcastViewController` to instantly stream live video from your application:
 
-    ```objc
-	[Kickflip setupWithAPIKey:@"API_KEY" secret:@"API_SECRET"];
-	[Kickflip presentBroadcastViewFromViewController:self ready:^(NSURL *streamURL, NSError *error){ 
-	    if (streamURL) {
-	    	NSLog(@"Stream is ready to view at URL: %@", streamURL);
-	    }
-	} 
-	completion:nil];
-	```
+```objc
+[Kickflip setupWithAPIKey:@"API_KEY" secret:@"API_SECRET"];
+[Kickflip presentBroadcastViewFromViewController:self ready:^(NSURL *streamURL, NSError *error){ 
+    if (streamURL) {
+    	NSLog(@"Stream is ready to view at URL: %@", streamURL);
+    }
+} 
+completion:nil];
+```
 	
 	
 ## License
