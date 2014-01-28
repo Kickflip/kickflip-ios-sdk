@@ -1,0 +1,21 @@
+[submodule "Submodules/FFmpegWrapper"]
+	path = Submodules/FFmpegWrapper
+	url = git@github.com:OpenWatch/FFmpegWrapper.git
+[submodule "Submodules/CocoaHTTPServer"]
+	path = Submodules/CocoaHTTPServer
+	url = git@github.com:robbiehanson/CocoaHTTPServer.git
+[submodule "Submodules/OWS3Client"]
+	path = Submodules/OWS3Client
+	url = git@github.com:OpenWatch/OWS3Client.git
+[submodule "Submodules/AFNetworking"]
+	path = Submodules/AFNetworking
+	url = git@github.com:AFNetworking/AFNetworking.git
+[submodule "Submodules/AFOAuth2Client"]
+	path = Submodules/AFOAuth2Client
+	url = git@github.com:AFNetworking/AFOAuth2Client.git
+[submodule "Submodules/SSKeychain"]
+	path = Submodules/SSKeychain
+	url = git@github.com:soffes/sskeychain.git
+[submodule "Submodules/CocoaLumberjack"]
+	path = Submodules/CocoaLumberjack
+	url = git@github.com:CocoaLumberjack/CocoaLumberjack.git
