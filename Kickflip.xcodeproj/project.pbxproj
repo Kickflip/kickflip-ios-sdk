@@ -79,6 +79,7 @@
 		D945AF32189859AC0026F697 /* SSKeychain.m in Sources */ = {isa = PBXBuildFile; fileRef = D945AF2F189859AC0026F697 /* SSKeychain.m */; };
 		D945AF33189859AC0026F697 /* SSKeychainQuery.m in Sources */ = {isa = PBXBuildFile; fileRef = D945AF31189859AC0026F697 /* SSKeychainQuery.m */; };
 		D945AF3718985A9C0026F697 /* OWSharedS3Client.m in Sources */ = {isa = PBXBuildFile; fileRef = D945AF3618985A9C0026F697 /* OWSharedS3Client.m */; };
+		D945AF411898635A0026F697 /* KFDemoViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = D945AF401898635A0026F697 /* KFDemoViewController.m */; };
 		D99912CF18984D3F00BFCBA4 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D99912CE18984D3F00BFCBA4 /* Foundation.framework */; };
 /* End PBXBuildFile section */
 
@@ -149,7 +150,6 @@
 		D945AD4C1898536D0026F697 /* EncoderDemoAppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = EncoderDemoAppDelegate.m; sourceTree = "<group>"; };
 		D945AD4D1898536D0026F697 /* EncoderDemoViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EncoderDemoViewController.h; sourceTree = "<group>"; };
 		D945AD4E1898536D0026F697 /* EncoderDemoViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = EncoderDemoViewController.m; sourceTree = "<group>"; };
-		D945AD4F1898536D0026F697 /* LICENSE.markdown */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = LICENSE.markdown; sourceTree = "<group>"; };
 		D945AD501898536D0026F697 /* MP4Atom.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MP4Atom.h; sourceTree = "<group>"; };
 		D945AD511898536D0026F697 /* MP4Atom.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MP4Atom.m; sourceTree = "<group>"; };
 		D945AD521898536D0026F697 /* NALUnit.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = NALUnit.cpp; sourceTree = "<group>"; };
@@ -355,6 +355,8 @@
 		D945AF3418985A5E0026F697 /* KFSecrets.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = KFSecrets.h; sourceTree = "<group>"; };
 		D945AF3518985A9C0026F697 /* OWSharedS3Client.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OWSharedS3Client.h; sourceTree = "<group>"; };
 		D945AF3618985A9C0026F697 /* OWSharedS3Client.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = OWSharedS3Client.m; sourceTree = "<group>"; };
+		D945AF3F1898635A0026F697 /* KFDemoViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = KFDemoViewController.h; sourceTree = "<group>"; };
+		D945AF401898635A0026F697 /* KFDemoViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = KFDemoViewController.m; sourceTree = "<group>"; };
 		D99912CB18984D3F00BFCBA4 /* libKickflip.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libKickflip.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		D99912CE18984D3F00BFCBA4 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		D99912DC18984D3F00BFCBA4 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
@@ -473,7 +475,6 @@
 				D945AD4C1898536D0026F697 /* EncoderDemoAppDelegate.m */,
 				D945AD4D1898536D0026F697 /* EncoderDemoViewController.h */,
 				D945AD4E1898536D0026F697 /* EncoderDemoViewController.m */,
-				D945AD4F1898536D0026F697 /* LICENSE.markdown */,
 				D945AD501898536D0026F697 /* MP4Atom.h */,
 				D945AD511898536D0026F697 /* MP4Atom.m */,
 				D945AD521898536D0026F697 /* NALUnit.cpp */,
@@ -602,6 +603,8 @@
 				D945ADD1189854000026F697 /* Images.xcassets */,
 				D945ADD2189854000026F697 /* KFAppDelegate.h */,
 				D945ADD3189854000026F697 /* KFAppDelegate.m */,
+				D945AF3F1898635A0026F697 /* KFDemoViewController.h */,
+				D945AF401898635A0026F697 /* KFDemoViewController.m */,
 				D945ADD4189854000026F697 /* KFDemo-Info.plist */,
 				D945ADD5189854000026F697 /* KFDemo-Prefix.pch */,
 				D945ADD6189854000026F697 /* main.m */,
@@ -1076,6 +1079,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				D945ADDB189854000026F697 /* main.m in Sources */,
+				D945AF411898635A0026F697 /* KFDemoViewController.m in Sources */,
 				D945ADD9189854000026F697 /* KFAppDelegate.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1396,6 +1400,7 @@
 				D945ADFF189857070026F697 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		D99912C618984D3F00BFCBA4 /* Build configuration list for PBXProject "Kickflip" */ = {
 			isa = XCConfigurationList;

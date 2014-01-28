@@ -7,6 +7,9 @@
 //
 
 #import "KFAppDelegate.h"
+#import "KFDemoViewController.h"
+#import "Kickflip.h"
+#import "KFSecrets.h"
 
 @implementation KFAppDelegate
 
@@ -15,6 +18,10 @@
     self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
     // Override point for customization after application launch.
     self.window.backgroundColor = [UIColor whiteColor];
+    
+    [Kickflip setupWithAPIKey:KICKFLIP_DEV_API_ID secret:KICKFLIP_DEV_API_SECRET];
+    
+    self.window.rootViewController = [[KFDemoViewController alloc] init];
     [self.window makeKeyAndVisible];
     return YES;
 }

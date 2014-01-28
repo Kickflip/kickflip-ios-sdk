@@ -7,15 +7,13 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "KFRecordingViewController.h"
-#import "KFBroadcaster.h"
+#import <UIKit/UIKit.h>
 
 @interface Kickflip : NSObject
 
 + (void) setupWithAPIKey:(NSString*)key secret:(NSString*)secret;
-+ (void) presentBroadcastViewFromViewController:(UIViewController*)viewController ready:(void (^)(NSURL *streamURL, NSError *error))readyBlock completion:(void (^)(void))completionBlock;
++ (void) presentBroadcasterFromViewController:(UIViewController*)viewController ready:(void (^)(NSURL *streamURL, NSError *error))readyBlock completion:(void (^)(void))completionBlock;
 
-+ (KFBroadcaster*) broadcaster;
 + (NSString*) apiKey;
 + (NSString*) apiSecret;
 
