@@ -10,7 +10,7 @@ Launch Kickflip's default `KFBroadcastViewController` to instantly stream live v
 
 ```objc
 [Kickflip setupWithAPIKey:@"API_KEY" secret:@"API_SECRET"];
-[Kickflip presentBroadcastViewFromViewController:self ready:^(NSURL *streamURL, NSError *error){ 
+[Kickflip presentBroadcasterFromViewController:self ready:^(NSURL *streamURL, NSError *error){ 
     if (streamURL) {
     	NSLog(@"Stream is ready to view at URL: %@", streamURL);
     }
