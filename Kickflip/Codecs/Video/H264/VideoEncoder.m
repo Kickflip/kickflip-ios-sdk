@@ -49,7 +49,9 @@
 
 - (void) finishWithCompletionHandler:(void (^)(void))handler
 {
-    [_writer finishWritingWithCompletionHandler: handler];
+    if (_writer.status == AVAssetWriterStatusWriting) {
+        [_writer finishWritingWithCompletionHandler: handler];
+    }
 }
 
 - (BOOL) encodeFrame:(CMSampleBufferRef) sampleBuffer

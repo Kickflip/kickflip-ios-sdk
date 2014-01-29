@@ -7,6 +7,7 @@
 //
 
 #import "Kickflip.h"
+#import "KFBroadcastViewController.h"
 
 static NSString *_apiKey;
 static NSString *_apiSecret;
@@ -14,7 +15,8 @@ static NSString *_apiSecret;
 @implementation Kickflip
 
 + (void) presentBroadcasterFromViewController:(UIViewController *)viewController ready:(void (^)(NSURL *, NSError *))readyBlock completion:(void (^)(void))completionBlock {
-    NSLog(@"API keys: %@ %@", [self apiKey], [self apiSecret]);
+    KFBroadcastViewController *broadcastViewController = [[KFBroadcastViewController alloc] init];
+    [viewController presentViewController:broadcastViewController animated:YES completion:nil];
 }
 
 + (void) initialize {

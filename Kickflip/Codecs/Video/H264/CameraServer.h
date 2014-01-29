@@ -21,6 +21,8 @@
 + (CameraServer*) server;
 - (void) startup;
 - (void) shutdown;
+- (void) startBroadcast;
+- (void) stopBroadcast;
 - (NSString*) getURL;
 - (AVCaptureVideoPreviewLayer*) getPreviewLayer;
 

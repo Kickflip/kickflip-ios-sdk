@@ -12,7 +12,6 @@
 #import "NALUnit.h"
 #import "HLSWriter.h"
 #import "AACEncoder.h"
-#import "HTTPServer.h"
 #import "HLSUploader.h"
 
 static const int VIDEO_WIDTH = 1280;
@@ -43,7 +42,8 @@ static CameraServer* theServer;
 
 @property (nonatomic, strong) NSFileHandle *debugFileHandle;
 
-@property (nonatomic, strong) HTTPServer *httpServer;
+@property (nonatomic) BOOL shouldBroadcast;
+
 
 @end
 
@@ -163,14 +163,6 @@ static CameraServer* theServer;
             NSLog(@"Error preparing for writing: %@", error);
         }
         
-        _httpServer = [[HTTPServer alloc] init];
-        [_httpServer setDocumentRoot:_hlsWriter.directoryPath];
-        _httpServer.port = 9001;
-        [_httpServer start:&error];
-        if (error) {
-            NSLog(@"Error starting http server: %@", error.description);
-        }
-        
         _hlsUploader = [[HLSUploader alloc] initWithDirectoryPath:_hlsWriter.directoryPath remoteFolderName:_hlsWriter.uuid];
         
         // create an encoder
@@ -198,6 +190,14 @@ static CameraServer* theServer;
         
 
     }
+}
+
+- (void) startBroadcast {
+    _shouldBroadcast = YES;
+}
+
+- (void) stopBroadcast {
+    _shouldBroadcast = NO;
 }
 
 - (void) writeVideoFrames:(NSArray*)frames pts:(double)pts {
@@ -249,8 +249,14 @@ static CameraServer* theServer;
 {
     // pass frame to encoder
     if (connection == _videoConnection) {
+        if (!_shouldBroadcast) {
+            return;
+        }
         [_encoder encodeFrame:sampleBuffer];
     } else if (connection == _audioConnection) {
+        if (!_shouldBroadcast) {
+            return;
+        }
         CMTime pts = CMSampleBufferGetPresentationTimeStamp(sampleBuffer);
         double dPTS = (double)(pts.value) / pts.timescale;
         [_aacEncoder encodeSampleBuffer:sampleBuffer completionBlock:^(NSData *encodedData, NSError *error) {
