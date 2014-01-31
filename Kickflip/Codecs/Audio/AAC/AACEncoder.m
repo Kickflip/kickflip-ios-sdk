@@ -35,6 +35,7 @@
         _pcmBufferSize = 0;
         _pcmBuffer = NULL;
         _aacBufferSize = 1024;
+        _addADTSHeader = NO;
         _aacBuffer = malloc(_aacBufferSize * sizeof(uint8_t));
         memset(_aacBuffer, 0, _aacBufferSize);
     }
@@ -162,10 +163,14 @@ static OSStatus inInputDataProc(AudioConverterRef inAudioConverter, UInt32 *ioNu
         NSData *data = nil;
         if (status == 0) {
             NSData *rawAAC = [NSData dataWithBytes:outAudioBufferList.mBuffers[0].mData length:outAudioBufferList.mBuffers[0].mDataByteSize];
-            NSData *adtsHeader = [self adtsDataForPacketLength:rawAAC.length];
-            NSMutableData *fullData = [NSMutableData dataWithData:adtsHeader];
-            [fullData appendData:rawAAC];
-            data = fullData;
+            if (_addADTSHeader) {
+                NSData *adtsHeader = [self adtsDataForPacketLength:rawAAC.length];
+                NSMutableData *fullData = [NSMutableData dataWithData:adtsHeader];
+                [fullData appendData:rawAAC];
+                data = fullData;
+            } else {
+                data = rawAAC;
+            }
         } else {
             error = [NSError errorWithDomain:NSOSStatusErrorDomain code:status userInfo:nil];
         }

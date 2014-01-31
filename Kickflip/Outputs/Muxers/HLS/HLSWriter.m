@@ -46,7 +46,10 @@
 
 - (void) setupOutputFile {
     NSString *outputPath = [_directoryPath stringByAppendingPathComponent:@"hls.m3u8"];
-    _outputFile = [[FFOutputFile alloc] initWithPath:outputPath options:@{kFFmpegOutputFormatKey: @"hls"}];
+    
+    _outputFile = [[FFOutputFile alloc] initWithPath:@"rtmp://192.168.1.44/hls/movie" options:@{kFFmpegOutputFormatKey: @"flv"}];
+    
+    //_outputFile = [[FFOutputFile alloc] initWithPath:outputPath options:@{kFFmpegOutputFormatKey: @"hls"}];
     
     //FFBitstreamFilter *bitstreamFilter = [[FFBitstreamFilter alloc] initWithFilterName:@"h264_mp4toannexb"];
     //[_outputFile addBitstreamFilter:bitstreamFilter];
@@ -55,7 +58,7 @@
 - (void) addVideoStreamWithWidth:(int)width height:(int)height {
     _videoStream = [[FFOutputStream alloc] initWithOutputFile:_outputFile outputCodec:@"h264"];
     [_videoStream setupVideoContextWithWidth:width height:height];
-    av_opt_set_int(_outputFile.formatContext->priv_data, "hls_time", _segmentDurationSeconds, 0);
+    //av_opt_set_int(_outputFile.formatContext->priv_data, "hls_time", _segmentDurationSeconds, 0);
 }
 
 - (void) addAudioStreamWithSampleRate:(int)sampleRate {

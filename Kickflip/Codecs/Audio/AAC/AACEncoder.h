@@ -13,6 +13,7 @@
 
 @property (nonatomic) dispatch_queue_t encoderQueue;
 @property (nonatomic) dispatch_queue_t callbackQueue;
+@property (nonatomic) BOOL addADTSHeader;
 
 - (void) encodeSampleBuffer:(CMSampleBufferRef)sampleBuffer completionBlock:(void (^)(NSData *encodedData, NSError* error))completionBlock;
 
