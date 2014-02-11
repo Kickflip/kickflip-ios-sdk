@@ -12,7 +12,6 @@
 
 - (id) init {
     if (self = [super init]) {
-        self.encoderQueue = dispatch_queue_create("KF Encoder Queue", DISPATCH_QUEUE_SERIAL);
         self.callbackQueue = dispatch_queue_create("KF Encoder Callback Queue", DISPATCH_QUEUE_SERIAL);
     }
     return self;

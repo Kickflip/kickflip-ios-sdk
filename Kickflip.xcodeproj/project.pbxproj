@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		D923A1FA18AAA75600C328EC /* KFEncoder.m in Sources */ = {isa = PBXBuildFile; fileRef = D923A1F918AAA75600C328EC /* KFEncoder.m */; };
+		D923A20218AAAD9500C328EC /* KFH264Encoder.mm in Sources */ = {isa = PBXBuildFile; fileRef = D923A20118AAAD9500C328EC /* KFH264Encoder.mm */; };
 		D945ADA4189853A80026F697 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D99912CE18984D3F00BFCBA4 /* Foundation.framework */; };
 		D945ADA6189853A80026F697 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D945ADA5189853A80026F697 /* CoreGraphics.framework */; };
 		D945ADA7189853A80026F697 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D99912DF18984D3F00BFCBA4 /* UIKit.framework */; };
@@ -23,9 +24,6 @@
 		D945AE45189857D90026F697 /* AVEncoder.mm in Sources */ = {isa = PBXBuildFile; fileRef = D945AD481898536D0026F697 /* AVEncoder.mm */; };
 		D945AE46189857D90026F697 /* CameraServer.mm in Sources */ = {isa = PBXBuildFile; fileRef = D945AD4A1898536D0026F697 /* CameraServer.mm */; };
 		D945AE4A189857D90026F697 /* MP4Atom.m in Sources */ = {isa = PBXBuildFile; fileRef = D945AD511898536D0026F697 /* MP4Atom.m */; };
-		D945AE4B189857D90026F697 /* RTSPClientConnection.mm in Sources */ = {isa = PBXBuildFile; fileRef = D945AD551898536D0026F697 /* RTSPClientConnection.mm */; };
-		D945AE4C189857D90026F697 /* RTSPMessage.m in Sources */ = {isa = PBXBuildFile; fileRef = D945AD571898536D0026F697 /* RTSPMessage.m */; };
-		D945AE4D189857D90026F697 /* RTSPServer.m in Sources */ = {isa = PBXBuildFile; fileRef = D945AD591898536D0026F697 /* RTSPServer.m */; };
 		D945AE4E189857D90026F697 /* VideoEncoder.m in Sources */ = {isa = PBXBuildFile; fileRef = D945AD5B1898536D0026F697 /* VideoEncoder.m */; };
 		D945AE4F189857D90026F697 /* KFRecorder.m in Sources */ = {isa = PBXBuildFile; fileRef = D945AD5F1898536D0026F697 /* KFRecorder.m */; };
 		D945AE50189857D90026F697 /* Kickflip.m in Sources */ = {isa = PBXBuildFile; fileRef = D945AD621898536D0026F697 /* Kickflip.m */; };
@@ -153,6 +151,8 @@
 /* Begin PBXFileReference section */
 		D923A1F818AAA75600C328EC /* KFEncoder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = KFEncoder.h; path = Kickflip/Codecs/KFEncoder.h; sourceTree = SOURCE_ROOT; };
 		D923A1F918AAA75600C328EC /* KFEncoder.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = KFEncoder.m; path = Kickflip/Codecs/KFEncoder.m; sourceTree = SOURCE_ROOT; };
+		D923A20018AAAD9500C328EC /* KFH264Encoder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = KFH264Encoder.h; sourceTree = "<group>"; };
+		D923A20118AAAD9500C328EC /* KFH264Encoder.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = KFH264Encoder.mm; sourceTree = "<group>"; };
 		D945AD3C1898536D0026F697 /* KFAPIClient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = KFAPIClient.h; sourceTree = "<group>"; };
 		D945AD3D1898536D0026F697 /* KFAPIClient.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = KFAPIClient.m; sourceTree = "<group>"; };
 		D945AD3E1898536D0026F697 /* KFUser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = KFUser.h; sourceTree = "<group>"; };
@@ -167,12 +167,6 @@
 		D945AD511898536D0026F697 /* MP4Atom.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MP4Atom.m; sourceTree = "<group>"; };
 		D945AD521898536D0026F697 /* NALUnit.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = NALUnit.cpp; sourceTree = "<group>"; };
 		D945AD531898536D0026F697 /* NALUnit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NALUnit.h; sourceTree = "<group>"; };
-		D945AD541898536D0026F697 /* RTSPClientConnection.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RTSPClientConnection.h; sourceTree = "<group>"; };
-		D945AD551898536D0026F697 /* RTSPClientConnection.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = RTSPClientConnection.mm; sourceTree = "<group>"; };
-		D945AD561898536D0026F697 /* RTSPMessage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RTSPMessage.h; sourceTree = "<group>"; };
-		D945AD571898536D0026F697 /* RTSPMessage.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RTSPMessage.m; sourceTree = "<group>"; };
-		D945AD581898536D0026F697 /* RTSPServer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RTSPServer.h; sourceTree = "<group>"; };
-		D945AD591898536D0026F697 /* RTSPServer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RTSPServer.m; sourceTree = "<group>"; };
 		D945AD5A1898536D0026F697 /* VideoEncoder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VideoEncoder.h; sourceTree = "<group>"; };
 		D945AD5B1898536D0026F697 /* VideoEncoder.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VideoEncoder.m; sourceTree = "<group>"; };
 		D945AD5E1898536D0026F697 /* KFRecorder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = KFRecorder.h; sourceTree = "<group>"; };
@@ -2930,6 +2924,8 @@
 		D945AD461898536D0026F697 /* H264 */ = {
 			isa = PBXGroup;
 			children = (
+				D923A20018AAAD9500C328EC /* KFH264Encoder.h */,
+				D923A20118AAAD9500C328EC /* KFH264Encoder.mm */,
 				D945AD471898536D0026F697 /* AVEncoder.h */,
 				D945AD481898536D0026F697 /* AVEncoder.mm */,
 				D945AD491898536D0026F697 /* CameraServer.h */,
@@ -2938,12 +2934,6 @@
 				D945AD511898536D0026F697 /* MP4Atom.m */,
 				D945AD521898536D0026F697 /* NALUnit.cpp */,
 				D945AD531898536D0026F697 /* NALUnit.h */,
-				D945AD541898536D0026F697 /* RTSPClientConnection.h */,
-				D945AD551898536D0026F697 /* RTSPClientConnection.mm */,
-				D945AD561898536D0026F697 /* RTSPMessage.h */,
-				D945AD571898536D0026F697 /* RTSPMessage.m */,
-				D945AD581898536D0026F697 /* RTSPServer.h */,
-				D945AD591898536D0026F697 /* RTSPServer.m */,
 				D945AD5A1898536D0026F697 /* VideoEncoder.h */,
 				D945AD5B1898536D0026F697 /* VideoEncoder.m */,
 			);
@@ -6352,9 +6342,6 @@
 				D945AE46189857D90026F697 /* CameraServer.mm in Sources */,
 				D945AF4E18986C9A0026F697 /* KFRTMPEndpointResponse.m in Sources */,
 				D945AE4A189857D90026F697 /* MP4Atom.m in Sources */,
-				D945AE4B189857D90026F697 /* RTSPClientConnection.mm in Sources */,
-				D945AE4C189857D90026F697 /* RTSPMessage.m in Sources */,
-				D945AE4D189857D90026F697 /* RTSPServer.m in Sources */,
 				D945AE4E189857D90026F697 /* VideoEncoder.m in Sources */,
 				D945AE4F189857D90026F697 /* KFRecorder.m in Sources */,
 				D945AE50189857D90026F697 /* Kickflip.m in Sources */,
@@ -6364,6 +6351,7 @@
 				D945AE54189857D90026F697 /* HLSWriter.m in Sources */,
 				D945AE55189857D90026F697 /* KFHLSMonitor.m in Sources */,
 				D945AE57189857D90026F697 /* KFUploader.m in Sources */,
+				D923A20218AAAD9500C328EC /* KFH264Encoder.mm in Sources */,
 				D945AE5A189857D90026F697 /* KFS3Uploader.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

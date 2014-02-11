@@ -227,8 +227,7 @@ static unsigned int to_host(unsigned char* p)
         }
     }
     CMTime prestime = CMSampleBufferGetPresentationTimeStamp(sampleBuffer);
-    double dPTS = (double)(prestime.value) / prestime.timescale;
-    NSNumber* pts = [NSNumber numberWithDouble:dPTS];
+    NSNumber* pts = @(prestime.value);
     @synchronized(_times)
     {
         [_times addObject:pts];

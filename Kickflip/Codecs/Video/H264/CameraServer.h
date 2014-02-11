@@ -14,9 +14,10 @@
 #import "AVFoundation/AVCaptureVideoPreviewLayer.h"
 #import "AVFoundation/AVMediaFormat.h"
 #import "HLSUploader.h"
+#import "KFH264Encoder.h"
 @class HLSWriter;
 
-@interface CameraServer : NSObject
+@interface CameraServer : NSObject <KFEncoderDelegate>
 
 + (CameraServer*) server;
 - (void) startup;

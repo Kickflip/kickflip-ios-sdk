@@ -8,8 +8,11 @@
 
 #import "KFEncoder.h"
 
-@interface KFAACEncoder : KFEncoder <KFSampleBufferEncoder>
+@interface KFAACEncoder : KFEncoder
 
+@property (nonatomic) dispatch_queue_t encoderQueue;
 @property (nonatomic) BOOL addADTSHeader;
+
+- (void) encodeSampleBuffer:(CMSampleBufferRef)sampleBuffer completionBlock:(void (^)(NSData *encodedData, CMTime presentationTimeStamp, NSError* error))completionBlock;
 
 @end

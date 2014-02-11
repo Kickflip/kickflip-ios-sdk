@@ -29,6 +29,7 @@
 
 - (id) init {
     if (self = [super init]) {
+        self.encoderQueue = dispatch_queue_create("KF Encoder Queue", DISPATCH_QUEUE_SERIAL);
         _audioConverter = NULL;
         _pcmBufferSize = 0;
         _pcmBuffer = NULL;
@@ -130,6 +131,16 @@ static OSStatus inInputDataProc(AudioConverterRef inAudioConverter, UInt32 *ioNu
     _pcmBuffer = NULL;
     _pcmBufferSize = 0;
     return originalBufferSize;
+}
+
+- (void) encodeSampleBuffer:(CMSampleBufferRef)sampleBuffer {
+    [self encodeSampleBuffer:sampleBuffer completionBlock:^(NSData *encodedData, CMTime presentationTimeStamp, NSError *error) {
+        if (self.delegate) {
+            dispatch_async(self.callbackQueue, ^{
+                [self.delegate encoder:self encodedData:encodedData pts:presentationTimeStamp];
+            });
+        }
+    }];
 }
 
 

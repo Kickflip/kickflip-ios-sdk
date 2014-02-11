@@ -15,7 +15,7 @@
 #import "VideoEncoder.h"
 #import "MP4Atom.h"
 
-typedef int (^encoder_handler_t)(NSArray* data, double pts);
+typedef int (^encoder_handler_t)(NSArray* data, CMTimeValue ptsValue);
 typedef int (^param_handler_t)(NSData* params);
 
 @interface AVEncoder : NSObject

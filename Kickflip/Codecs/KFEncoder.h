@@ -9,14 +9,17 @@
 #import <Foundation/Foundation.h>
 #import <AVFoundation/AVFoundation.h>
 
-@protocol KFSampleBufferEncoder <NSObject>
-- (void) encodeSampleBuffer:(CMSampleBufferRef)sampleBuffer completionBlock:(void (^)(NSData *encodedData, CMTime presentationTimeStamp, NSError* error))completionBlock;
+@class KFEncoder;
+
+@protocol KFEncoderDelegate <NSObject>
+- (void) encoder:(KFEncoder*)encoder encodedData:(NSData*)data pts:(CMTime)pts;
 @end
 
 @interface KFEncoder : NSObject
 
-@property (nonatomic) dispatch_queue_t encoderQueue;
+@property (nonatomic, weak) id<KFEncoderDelegate> delegate;
 @property (nonatomic) dispatch_queue_t callbackQueue;
 
+- (void) encodeSampleBuffer:(CMSampleBufferRef)sampleBuffer;
 
 @end

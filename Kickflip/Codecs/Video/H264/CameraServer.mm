@@ -8,11 +8,10 @@
 
 #import "CameraServer.h"
 #import "AVEncoder.h"
-#import "RTSPServer.h"
-#import "NALUnit.h"
 #import "HLSWriter.h"
 #import "KFAACEncoder.h"
 #import "HLSUploader.h"
+#import "KFH264Encoder.h"
 
 static const int VIDEO_WIDTH = 1280;
 static const int VIDEO_HEIGHT = 720;
@@ -30,16 +29,10 @@ static CameraServer* theServer;
     dispatch_queue_t _audioQueue;
     AVCaptureConnection* _audioConnection;
     AVCaptureConnection* _videoConnection;
-    
-    AVEncoder* _encoder;
-    
-    RTSPServer* _rtsp;
 }
 
-@property (nonatomic, strong) NSData *naluStartCode;
-@property (nonatomic, strong) NSMutableData *videoSPSandPPS;
 @property (nonatomic, strong) KFAACEncoder *aacEncoder;
-
+@property (nonatomic, strong) KFH264Encoder *h264Encoder;
 @property (nonatomic, strong) NSFileHandle *debugFileHandle;
 
 @property (nonatomic) BOOL shouldBroadcast;
@@ -83,18 +76,11 @@ static CameraServer* theServer;
     self.hlsWriter = [[HLSWriter alloc] initWithDirectoryPath:hlsDirectoryPath];
 }
 
-- (void) initializeNALUnitStartCode {
-    NSUInteger naluLength = 4;
-    uint8_t *nalu = (uint8_t*)malloc(naluLength * sizeof(uint8_t));
-    nalu[0] = 0x00;
-    nalu[1] = 0x00;
-    nalu[2] = 0x00;
-    nalu[3] = 0x01;
-    _naluStartCode = [NSData dataWithBytesNoCopy:nalu length:naluLength freeWhenDone:YES];
-}
+
 
 - (void) setupAudioCapture {
     _aacEncoder = [[KFAACEncoder alloc] init];
+    _aacEncoder.delegate = self;
     // create capture device with video input
     
     /*
@@ -142,6 +128,9 @@ static CameraServer* theServer;
         [_session addOutput:_videoOutput];
     }
     _videoConnection = [_videoOutput connectionWithMediaType:AVMediaTypeVideo];
+    
+    _h264Encoder = [[KFH264Encoder alloc] initWithWidth:VIDEO_WIDTH height:VIDEO_HEIGHT];
+    _h264Encoder.delegate = self;
 
     [_hlsWriter addVideoStreamWithWidth:VIDEO_WIDTH height:VIDEO_HEIGHT];
 
@@ -153,7 +142,6 @@ static CameraServer* theServer;
     {
         _session = [[AVCaptureSession alloc] init];
         NSLog(@"Starting up server");
-        [self initializeNALUnitStartCode];
         [self setupHLSWriter];
         [self setupVideoCapture];
         [self setupAudioCapture];
@@ -165,30 +153,12 @@ static CameraServer* theServer;
         
         _hlsUploader = [[HLSUploader alloc] initWithDirectoryPath:_hlsWriter.directoryPath remoteFolderName:_hlsWriter.uuid];
         
-        // create an encoder
-        _encoder = [AVEncoder encoderForHeight:VIDEO_HEIGHT andWidth:VIDEO_WIDTH];
-        [_encoder encodeWithBlock:^int(NSArray* dataArray, double pts) {
-            [self writeVideoFrames:dataArray pts:pts];
-            //[self writeDebugFileForDataArray:dataArray pts:pts];
-            if (_rtsp != nil)
-            {
-                _rtsp.bitrate = _encoder.bitspersecond;
-                [_rtsp onVideoData:dataArray time:pts];
-            }
-            return 0;
-        } onParams:^int(NSData *data) {
-            _rtsp = [RTSPServer setupListener:data];
-            return 0;
-        }];
-        
         // start capture and a preview layer
         [_session startRunning];
         
         
         _preview = [AVCaptureVideoPreviewLayer layerWithSession:_session];
         _preview.videoGravity = AVLayerVideoGravityResizeAspectFill;
-        
-
     }
 }
 
@@ -200,73 +170,26 @@ static CameraServer* theServer;
     _shouldBroadcast = NO;
 }
 
-- (void) writeVideoFrames:(NSArray*)frames pts:(double)pts {
-    NSLog(@"pts: %f", pts);
-    if (pts == 0) {
-        NSLog(@"PTS of 0, skipping frame: %@", frames);
-        return;
-    }
-    if (!_videoSPSandPPS) {
-        NSData* config = _encoder.getConfigData;
-        
-        avcCHeader avcC((const BYTE*)[config bytes], [config length]);
-        SeqParamSet seqParams;
-        seqParams.Parse(avcC.sps());
-        
-        NSData* spsData = [NSData dataWithBytes:avcC.sps()->Start() length:avcC.sps()->Length()];
-        NSData *ppsData = [NSData dataWithBytes:avcC.pps()->Start() length:avcC.pps()->Length()];
-        
-        _videoSPSandPPS = [NSMutableData dataWithCapacity:avcC.sps()->Length() + avcC.pps()->Length() + _naluStartCode.length * 2];
-        [_videoSPSandPPS appendData:_naluStartCode];
-        [_videoSPSandPPS appendData:spsData];
-        [_videoSPSandPPS appendData:_naluStartCode];
-        [_videoSPSandPPS appendData:ppsData];
-    }
-    
-    for (NSData *data in frames) {
-        unsigned char* pNal = (unsigned char*)[data bytes];
-        //int idc = pNal[0] & 0x60;
-        int naltype = pNal[0] & 0x1f;
-        NSData *videoData = nil;
-        if (naltype == 5) { // IDR
-            NSMutableData *IDRData = [NSMutableData dataWithData:_videoSPSandPPS];
-            [IDRData appendData:_naluStartCode];
-            [IDRData appendData:data];
-            videoData = IDRData;
-        } else {
-            NSMutableData *regularData = [NSMutableData dataWithData:_naluStartCode];
-            [regularData appendData:data];
-            videoData = regularData;
-        }
-        //NSMutableData *nalu = [[NSMutableData alloc] initWithData:_naluStartCode];
-        //[nalu appendData:data];
-        //NSLog(@"%f: %@", pts, videoData.description);
-        [_hlsWriter processEncodedData:videoData presentationTimestamp:pts streamIndex:0];
+
+- (void) encoder:(KFEncoder *)encoder encodedData:(NSData *)data pts:(CMTime)pts {
+    double dPTS = (double)(pts.value) / pts.timescale;
+    if (encoder == _h264Encoder) {
+        [_hlsWriter processEncodedData:data presentationTimestamp:dPTS streamIndex:0];
+    } else if (encoder == _aacEncoder) {
+        [_hlsWriter processEncodedData:data presentationTimestamp:dPTS streamIndex:1];
     }
 }
 
 - (void) captureOutput:(AVCaptureOutput *)captureOutput didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer fromConnection:(AVCaptureConnection *)connection
 {
-    // pass frame to encoder
+    if (!_shouldBroadcast) {
+        return;
+    }
+    // pass frame to encoders
     if (connection == _videoConnection) {
-        if (!_shouldBroadcast) {
-            return;
-        }
-        [_encoder encodeFrame:sampleBuffer];
+        [_h264Encoder encodeSampleBuffer:sampleBuffer];
     } else if (connection == _audioConnection) {
-        if (!_shouldBroadcast) {
-            return;
-        }
-        [_aacEncoder encodeSampleBuffer:sampleBuffer completionBlock:^(NSData *encodedData, CMTime pts, NSError *error) {
-            if (encodedData) {
-                double dPTS = (double)(pts.value) / pts.timescale;
-                //NSLog(@"Encoded data (%d): %@", encodedData.length, encodedData.description);
-                [_hlsWriter processEncodedData:encodedData presentationTimestamp:dPTS streamIndex:1];
-                //[self writeDebugFileForData:encodedData pts:dPTS];
-            } else {
-                NSLog(@"Error encoding AAC: %@", error);
-            }
-        }];
+        [_aacEncoder encodeSampleBuffer:sampleBuffer];
     }
 }
 
@@ -303,21 +226,6 @@ static CameraServer* theServer;
         [_session stopRunning];
         _session = nil;
     }
-    if (_rtsp)
-    {
-        [_rtsp shutdownServer];
-    }
-    if (_encoder)
-    {
-        [ _encoder shutdown];
-    }
-}
-
-- (NSString*) getURL
-{
-    NSString* ipaddr = [RTSPServer getIPAddress];
-    NSString* url = [NSString stringWithFormat:@"rtsp://%@/", ipaddr];
-    return url;
 }
 
 - (AVCaptureVideoPreviewLayer*) getPreviewLayer
