@@ -1,17 +1,17 @@
 //
-//  AACEncoder.m
-//  FFmpegEncoder
+//  KFAACEncoder.m
+//  Kickflip
 //
 //  Created by Christopher Ballinger on 12/18/13.
 //  Copyright (c) 2013 Christopher Ballinger. All rights reserved.
 //
 //  http://stackoverflow.com/questions/10817036/can-i-use-avcapturesession-to-encode-an-aac-stream-to-memory
 
-#import "AACEncoder.h"
+#import "KFAACEncoder.h"
 #import <AVFoundation/AVFoundation.h>
 #import <AudioToolbox/AudioToolbox.h>
 
-@interface AACEncoder()
+@interface KFAACEncoder()
 @property (nonatomic) AudioConverterRef audioConverter;
 @property (nonatomic) uint8_t *aacBuffer;
 @property (nonatomic) NSUInteger aacBufferSize;
@@ -20,7 +20,7 @@
 
 @end
 
-@implementation AACEncoder
+@implementation KFAACEncoder
 
 - (void) dealloc {
     AudioConverterDispose(_audioConverter);
@@ -29,8 +29,6 @@
 
 - (id) init {
     if (self = [super init]) {
-        _encoderQueue = dispatch_queue_create("AAC Encoder Queue", DISPATCH_QUEUE_SERIAL);
-        _callbackQueue = dispatch_queue_create("AAC Encoder Callback Queue", DISPATCH_QUEUE_SERIAL);
         _audioConverter = NULL;
         _pcmBufferSize = 0;
         _pcmBuffer = NULL;
@@ -108,7 +106,7 @@
 
 static OSStatus inInputDataProc(AudioConverterRef inAudioConverter, UInt32 *ioNumberDataPackets, AudioBufferList *ioData, AudioStreamPacketDescription **outDataPacketDescription, void *inUserData)
 {
-    AACEncoder *encoder = (__bridge AACEncoder *)(inUserData);
+    KFAACEncoder *encoder = (__bridge KFAACEncoder *)(inUserData);
     UInt32 requestedPackets = *ioNumberDataPackets;
     //NSLog(@"Number of packets requested: %d", (unsigned int)requestedPackets);
     size_t copiedSamples = [encoder copyPCMSamplesIntoBuffer:ioData];
@@ -135,9 +133,9 @@ static OSStatus inInputDataProc(AudioConverterRef inAudioConverter, UInt32 *ioNu
 }
 
 
-- (void) encodeSampleBuffer:(CMSampleBufferRef)sampleBuffer completionBlock:(void (^)(NSData * encodedData, NSError* error))completionBlock {
+- (void) encodeSampleBuffer:(CMSampleBufferRef)sampleBuffer completionBlock:(void (^)(NSData * encodedData, CMTime pts, NSError* error))completionBlock {
     CFRetain(sampleBuffer);
-    dispatch_async(_encoderQueue, ^{
+    dispatch_async(self.encoderQueue, ^{
         if (!_audioConverter) {
             [self setupEncoderFromSampleBuffer:sampleBuffer];
         }
@@ -160,6 +158,8 @@ static OSStatus inInputDataProc(AudioConverterRef inAudioConverter, UInt32 *ioNu
         UInt32 ioOutputDataPacketSize = 1;
         status = AudioConverterFillComplexBuffer(_audioConverter, inInputDataProc, (__bridge void *)(self), &ioOutputDataPacketSize, &outAudioBufferList, outPacketDescription);
         //NSLog(@"ioOutputDataPacketSize: %d", (unsigned int)ioOutputDataPacketSize);
+        CMTime pts = CMSampleBufferGetPresentationTimeStamp(sampleBuffer);
+
         NSData *data = nil;
         if (status == 0) {
             NSData *rawAAC = [NSData dataWithBytes:outAudioBufferList.mBuffers[0].mData length:outAudioBufferList.mBuffers[0].mDataByteSize];
@@ -175,15 +175,14 @@ static OSStatus inInputDataProc(AudioConverterRef inAudioConverter, UInt32 *ioNu
             error = [NSError errorWithDomain:NSOSStatusErrorDomain code:status userInfo:nil];
         }
         if (completionBlock) {
-            dispatch_async(_callbackQueue, ^{
-                completionBlock(data, error);
+            dispatch_async(self.callbackQueue, ^{
+                completionBlock(data, pts, error);
             });
         }
         CFRelease(sampleBuffer);
         CFRelease(blockBuffer);
    });
 }
-
 
 
 /**

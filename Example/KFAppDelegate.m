@@ -23,6 +23,7 @@
     
     self.window.rootViewController = [[KFDemoViewController alloc] init];
     [self.window makeKeyAndVisible];
+    signal(SIGPIPE, SIG_IGN);
     return YES;
 }
 

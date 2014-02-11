@@ -11,7 +11,7 @@
 #import "RTSPServer.h"
 #import "NALUnit.h"
 #import "HLSWriter.h"
-#import "AACEncoder.h"
+#import "KFAACEncoder.h"
 #import "HLSUploader.h"
 
 static const int VIDEO_WIDTH = 1280;
@@ -38,7 +38,7 @@ static CameraServer* theServer;
 
 @property (nonatomic, strong) NSData *naluStartCode;
 @property (nonatomic, strong) NSMutableData *videoSPSandPPS;
-@property (nonatomic, strong) AACEncoder *aacEncoder;
+@property (nonatomic, strong) KFAACEncoder *aacEncoder;
 
 @property (nonatomic, strong) NSFileHandle *debugFileHandle;
 
@@ -94,7 +94,7 @@ static CameraServer* theServer;
 }
 
 - (void) setupAudioCapture {
-    _aacEncoder = [[AACEncoder alloc] init];
+    _aacEncoder = [[KFAACEncoder alloc] init];
     // create capture device with video input
     
     /*
@@ -201,8 +201,9 @@ static CameraServer* theServer;
 }
 
 - (void) writeVideoFrames:(NSArray*)frames pts:(double)pts {
+    NSLog(@"pts: %f", pts);
     if (pts == 0) {
-        NSLog(@"PTS of 0, skipping frame");
+        NSLog(@"PTS of 0, skipping frame: %@", frames);
         return;
     }
     if (!_videoSPSandPPS) {
@@ -242,7 +243,6 @@ static CameraServer* theServer;
         //NSLog(@"%f: %@", pts, videoData.description);
         [_hlsWriter processEncodedData:videoData presentationTimestamp:pts streamIndex:0];
     }
-    
 }
 
 - (void) captureOutput:(AVCaptureOutput *)captureOutput didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer fromConnection:(AVCaptureConnection *)connection
@@ -257,10 +257,9 @@ static CameraServer* theServer;
         if (!_shouldBroadcast) {
             return;
         }
-        CMTime pts = CMSampleBufferGetPresentationTimeStamp(sampleBuffer);
-        double dPTS = (double)(pts.value) / pts.timescale;
-        [_aacEncoder encodeSampleBuffer:sampleBuffer completionBlock:^(NSData *encodedData, NSError *error) {
+        [_aacEncoder encodeSampleBuffer:sampleBuffer completionBlock:^(NSData *encodedData, CMTime pts, NSError *error) {
             if (encodedData) {
+                double dPTS = (double)(pts.value) / pts.timescale;
                 //NSLog(@"Encoded data (%d): %@", encodedData.length, encodedData.description);
                 [_hlsWriter processEncodedData:encodedData presentationTimestamp:dPTS streamIndex:1];
                 //[self writeDebugFileForData:encodedData pts:dPTS];

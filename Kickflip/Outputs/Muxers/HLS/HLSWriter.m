@@ -12,6 +12,7 @@
 #import "libavformat/avformat.h"
 #import "libavcodec/avcodec.h"
 #import "libavutil/opt.h"
+#import "librtmp/log.h"
 
 @interface HLSWriter()
 @property (nonatomic, strong) FFOutputFile *outputFile;
@@ -30,6 +31,15 @@
         av_register_all();
         avformat_network_init();
         avcodec_register_all();
+        
+#if DEBUG
+        av_log_set_level(AV_LOG_VERBOSE);
+        RTMP_LogSetLevel(RTMP_LOGALL);
+#else
+        av_log_set_level(AV_LOG_QUIET);
+        RTMP_LogSetLevel(RTMP_LOGCRIT);
+#endif
+        
         _directoryPath = directoryPath;
         _packet = av_malloc(sizeof(AVPacket));
         _videoTimeBase.num = 1;
@@ -45,9 +55,9 @@
 }
 
 - (void) setupOutputFile {
-    NSString *outputPath = [_directoryPath stringByAppendingPathComponent:@"hls.m3u8"];
+    NSString *outputPath = [_directoryPath stringByAppendingPathComponent:@"test.flv"];
     
-    _outputFile = [[FFOutputFile alloc] initWithPath:@"rtmp://192.168.1.44/hls/movie" options:@{kFFmpegOutputFormatKey: @"flv"}];
+    _outputFile = [[FFOutputFile alloc] initWithPath:outputPath options:@{kFFmpegOutputFormatKey: @"flv"}];
     
     //_outputFile = [[FFOutputFile alloc] initWithPath:outputPath options:@{kFFmpegOutputFormatKey: @"hls"}];
     
