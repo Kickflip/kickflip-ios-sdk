@@ -2851,6 +2851,23 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		D90766B818AD4D5C004116AF /* GDCL */ = {
+			isa = PBXGroup;
+			children = (
+				D945AD471898536D0026F697 /* AVEncoder.h */,
+				D945AD481898536D0026F697 /* AVEncoder.mm */,
+				D945AD491898536D0026F697 /* CameraServer.h */,
+				D945AD4A1898536D0026F697 /* CameraServer.mm */,
+				D945AD501898536D0026F697 /* MP4Atom.h */,
+				D945AD511898536D0026F697 /* MP4Atom.m */,
+				D945AD521898536D0026F697 /* NALUnit.cpp */,
+				D945AD531898536D0026F697 /* NALUnit.h */,
+				D945AD5A1898536D0026F697 /* VideoEncoder.h */,
+				D945AD5B1898536D0026F697 /* VideoEncoder.m */,
+			);
+			name = GDCL;
+			sourceTree = "<group>";
+		};
 		D945AD3A1898536D0026F697 /* Kickflip */ = {
 			isa = PBXGroup;
 			children = (
@@ -2926,16 +2943,7 @@
 			children = (
 				D923A20018AAAD9500C328EC /* KFH264Encoder.h */,
 				D923A20118AAAD9500C328EC /* KFH264Encoder.mm */,
-				D945AD471898536D0026F697 /* AVEncoder.h */,
-				D945AD481898536D0026F697 /* AVEncoder.mm */,
-				D945AD491898536D0026F697 /* CameraServer.h */,
-				D945AD4A1898536D0026F697 /* CameraServer.mm */,
-				D945AD501898536D0026F697 /* MP4Atom.h */,
-				D945AD511898536D0026F697 /* MP4Atom.m */,
-				D945AD521898536D0026F697 /* NALUnit.cpp */,
-				D945AD531898536D0026F697 /* NALUnit.h */,
-				D945AD5A1898536D0026F697 /* VideoEncoder.h */,
-				D945AD5B1898536D0026F697 /* VideoEncoder.m */,
+				D90766B818AD4D5C004116AF /* GDCL */,
 			);
 			path = H264;
 			sourceTree = "<group>";

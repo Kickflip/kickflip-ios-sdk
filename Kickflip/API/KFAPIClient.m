@@ -12,6 +12,7 @@
 #import "KFLog.h"
 #import "KFUser.h"
 #import "KFS3EndpointResponse.h"
+#import "Kickflip.h"
 
 static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
 
@@ -43,7 +44,13 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
 
 - (void) checkOAuthCredentialsWithCallback:(void (^)(BOOL success, NSError * error))callback {
     NSURL *url = [NSURL URLWithString:KICKFLIP_API_BASE_URL];
-    AFOAuth2Client *oauthClient = [AFOAuth2Client clientWithBaseURL:url clientID:KICKFLIP_PRODUCTION_API_ID secret:KICKFLIP_PRODUCTION_API_SECRET];
+    NSString *apiKey = [Kickflip apiKey];
+    NSString *apiSecret = [Kickflip apiSecret];
+    if (!apiKey || !apiSecret) {
+        callback(NO, [NSError errorWithDomain:kKFAPIClientErrorDomain code:99 userInfo:@{NSLocalizedDescriptionKey: @"Missing API key and secret.", NSLocalizedRecoverySuggestionErrorKey: @"Call [Kickflip setupWithAPIKey:secret:] with your credentials obtained from kickflip.io"}]);
+        return;
+    }
+    AFOAuth2Client *oauthClient = [AFOAuth2Client clientWithBaseURL:url clientID:apiKey secret:apiSecret];
     
     AFOAuthCredential *credential = [AFOAuthCredential retrieveCredentialWithIdentifier:oauthClient.serviceProviderIdentifier];
     if (credential && !credential.isExpired) {
@@ -55,7 +62,6 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
     }
 
     [oauthClient authenticateUsingOAuthWithPath:@"/o/token/" parameters:@{@"grant_type": kAFOAuthClientCredentialsGrantType} success:^(AFOAuthCredential *credential) {
-        NSLog(@"I have new token! %@", credential.accessToken);
         [AFOAuthCredential storeCredential:credential withIdentifier:oauthClient.serviceProviderIdentifier];
         [self setAuthorizationHeaderWithCredential:credential];
         if (callback) {
@@ -72,10 +78,43 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
     [self setDefaultHeader:@"Authorization" value:[NSString stringWithFormat:@"Bearer %@", credential.accessToken]];
 }
 
+- (void) requestNewUser:(void (^)(KFUser *newUser, NSError *error))userCallback {
+    [self checkOAuthCredentialsWithCallback:^(BOOL success, NSError *error) {
+        if (!success) {
+            if (userCallback) {
+                userCallback(nil, error);
+            }
+            return;
+        }
+        [self postPath:@"/api/new/user/" parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
+            if (responseObject && [responseObject isKindOfClass:[NSDictionary class]]) {
+                NSDictionary *responseDictionary = (NSDictionary*)responseObject;
+                KFUser *activeUser = [KFUser activeUserWithDictionary:responseDictionary];
+                if (!userCallback) {
+                    return;
+                }
+                if (!activeUser) {
+                    userCallback(nil, [NSError errorWithDomain:kKFAPIClientErrorDomain code:100 userInfo:@{NSLocalizedDescriptionKey: @"User response error, no user", @"operation": operation}]);
+                    return;
+                }
+                userCallback(activeUser, nil);
+            } else {
+                if (userCallback) {
+                    userCallback(nil, [NSError errorWithDomain:kKFAPIClientErrorDomain code:101 userInfo:@{NSLocalizedDescriptionKey: @"User response error, bad server response", @"operation": operation}]);
+                }
+            }
+            
+        } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+            if (error && userCallback) {
+                userCallback(nil, error);
+            }
+        }];
+    }];
+}
+
 - (void) requestRecordingEndpoint:(void (^)(KFEndpointResponse *, NSError *))endpointCallback {
     [self checkOAuthCredentialsWithCallback:^(BOOL success, NSError *error) {
         if (!success) {
-            DDLogError(@"Error fetching OAuth credentials: %@", error);
             if (endpointCallback) {
                 endpointCallback(nil, error);
             }
@@ -89,32 +128,17 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
             }
             return;
         }
-        [self postPath:@"/api/new/user/" parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
-            if (responseObject && [responseObject isKindOfClass:[NSDictionary class]]) {
-                NSDictionary *responseDictionary = (NSDictionary*)responseObject;
-                KFUser *activeUser = [KFUser activeUserWithDictionary:responseDictionary];
-                if (activeUser) {
-                    KFS3EndpointResponse *endpointResponse = [KFS3EndpointResponse endpointResponseForUser:activeUser];
-                    if (endpointCallback) {
-                        endpointCallback(endpointResponse, nil);
-                    }
-                    return;
-                } else {
-                    if (endpointCallback) {
-                        endpointCallback(nil, [NSError errorWithDomain:kKFAPIClientErrorDomain code:100 userInfo:@{NSLocalizedDescriptionKey: @"User response error", @"operation": operation}]);
-                    }
-                }
-            } else {
-                if (endpointCallback) {
-                    endpointCallback(nil, [NSError errorWithDomain:kKFAPIClientErrorDomain code:100 userInfo:@{NSLocalizedDescriptionKey: @"User response error", @"operation": operation}]);
-                }
-            }
-            
-        } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-            if (error && endpointCallback) {
+        [self requestNewUser:^(KFUser *newUser, NSError *error) {
+            if (error) {
                 endpointCallback(nil, error);
+                return;
+            }
+            KFS3EndpointResponse *endpointResponse = [KFS3EndpointResponse endpointResponseForUser:activeUser];
+            if (endpointCallback) {
+                endpointCallback(endpointResponse, nil);
             }
         }];
+        
     }];
 }
 

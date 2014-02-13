@@ -10,6 +10,8 @@
 #import "KFDemoViewController.h"
 #import "Kickflip.h"
 #import "KFSecrets.h"
+#import "KFLog.h"
+#import "DDTTYLogger.h"
 
 @implementation KFAppDelegate
 
@@ -20,6 +22,8 @@
     self.window.backgroundColor = [UIColor whiteColor];
     
     [Kickflip setupWithAPIKey:KICKFLIP_DEV_API_ID secret:KICKFLIP_DEV_API_SECRET];
+    
+    [DDLog addLogger:[DDTTYLogger sharedInstance]];
     
     self.window.rootViewController = [[KFDemoViewController alloc] init];
     [self.window makeKeyAndVisible];
