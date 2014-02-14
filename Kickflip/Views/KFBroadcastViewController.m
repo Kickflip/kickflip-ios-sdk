@@ -7,8 +7,7 @@
 //
 
 #import "KFBroadcastViewController.h"
-#import "CameraServer.h"
-#import "HLSWriter.h"
+#import "KFRecorder.h"
 #import "KFAPIClient.h"
 #import "KFUser.h"
 
@@ -28,23 +27,25 @@
         self.doneButton = [UIButton buttonWithType:UIButtonTypeRoundedRect];
         [_doneButton setTitle:@"Done" forState:UIControlStateNormal];
         [_doneButton addTarget:self action:@selector(doneButtonPressed:) forControlEvents:UIControlEventTouchUpInside];
+        
+        self.recorder = [[KFRecorder alloc] init];
 
     }
     return self;
 }
 
 - (void) doneButtonPressed:(id)sender {
-    [[CameraServer server] stopBroadcast];
-    [[CameraServer server] shutdown];
+    [self.recorder stopRecording];
     [self dismissViewControllerAnimated:YES completion:nil];
 }
 
 - (void) startButtonPressed:(id)sender {
-    [[CameraServer server] startBroadcast];
+    [self.recorder startRecording];
 }
 
 - (void) shareButtonPressed:(id)sender {
-    NSString *kickflipURLString = [NSString stringWithFormat:@"http://kickflip.io/video.html?v=%@", [CameraServer server].hlsWriter.uuid];
+    /*
+    NSString *kickflipURLString = [NSString stringWithFormat:@"http://kickflip.io/video.html?v=%@", self.recorder.hlsWriter.uuid];
     NSURL *kickflipURL = [NSURL URLWithString:kickflipURLString];
     NSURL *manifestURL = [CameraServer server].hlsUploader.manifestURL;
     UIActivityViewController *activityViewController = [[UIActivityViewController alloc] initWithActivityItems:@[kickflipURL, manifestURL] applicationActivities:nil];
@@ -56,6 +57,7 @@
     activityViewController.completionHandler = completionHandler;
     
     [self presentViewController:activityViewController animated:YES completion:nil];
+     */
 }
 
 - (void)viewDidLoad
@@ -96,15 +98,14 @@
 - (void) willAnimateRotationToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation duration:(NSTimeInterval)duration
 {
     // this is not the most beautiful animation...
-    AVCaptureVideoPreviewLayer* preview = [[CameraServer server] getPreviewLayer];
+    AVCaptureVideoPreviewLayer* preview = self.recorder.previewLayer;
     preview.frame = self.cameraView.bounds;
     [[preview connection] setVideoOrientation:toInterfaceOrientation];
 }
 
 - (void) startPreview
 {
-    [[CameraServer server] startup];
-    AVCaptureVideoPreviewLayer* preview = [[CameraServer server] getPreviewLayer];
+    AVCaptureVideoPreviewLayer* preview = self.recorder.previewLayer;
     [preview removeFromSuperlayer];
     preview.frame = self.cameraView.bounds;
     [[preview connection] setVideoOrientation:UIInterfaceOrientationPortrait];

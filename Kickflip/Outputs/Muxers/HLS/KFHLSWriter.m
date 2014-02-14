@@ -1,20 +1,21 @@
 //
-//  HLSWriter.m
+//  KFHLSWriter.m
 //  FFmpegEncoder
 //
 //  Created by Christopher Ballinger on 12/16/13.
 //  Copyright (c) 2013 Christopher Ballinger. All rights reserved.
 //
 
-#import "HLSWriter.h"
+#import "KFHLSWriter.h"
 #import "FFOutputFile.h"
 #import "FFmpegWrapper.h"
 #import "libavformat/avformat.h"
 #import "libavcodec/avcodec.h"
 #import "libavutil/opt.h"
 #import "librtmp/log.h"
+#import "KFLog.h"
 
-@interface HLSWriter()
+@interface KFHLSWriter()
 @property (nonatomic, strong) FFOutputFile *outputFile;
 @property (nonatomic, strong) FFOutputStream *videoStream;
 @property (nonatomic, strong) FFOutputStream *audioStream;
@@ -24,7 +25,7 @@
 @property (nonatomic) NSUInteger segmentDurationSeconds;
 @end
 
-@implementation HLSWriter
+@implementation KFHLSWriter
 
 - (id) initWithDirectoryPath:(NSString *)directoryPath {
     if (self = [super init]) {
@@ -46,7 +47,7 @@
         _videoTimeBase.den = 1000000000;
         _audioTimeBase.num = 1;
         _audioTimeBase.den = 1000000000;
-        _segmentDurationSeconds = 10;
+        _segmentDurationSeconds = 5;
         [self setupOutputFile];
         _conversionQueue = dispatch_queue_create("HLS Write queue", DISPATCH_QUEUE_SERIAL);
         _uuid = [[NSUUID UUID] UUIDString];
@@ -55,11 +56,11 @@
 }
 
 - (void) setupOutputFile {
-    NSString *outputPath = [_directoryPath stringByAppendingPathComponent:@"test.flv"];
+    NSString *outputPath = [_directoryPath stringByAppendingPathComponent:@"index.m3u8"];
     
-    _outputFile = [[FFOutputFile alloc] initWithPath:outputPath options:@{kFFmpegOutputFormatKey: @"flv"}];
+    //_outputFile = [[FFOutputFile alloc] initWithPath:outputPath options:@{kFFmpegOutputFormatKey: @"flv"}];
     
-    //_outputFile = [[FFOutputFile alloc] initWithPath:outputPath options:@{kFFmpegOutputFormatKey: @"hls"}];
+    _outputFile = [[FFOutputFile alloc] initWithPath:outputPath options:@{kFFmpegOutputFormatKey: @"hls"}];
     
     //FFBitstreamFilter *bitstreamFilter = [[FFBitstreamFilter alloc] initWithFilterName:@"h264_mp4toannexb"];
     //[_outputFile addBitstreamFilter:bitstreamFilter];
@@ -68,7 +69,7 @@
 - (void) addVideoStreamWithWidth:(int)width height:(int)height {
     _videoStream = [[FFOutputStream alloc] initWithOutputFile:_outputFile outputCodec:@"h264"];
     [_videoStream setupVideoContextWithWidth:width height:height];
-    //av_opt_set_int(_outputFile.formatContext->priv_data, "hls_time", _segmentDurationSeconds, 0);
+    av_opt_set_int(_outputFile.formatContext->priv_data, "hls_time", _segmentDurationSeconds, 0);
 }
 
 - (void) addAudioStreamWithSampleRate:(int)sampleRate {
@@ -88,25 +89,25 @@
 }
 
 
-- (void) processEncodedData:(NSData*)data presentationTimestamp:(double)pts streamIndex:(NSUInteger)streamIndex {
+- (void) processEncodedData:(NSData*)data presentationTimestamp:(CMTime)pts streamIndex:(NSUInteger)streamIndex {
     dispatch_async(_conversionQueue, ^{
         av_init_packet(_packet);
         
-        uint64_t originalPTS = (uint64_t)(1000000000 * pts);
-        //NSLog(@"*** Writing packet at %lld", originalPTS);
+        uint64_t originalPTS = pts.value;
+        //DDLogInfo(@"*** Writing packet at %lld", originalPTS);
         
         _packet->data = (uint8_t*)data.bytes;
         _packet->size = (int)data.length;
         _packet->stream_index = streamIndex;
         uint64_t scaledPTS = av_rescale_q(originalPTS, _videoTimeBase, _outputFile.formatContext->streams[_packet->stream_index]->time_base);
-        //NSLog(@"*** Scaled PTS: %lld", scaledPTS);
+        //DDLogInfo(@"*** Scaled PTS: %lld", scaledPTS);
         
         _packet->pts = scaledPTS;
         _packet->dts = scaledPTS;
         NSError *error = nil;
         [_outputFile writePacket:_packet error:&error];
         if (error) {
-            NSLog(@"Error writing packet at streamIndex %d and PTS %lld: %@", streamIndex, originalPTS, error.description);
+            DDLogError(@"Error writing packet at streamIndex %d and PTS %lld: %@", streamIndex, originalPTS, error.description);
         } else {
             //NSLog(@"Wrote packet of length %d at streamIndex %d and PTS %lld", data.length, streamIndex, originalPTS);
         }

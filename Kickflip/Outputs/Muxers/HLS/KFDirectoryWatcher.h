@@ -1,5 +1,5 @@
 /*
-     File: DirectoryWatcher.h 
+     File: KFDirectoryWatcher.h
  Abstract: 
  Object used to monitor the contents of a given directory by using
  "kqueue": a kernel event notification mechanism.
@@ -50,24 +50,24 @@
 
 #import <Foundation/Foundation.h>
 
-@class DirectoryWatcher;
+@class KFDirectoryWatcher;
 
-@protocol DirectoryWatcherDelegate <NSObject>
+@protocol KFDirectoryWatcherDelegate <NSObject>
 @required
-- (void)directoryDidChange:(DirectoryWatcher *)folderWatcher;
+- (void)directoryDidChange:(KFDirectoryWatcher *)folderWatcher;
 @end
 
-@interface DirectoryWatcher : NSObject 
+@interface KFDirectoryWatcher : NSObject
 {
-	id <DirectoryWatcherDelegate> __weak delegate;
+	id <KFDirectoryWatcherDelegate> __weak delegate;
     
 	int dirFD;
     int kq;
 
 	CFFileDescriptorRef dirKQRef;
 }
-@property (nonatomic, weak) id <DirectoryWatcherDelegate> delegate;
+@property (nonatomic, weak) id <KFDirectoryWatcherDelegate> delegate;
 
-+ (DirectoryWatcher *)watchFolderWithPath:(NSString *)watchPath delegate:(id<DirectoryWatcherDelegate>)watchDelegate;
++ (KFDirectoryWatcher *)watchFolderWithPath:(NSString *)watchPath delegate:(id<KFDirectoryWatcherDelegate>)watchDelegate;
 - (void)invalidate;
 @end

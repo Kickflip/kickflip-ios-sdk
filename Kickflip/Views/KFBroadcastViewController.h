@@ -8,11 +8,14 @@
 
 #import <UIKit/UIKit.h>
 
+@class KFRecorder;
+
 @interface KFBroadcastViewController : UIViewController
 
 @property (strong, nonatomic) UIView *cameraView;
 @property (nonatomic, strong) UIButton *shareButton;
 @property (nonatomic, strong) UIButton *doneButton;
 @property (nonatomic, strong) UIButton *startButton;
+@property (nonatomic, strong) KFRecorder *recorder;
 
 @end

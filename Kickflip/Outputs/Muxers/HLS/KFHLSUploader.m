@@ -1,15 +1,15 @@
 //
-//  HLSUploader.m
+//  KFHLSUploader.m
 //  FFmpegEncoder
 //
 //  Created by Christopher Ballinger on 12/20/13.
 //  Copyright (c) 2013 Christopher Ballinger. All rights reserved.
 //
 
-#import "HLSUploader.h"
-#import "OWSharedS3Client.h"
-
-static NSString * const kBucketName = @"openwatch-livestreamer";
+#import "KFHLSUploader.h"
+#import "KFS3EndpointResponse.h"
+#import "OWS3Client.h"
+#import "KFUser.h"
 
 static NSString * const kManifestKey =  @"manifest";
 static NSString * const kFileNameKey = @"fileName";
@@ -18,24 +18,30 @@ static NSString * const kUploadStateQueued = @"queued";
 static NSString * const kUploadStateFinished = @"finished";
 static NSString * const kUploadStateUploading = @"uploading";
 
-@interface HLSUploader()
+@interface KFHLSUploader()
 @property (nonatomic) NSUInteger numbersOffset;
 @property (nonatomic, strong) NSMutableDictionary *queuedSegments;
 @property (nonatomic) NSUInteger nextSegmentIndexToUpload;
+@property (nonatomic, strong) NSString *bucketName;
 @end
 
-@implementation HLSUploader
+@implementation KFHLSUploader
 
-- (id) initWithDirectoryPath:(NSString *)directoryPath remoteFolderName:(NSString *)remoteFolderName {
+- (id) initWithDirectoryPath:(NSString *)directoryPath endpoint:(KFS3EndpointResponse *)endpoint {
     if (self = [super init]) {
+        self.endpoint = endpoint;
         _directoryPath = [directoryPath copy];
-        _directoryWatcher = [DirectoryWatcher watchFolderWithPath:_directoryPath delegate:self];
+        _directoryWatcher = [KFDirectoryWatcher watchFolderWithPath:_directoryPath delegate:self];
         _files = [NSMutableDictionary dictionary];
-        _remoteFolderName = [remoteFolderName copy];
+        _remoteFolderName = endpoint.uuid;
         _scanningQueue = dispatch_queue_create("Scanning Queue", DISPATCH_QUEUE_SERIAL);
         _queuedSegments = [NSMutableDictionary dictionaryWithCapacity:5];
         _numbersOffset = 0;
         _nextSegmentIndexToUpload = 0;
+        self.s3Client = [[OWS3Client alloc] initWithAccessKey:self.endpoint.user.awsAccessKey secretKey:self.endpoint.user.awsSecretKey];
+        self.s3Client.region = US_EAST_1;
+        self.s3Client.useSSL = NO;
+        self.bucketName = self.endpoint.user.appName;
     }
     return self;
 }
@@ -57,7 +63,7 @@ static NSString * const kUploadStateUploading = @"uploading";
     [_files setObject:kUploadStateUploading forKey:fileName];
     NSString *filePath = [_directoryPath stringByAppendingPathComponent:fileName];
     NSString *key = [NSString stringWithFormat:@"%@/%@", _remoteFolderName, fileName];
-    [[OWSharedS3Client sharedClient] postObjectWithFile:filePath bucket:kBucketName key:key acl:@"public-read" success:^(S3PutObjectResponse *responseObject) {
+    [self.s3Client postObjectWithFile:filePath bucket:self.bucketName key:key acl:@"public-read" success:^(S3PutObjectResponse *responseObject) {
         dispatch_async(_scanningQueue, ^{
             NSLog(@"Uploaded %@", fileName);
             [_files setObject:kUploadStateFinished forKey:fileName];
@@ -83,14 +89,14 @@ static NSString * const kUploadStateUploading = @"uploading";
 - (void) updateManifestWithString:(NSString*)manifestString {
     NSData *data = [manifestString dataUsingEncoding:NSUTF8StringEncoding];
     NSString *key = [NSString stringWithFormat:@"%@/%@", _remoteFolderName, [_manifestPath lastPathComponent]];
-    [[OWSharedS3Client sharedClient] postObjectWithData:data bucket:kBucketName key:key acl:@"public-read" success:^(S3PutObjectResponse *responseObject) {
+    [self.s3Client postObjectWithData:data bucket:self.bucketName key:key acl:@"public-read" success:^(S3PutObjectResponse *responseObject) {
         NSLog(@"Manifest updated");
     } failure:^(NSError *error) {
         NSLog(@"Error updating manifest: %@", error.description);
     }];
 }
 
-- (void) directoryDidChange:(DirectoryWatcher *)folderWatcher {
+- (void) directoryDidChange:(KFDirectoryWatcher *)folderWatcher {
     dispatch_async(_scanningQueue, ^{
         NSError *error = nil;
         NSArray *files = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:_directoryPath error:&error];
@@ -153,7 +159,7 @@ static NSString * const kUploadStateUploading = @"uploading";
 }
 
 - (NSURL*) manifestURL {
-    NSString *urlString = [NSString stringWithFormat:@"http://%@.s3.amazonaws.com/%@/%@", kBucketName, _remoteFolderName, [_manifestPath lastPathComponent]];
+    NSString *urlString = [NSString stringWithFormat:@"http://%@.s3.amazonaws.com/%@/%@", self.bucketName, _remoteFolderName, [_manifestPath lastPathComponent]];
     return [NSURL URLWithString:urlString];
 }
 

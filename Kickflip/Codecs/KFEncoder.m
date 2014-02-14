@@ -17,4 +17,8 @@
     return self;
 }
 
+- (void) encodeSampleBuffer:(CMSampleBufferRef)sampleBuffer {
+    
+}
+
 @end

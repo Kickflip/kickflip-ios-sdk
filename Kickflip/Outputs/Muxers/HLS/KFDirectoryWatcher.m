@@ -1,5 +1,5 @@
 /*
-     File: DirectoryWatcher.m 
+     File: KFDirectoryWatcher.m
  Abstract: 
  Object used to monitor the contents of a given directory by using
  "kqueue": a kernel event notification mechanism.
@@ -48,7 +48,7 @@
   
  */ 
 
-#import "DirectoryWatcher.h"
+#import "KFDirectoryWatcher.h"
 
 #include <sys/types.h>
 #include <sys/event.h>
@@ -58,7 +58,7 @@
 
 #import <CoreFoundation/CoreFoundation.h>
 
-@interface DirectoryWatcher (DirectoryWatcherPrivate)
+@interface KFDirectoryWatcher (KFDirectoryWatcherPrivate)
 - (BOOL)startMonitoringDirectory:(NSString *)dirPath;
 - (void)kqueueFired;
 @end
@@ -66,7 +66,7 @@
 
 #pragma mark -
 
-@implementation DirectoryWatcher
+@implementation KFDirectoryWatcher
 
 @synthesize delegate;
 
@@ -87,12 +87,12 @@
 	[self invalidate];
 }
 
-+ (DirectoryWatcher *)watchFolderWithPath:(NSString *)watchPath delegate:(id)watchDelegate
++ (KFDirectoryWatcher *)watchFolderWithPath:(NSString *)watchPath delegate:(id)watchDelegate
 {
-	DirectoryWatcher *retVal = NULL;
+	KFDirectoryWatcher *retVal = NULL;
 	if ((watchDelegate != NULL) && (watchPath != NULL))
 	{
-		DirectoryWatcher *tempManager = [[DirectoryWatcher alloc] init];
+		KFDirectoryWatcher *tempManager = [[KFDirectoryWatcher alloc] init];
 		tempManager.delegate = watchDelegate;		
 		if ([tempManager startMonitoringDirectory: watchPath])
 		{
@@ -128,7 +128,7 @@
 
 #pragma mark -
 
-@implementation DirectoryWatcher (DirectoryWatcherPrivate)
+@implementation KFDirectoryWatcher (KFDirectoryWatcherPrivate)
 
 - (void)kqueueFired
 {
@@ -149,10 +149,10 @@
 
 static void KQCallback(CFFileDescriptorRef kqRef, CFOptionFlags callBackTypes, void *info)
 {
-    DirectoryWatcher *obj;
+    KFDirectoryWatcher *obj;
 	
-    obj = (__bridge DirectoryWatcher *)info;
-    assert([obj isKindOfClass:[DirectoryWatcher class]]);
+    obj = (__bridge KFDirectoryWatcher *)info;
+    assert([obj isKindOfClass:[KFDirectoryWatcher class]]);
     assert(kqRef == obj->dirKQRef);
     assert(callBackTypes == kCFFileDescriptorReadCallBack);
 	

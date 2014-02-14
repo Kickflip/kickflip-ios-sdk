@@ -22,18 +22,14 @@
 		D945AE43189857D90026F697 /* KFUser.m in Sources */ = {isa = PBXBuildFile; fileRef = D945AD3F1898536D0026F697 /* KFUser.m */; };
 		D945AE44189857D90026F697 /* KFAACEncoder.m in Sources */ = {isa = PBXBuildFile; fileRef = D945AD441898536D0026F697 /* KFAACEncoder.m */; };
 		D945AE45189857D90026F697 /* AVEncoder.mm in Sources */ = {isa = PBXBuildFile; fileRef = D945AD481898536D0026F697 /* AVEncoder.mm */; };
-		D945AE46189857D90026F697 /* CameraServer.mm in Sources */ = {isa = PBXBuildFile; fileRef = D945AD4A1898536D0026F697 /* CameraServer.mm */; };
 		D945AE4A189857D90026F697 /* MP4Atom.m in Sources */ = {isa = PBXBuildFile; fileRef = D945AD511898536D0026F697 /* MP4Atom.m */; };
 		D945AE4E189857D90026F697 /* VideoEncoder.m in Sources */ = {isa = PBXBuildFile; fileRef = D945AD5B1898536D0026F697 /* VideoEncoder.m */; };
 		D945AE4F189857D90026F697 /* KFRecorder.m in Sources */ = {isa = PBXBuildFile; fileRef = D945AD5F1898536D0026F697 /* KFRecorder.m */; };
 		D945AE50189857D90026F697 /* Kickflip.m in Sources */ = {isa = PBXBuildFile; fileRef = D945AD621898536D0026F697 /* Kickflip.m */; };
-		D945AE51189857D90026F697 /* KFBroadcaster.m in Sources */ = {isa = PBXBuildFile; fileRef = D945AD651898536D0026F697 /* KFBroadcaster.m */; };
-		D945AE52189857D90026F697 /* DirectoryWatcher.m in Sources */ = {isa = PBXBuildFile; fileRef = D945AD691898536D0026F697 /* DirectoryWatcher.m */; };
-		D945AE53189857D90026F697 /* HLSUploader.m in Sources */ = {isa = PBXBuildFile; fileRef = D945AD6B1898536D0026F697 /* HLSUploader.m */; };
-		D945AE54189857D90026F697 /* HLSWriter.m in Sources */ = {isa = PBXBuildFile; fileRef = D945AD6D1898536D0026F697 /* HLSWriter.m */; };
+		D945AE52189857D90026F697 /* KFDirectoryWatcher.m in Sources */ = {isa = PBXBuildFile; fileRef = D945AD691898536D0026F697 /* KFDirectoryWatcher.m */; };
+		D945AE53189857D90026F697 /* KFHLSUploader.m in Sources */ = {isa = PBXBuildFile; fileRef = D945AD6B1898536D0026F697 /* KFHLSUploader.m */; };
+		D945AE54189857D90026F697 /* KFHLSWriter.m in Sources */ = {isa = PBXBuildFile; fileRef = D945AD6D1898536D0026F697 /* KFHLSWriter.m */; };
 		D945AE55189857D90026F697 /* KFHLSMonitor.m in Sources */ = {isa = PBXBuildFile; fileRef = D945AD6F1898536D0026F697 /* KFHLSMonitor.m */; };
-		D945AE57189857D90026F697 /* KFUploader.m in Sources */ = {isa = PBXBuildFile; fileRef = D945AD741898536D0026F697 /* KFUploader.m */; };
-		D945AE5A189857D90026F697 /* KFS3Uploader.m in Sources */ = {isa = PBXBuildFile; fileRef = D945AD7C1898536D0026F697 /* KFS3Uploader.m */; };
 		D945AE711898587B0026F697 /* AFHTTPClient.m in Sources */ = {isa = PBXBuildFile; fileRef = D945AE5F1898587B0026F697 /* AFHTTPClient.m */; };
 		D945AE721898587B0026F697 /* AFHTTPRequestOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = D945AE611898587B0026F697 /* AFHTTPRequestOperation.m */; };
 		D945AE731898587B0026F697 /* AFImageRequestOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = D945AE631898587B0026F697 /* AFImageRequestOperation.m */; };
@@ -70,7 +66,6 @@
 		D945AF2A1898599A0026F697 /* DDMultiFormatter.m in Sources */ = {isa = PBXBuildFile; fileRef = D945AF201898599A0026F697 /* DDMultiFormatter.m */; };
 		D945AF32189859AC0026F697 /* SSKeychain.m in Sources */ = {isa = PBXBuildFile; fileRef = D945AF2F189859AC0026F697 /* SSKeychain.m */; };
 		D945AF33189859AC0026F697 /* SSKeychainQuery.m in Sources */ = {isa = PBXBuildFile; fileRef = D945AF31189859AC0026F697 /* SSKeychainQuery.m */; };
-		D945AF3718985A9C0026F697 /* OWSharedS3Client.m in Sources */ = {isa = PBXBuildFile; fileRef = D945AF3618985A9C0026F697 /* OWSharedS3Client.m */; };
 		D945AF411898635A0026F697 /* KFDemoViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = D945AF401898635A0026F697 /* KFDemoViewController.m */; };
 		D945AF4D18986C9A0026F697 /* KFEndpointResponse.m in Sources */ = {isa = PBXBuildFile; fileRef = D945AF4818986C9A0026F697 /* KFEndpointResponse.m */; };
 		D945AF4E18986C9A0026F697 /* KFRTMPEndpointResponse.m in Sources */ = {isa = PBXBuildFile; fileRef = D945AF4A18986C9A0026F697 /* KFRTMPEndpointResponse.m */; };
@@ -161,8 +156,6 @@
 		D945AD441898536D0026F697 /* KFAACEncoder.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = KFAACEncoder.m; sourceTree = "<group>"; };
 		D945AD471898536D0026F697 /* AVEncoder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AVEncoder.h; sourceTree = "<group>"; };
 		D945AD481898536D0026F697 /* AVEncoder.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = AVEncoder.mm; sourceTree = "<group>"; };
-		D945AD491898536D0026F697 /* CameraServer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CameraServer.h; sourceTree = "<group>"; };
-		D945AD4A1898536D0026F697 /* CameraServer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = CameraServer.mm; sourceTree = "<group>"; };
 		D945AD501898536D0026F697 /* MP4Atom.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MP4Atom.h; sourceTree = "<group>"; };
 		D945AD511898536D0026F697 /* MP4Atom.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MP4Atom.m; sourceTree = "<group>"; };
 		D945AD521898536D0026F697 /* NALUnit.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = NALUnit.cpp; sourceTree = "<group>"; };
@@ -174,20 +167,14 @@
 		D945AD601898536D0026F697 /* Kickflip-Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "Kickflip-Prefix.pch"; sourceTree = "<group>"; };
 		D945AD611898536D0026F697 /* Kickflip.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Kickflip.h; sourceTree = "<group>"; };
 		D945AD621898536D0026F697 /* Kickflip.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Kickflip.m; sourceTree = "<group>"; };
-		D945AD641898536D0026F697 /* KFBroadcaster.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = KFBroadcaster.h; sourceTree = "<group>"; };
-		D945AD651898536D0026F697 /* KFBroadcaster.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = KFBroadcaster.m; sourceTree = "<group>"; };
-		D945AD681898536D0026F697 /* DirectoryWatcher.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DirectoryWatcher.h; sourceTree = "<group>"; };
-		D945AD691898536D0026F697 /* DirectoryWatcher.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DirectoryWatcher.m; sourceTree = "<group>"; };
-		D945AD6A1898536D0026F697 /* HLSUploader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HLSUploader.h; sourceTree = "<group>"; };
-		D945AD6B1898536D0026F697 /* HLSUploader.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HLSUploader.m; sourceTree = "<group>"; };
-		D945AD6C1898536D0026F697 /* HLSWriter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HLSWriter.h; sourceTree = "<group>"; };
-		D945AD6D1898536D0026F697 /* HLSWriter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HLSWriter.m; sourceTree = "<group>"; };
+		D945AD681898536D0026F697 /* KFDirectoryWatcher.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = KFDirectoryWatcher.h; sourceTree = "<group>"; };
+		D945AD691898536D0026F697 /* KFDirectoryWatcher.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = KFDirectoryWatcher.m; sourceTree = "<group>"; };
+		D945AD6A1898536D0026F697 /* KFHLSUploader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = KFHLSUploader.h; path = ../../Muxers/HLS/KFHLSUploader.h; sourceTree = "<group>"; };
+		D945AD6B1898536D0026F697 /* KFHLSUploader.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = KFHLSUploader.m; path = ../../Muxers/HLS/KFHLSUploader.m; sourceTree = "<group>"; };
+		D945AD6C1898536D0026F697 /* KFHLSWriter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = KFHLSWriter.h; sourceTree = "<group>"; };
+		D945AD6D1898536D0026F697 /* KFHLSWriter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = KFHLSWriter.m; sourceTree = "<group>"; };
 		D945AD6E1898536D0026F697 /* KFHLSMonitor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = KFHLSMonitor.h; sourceTree = "<group>"; };
 		D945AD6F1898536D0026F697 /* KFHLSMonitor.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = KFHLSMonitor.m; sourceTree = "<group>"; };
-		D945AD731898536D0026F697 /* KFUploader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = KFUploader.h; sourceTree = "<group>"; };
-		D945AD741898536D0026F697 /* KFUploader.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = KFUploader.m; sourceTree = "<group>"; };
-		D945AD7B1898536D0026F697 /* KFS3Uploader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = KFS3Uploader.h; sourceTree = "<group>"; };
-		D945AD7C1898536D0026F697 /* KFS3Uploader.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = KFS3Uploader.m; sourceTree = "<group>"; };
 		D945AD7E1898536D0026F697 /* KFLog.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = KFLog.h; sourceTree = "<group>"; };
 		D945ADA3189853A80026F697 /* KFDemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = KFDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D945ADA5189853A80026F697 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
@@ -350,8 +337,6 @@
 		D945AF30189859AC0026F697 /* SSKeychainQuery.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SSKeychainQuery.h; sourceTree = "<group>"; };
 		D945AF31189859AC0026F697 /* SSKeychainQuery.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SSKeychainQuery.m; sourceTree = "<group>"; };
 		D945AF3418985A5E0026F697 /* KFSecrets.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = KFSecrets.h; sourceTree = "<group>"; };
-		D945AF3518985A9C0026F697 /* OWSharedS3Client.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OWSharedS3Client.h; sourceTree = "<group>"; };
-		D945AF3618985A9C0026F697 /* OWSharedS3Client.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = OWSharedS3Client.m; sourceTree = "<group>"; };
 		D945AF3F1898635A0026F697 /* KFDemoViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = KFDemoViewController.h; sourceTree = "<group>"; };
 		D945AF401898635A0026F697 /* KFDemoViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = KFDemoViewController.m; sourceTree = "<group>"; };
 		D945AF4718986C9A0026F697 /* KFEndpointResponse.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = KFEndpointResponse.h; sourceTree = "<group>"; };
@@ -2856,8 +2841,6 @@
 			children = (
 				D945AD471898536D0026F697 /* AVEncoder.h */,
 				D945AD481898536D0026F697 /* AVEncoder.mm */,
-				D945AD491898536D0026F697 /* CameraServer.h */,
-				D945AD4A1898536D0026F697 /* CameraServer.mm */,
 				D945AD501898536D0026F697 /* MP4Atom.h */,
 				D945AD511898536D0026F697 /* MP4Atom.m */,
 				D945AD521898536D0026F697 /* NALUnit.cpp */,
@@ -2967,8 +2950,6 @@
 		D945AD631898536D0026F697 /* Outputs */ = {
 			isa = PBXGroup;
 			children = (
-				D945AD641898536D0026F697 /* KFBroadcaster.h */,
-				D945AD651898536D0026F697 /* KFBroadcaster.m */,
 				D945AD661898536D0026F697 /* Muxers */,
 				D945AD701898536D0026F697 /* Network */,
 			);
@@ -2986,12 +2967,10 @@
 		D945AD671898536D0026F697 /* HLS */ = {
 			isa = PBXGroup;
 			children = (
-				D945AD681898536D0026F697 /* DirectoryWatcher.h */,
-				D945AD691898536D0026F697 /* DirectoryWatcher.m */,
-				D945AD6A1898536D0026F697 /* HLSUploader.h */,
-				D945AD6B1898536D0026F697 /* HLSUploader.m */,
-				D945AD6C1898536D0026F697 /* HLSWriter.h */,
-				D945AD6D1898536D0026F697 /* HLSWriter.m */,
+				D945AD681898536D0026F697 /* KFDirectoryWatcher.h */,
+				D945AD691898536D0026F697 /* KFDirectoryWatcher.m */,
+				D945AD6C1898536D0026F697 /* KFHLSWriter.h */,
+				D945AD6D1898536D0026F697 /* KFHLSWriter.m */,
 				D945AD6E1898536D0026F697 /* KFHLSMonitor.h */,
 				D945AD6F1898536D0026F697 /* KFHLSMonitor.m */,
 			);
@@ -3001,8 +2980,6 @@
 		D945AD701898536D0026F697 /* Network */ = {
 			isa = PBXGroup;
 			children = (
-				D945AD731898536D0026F697 /* KFUploader.h */,
-				D945AD741898536D0026F697 /* KFUploader.m */,
 				D945AD751898536D0026F697 /* RTMP */,
 				D945AD781898536D0026F697 /* S3 */,
 			);
@@ -3019,10 +2996,8 @@
 		D945AD781898536D0026F697 /* S3 */ = {
 			isa = PBXGroup;
 			children = (
-				D945AF3518985A9C0026F697 /* OWSharedS3Client.h */,
-				D945AF3618985A9C0026F697 /* OWSharedS3Client.m */,
-				D945AD7B1898536D0026F697 /* KFS3Uploader.h */,
-				D945AD7C1898536D0026F697 /* KFS3Uploader.m */,
+				D945AD6A1898536D0026F697 /* KFHLSUploader.h */,
+				D945AD6B1898536D0026F697 /* KFHLSUploader.m */,
 			);
 			path = S3;
 			sourceTree = "<group>";
@@ -6344,23 +6319,18 @@
 				D945AE43189857D90026F697 /* KFUser.m in Sources */,
 				D923A1FA18AAA75600C328EC /* KFEncoder.m in Sources */,
 				D945AE44189857D90026F697 /* KFAACEncoder.m in Sources */,
-				D945AF3718985A9C0026F697 /* OWSharedS3Client.m in Sources */,
 				D945AE45189857D90026F697 /* AVEncoder.mm in Sources */,
 				D945AF4F18986C9A0026F697 /* KFS3EndpointResponse.m in Sources */,
-				D945AE46189857D90026F697 /* CameraServer.mm in Sources */,
 				D945AF4E18986C9A0026F697 /* KFRTMPEndpointResponse.m in Sources */,
 				D945AE4A189857D90026F697 /* MP4Atom.m in Sources */,
 				D945AE4E189857D90026F697 /* VideoEncoder.m in Sources */,
 				D945AE4F189857D90026F697 /* KFRecorder.m in Sources */,
 				D945AE50189857D90026F697 /* Kickflip.m in Sources */,
-				D945AE51189857D90026F697 /* KFBroadcaster.m in Sources */,
-				D945AE52189857D90026F697 /* DirectoryWatcher.m in Sources */,
-				D945AE53189857D90026F697 /* HLSUploader.m in Sources */,
-				D945AE54189857D90026F697 /* HLSWriter.m in Sources */,
+				D945AE52189857D90026F697 /* KFDirectoryWatcher.m in Sources */,
+				D945AE53189857D90026F697 /* KFHLSUploader.m in Sources */,
+				D945AE54189857D90026F697 /* KFHLSWriter.m in Sources */,
 				D945AE55189857D90026F697 /* KFHLSMonitor.m in Sources */,
-				D945AE57189857D90026F697 /* KFUploader.m in Sources */,
 				D923A20218AAAD9500C328EC /* KFH264Encoder.mm in Sources */,
-				D945AE5A189857D90026F697 /* KFS3Uploader.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

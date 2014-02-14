@@ -1,5 +1,5 @@
 //
-//  HLSUploader.h
+//  KFHLSUploader.h
 //  FFmpegEncoder
 //
 //  Created by Christopher Ballinger on 12/20/13.
@@ -7,18 +7,22 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "DirectoryWatcher.h"
+#import "KFDirectoryWatcher.h"
 
-@interface HLSUploader : NSObject <DirectoryWatcherDelegate>
+@class OWS3Client, KFS3EndpointResponse;
 
-@property (nonatomic, strong) DirectoryWatcher *directoryWatcher;
+@interface KFHLSUploader : NSObject <KFDirectoryWatcherDelegate>
+
+@property (nonatomic, strong) KFDirectoryWatcher *directoryWatcher;
 @property (nonatomic, strong) NSString *directoryPath;
 @property (nonatomic, strong) NSMutableDictionary *files;
 @property (nonatomic, strong) NSString *manifestPath;
 @property (nonatomic, strong) NSString *remoteFolderName;
 @property (nonatomic) dispatch_queue_t scanningQueue;
+@property (nonatomic, strong) OWS3Client *s3Client;
+@property (nonatomic, strong) KFS3EndpointResponse *endpoint;
 
-- (id) initWithDirectoryPath:(NSString*)directoryPath remoteFolderName:(NSString*)remoteFolderName;
+- (id) initWithDirectoryPath:(NSString*)directoryPath endpoint:(KFS3EndpointResponse*)endpoint;
 
 - (NSURL*) manifestURL;
 

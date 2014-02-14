@@ -1,5 +1,5 @@
 //
-//  HLSWriter.h
+//  KFHLSWriter.h
 //  FFmpegEncoder
 //
 //  Created by Christopher Ballinger on 12/16/13.
@@ -7,8 +7,9 @@
 //
 
 #import <Foundation/Foundation.h>
+#import <AVFoundation/AVFoundation.h>
 
-@interface HLSWriter : NSObject
+@interface KFHLSWriter : NSObject
 
 @property (nonatomic, strong) NSString *uuid;
 @property (nonatomic) dispatch_queue_t conversionQueue;
@@ -21,7 +22,7 @@
 
 - (BOOL) prepareForWriting:(NSError**)error;
 
-- (void) processEncodedData:(NSData*)data presentationTimestamp:(double)pts streamIndex:(NSUInteger)streamIndex;
+- (void) processEncodedData:(NSData*)data presentationTimestamp:(CMTime)pts streamIndex:(NSUInteger)streamIndex;
 
 - (BOOL) finishWriting:(NSError**)error;
 

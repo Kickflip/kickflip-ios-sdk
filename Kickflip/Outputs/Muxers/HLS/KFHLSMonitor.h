@@ -8,6 +8,12 @@
 
 #import <Foundation/Foundation.h>
 
+@class KFS3EndpointResponse;
+
 @interface KFHLSMonitor : NSObject
+
++ (KFHLSMonitor*) sharedMonitor;
+
+- (void) monitorFolderPath:(NSString*)path endpoint:(KFS3EndpointResponse*)endpoint;
 
 @end
