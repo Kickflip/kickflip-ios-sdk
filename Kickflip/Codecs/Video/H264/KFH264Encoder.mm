@@ -9,13 +9,14 @@
 #import "KFH264Encoder.h"
 #import "AVEncoder.h"
 #import "NALUnit.h"
-
+#import "KFLog.h"
 
 @interface KFH264Encoder()
 @property (nonatomic, strong) AVEncoder* encoder;
 @property (nonatomic, strong) NSData *naluStartCode;
 @property (nonatomic, strong) NSMutableData *videoSPSandPPS;
 @property (nonatomic) CMTimeScale timescale;
+@property (nonatomic, strong) NSMutableArray *orphanedFrames;
 @end
 
 @implementation KFH264Encoder
@@ -28,6 +29,7 @@
     if (self = [super init]) {
         [self initializeNALUnitStartCode];
         _timescale = 0;
+        self.orphanedFrames = [NSMutableArray arrayWithCapacity:2];
         _encoder = [AVEncoder encoderForHeight:height andWidth:width];
         [_encoder encodeWithBlock:^int(NSArray* dataArray, CMTimeValue ptsValue) {
             [self writeVideoFrames:dataArray ptsValue:ptsValue];
@@ -57,37 +59,70 @@
     [_encoder encodeFrame:sampleBuffer];
 }
 
+- (void) generateSPSandPPS {
+    NSData* config = _encoder.getConfigData;
+    
+    avcCHeader avcC((const BYTE*)[config bytes], [config length]);
+    SeqParamSet seqParams;
+    seqParams.Parse(avcC.sps());
+    
+    NSData* spsData = [NSData dataWithBytes:avcC.sps()->Start() length:avcC.sps()->Length()];
+    NSData *ppsData = [NSData dataWithBytes:avcC.pps()->Start() length:avcC.pps()->Length()];
+    
+    _videoSPSandPPS = [NSMutableData dataWithCapacity:avcC.sps()->Length() + avcC.pps()->Length() + _naluStartCode.length * 2];
+    [_videoSPSandPPS appendData:_naluStartCode];
+    [_videoSPSandPPS appendData:spsData];
+    [_videoSPSandPPS appendData:_naluStartCode];
+    [_videoSPSandPPS appendData:ppsData];
+}
+
+- (void) addOrphanedFramesFromArray:(NSArray*)frames {
+    for (NSData *data in frames) {
+        unsigned char* pNal = (unsigned char*)[data bytes];
+        int idc = pNal[0] & 0x60;
+        int naltype = pNal[0] & 0x1f;
+        DDLogInfo(@"Orphaned frame info: idc(%d) naltype(%d) size(%d)", idc, naltype, data.length);
+        [self.orphanedFrames addObject:data];
+    }
+}
+
 - (void) writeVideoFrames:(NSArray*)frames ptsValue:(CMTimeValue)ptsValue {
     CMTime presentationTimeStamp = CMTimeMake(ptsValue, _timescale);
-    //NSLog(@"pts: %f", pts);
+    //DDLogVerbose(@"# encoderFrames: %d \t pts %lld", frames.count, ptsValue);
     if (ptsValue == 0) {
-        NSLog(@"PTS of 0, skipping frame: %@", frames);
+        [self addOrphanedFramesFromArray:frames];
         return;
     }
     if (!_videoSPSandPPS) {
-        NSData* config = _encoder.getConfigData;
-        
-        avcCHeader avcC((const BYTE*)[config bytes], [config length]);
-        SeqParamSet seqParams;
-        seqParams.Parse(avcC.sps());
-        
-        NSData* spsData = [NSData dataWithBytes:avcC.sps()->Start() length:avcC.sps()->Length()];
-        NSData *ppsData = [NSData dataWithBytes:avcC.pps()->Start() length:avcC.pps()->Length()];
-        
-        _videoSPSandPPS = [NSMutableData dataWithCapacity:avcC.sps()->Length() + avcC.pps()->Length() + _naluStartCode.length * 2];
-        [_videoSPSandPPS appendData:_naluStartCode];
-        [_videoSPSandPPS appendData:spsData];
-        [_videoSPSandPPS appendData:_naluStartCode];
-        [_videoSPSandPPS appendData:ppsData];
+        [self generateSPSandPPS];
     }
     
-    for (NSData *data in frames) {
+    NSMutableArray *totalFrames = [NSMutableArray array];
+    if (self.orphanedFrames.count > 0) {
+        [totalFrames addObjectsFromArray:self.orphanedFrames];
+        [self.orphanedFrames removeAllObjects];
+    }
+    [totalFrames addObjectsFromArray:frames];
+    
+    NSMutableData *aggregateFrameData = [NSMutableData data];
+    NSData *sei = nil; // Supplemental enhancement information
+    
+    for (NSData *data in totalFrames) {
         unsigned char* pNal = (unsigned char*)[data bytes];
-        //int idc = pNal[0] & 0x60;
+        int idc = pNal[0] & 0x60;
         int naltype = pNal[0] & 0x1f;
         NSData *videoData = nil;
-        if (naltype == 5) { // IDR
+        
+        if (idc == 0 && naltype == 6) { // SEI
+            sei = data;
+            continue;
+        } else if (naltype == 5) { // IDR
             NSMutableData *IDRData = [NSMutableData dataWithData:_videoSPSandPPS];
+            if (sei) {
+                [IDRData appendData:_naluStartCode];
+                [IDRData appendData:sei];
+                sei = nil;
+            }
             [IDRData appendData:_naluStartCode];
             [IDRData appendData:data];
             videoData = IDRData;
@@ -96,14 +131,12 @@
             [regularData appendData:data];
             videoData = regularData;
         }
-        //NSMutableData *nalu = [[NSMutableData alloc] initWithData:_naluStartCode];
-        //[nalu appendData:data];
-        //NSLog(@"%f: %@", pts, videoData.description);
-        if (self.delegate) {
-            dispatch_async(self.callbackQueue, ^{
-                [self.delegate encoder:self encodedData:videoData pts:presentationTimeStamp];
-            });
-        }
+        [aggregateFrameData appendData:videoData];
+    }
+    if (self.delegate) {
+        dispatch_async(self.callbackQueue, ^{
+            [self.delegate encoder:self encodedData:aggregateFrameData pts:presentationTimeStamp];
+        });
     }
 }
 

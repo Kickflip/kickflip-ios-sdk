@@ -62,7 +62,7 @@ static unsigned int to_host(unsigned char* p)
     
     // estimate bitrate over first second
     int _bitspersecond;
-    double _firstpts;
+    CMTimeValue _firstpts;
 }
 
 - (void) initForHeight:(int) height andWidth:(int) width;
@@ -227,7 +227,7 @@ static unsigned int to_host(unsigned char* p)
         }
     }
     CMTime prestime = CMSampleBufferGetPresentationTimeStamp(sampleBuffer);
-    NSNumber* pts = @(prestime.value);
+    NSNumber* pts = [NSNumber numberWithLongLong:prestime.value];
     @synchronized(_times)
     {
         [_times addObject:pts];
@@ -377,12 +377,13 @@ static unsigned int to_host(unsigned char* p)
 
 - (void) onEncodedFrame
 {
-    double pts = 0;
+    CMTimeValue pts = 0;
     @synchronized(_times)
     {
         if ([_times count] > 0)
         {
-            pts = [_times[0] doubleValue];
+            NSNumber *time = _times[0];
+            pts = [time longLongValue];
             [_times removeObjectAtIndex:0];
             if (_firstpts < 0)
             {

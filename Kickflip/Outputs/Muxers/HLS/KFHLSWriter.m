@@ -58,7 +58,7 @@
 - (void) setupOutputFile {
     NSString *outputPath = [_directoryPath stringByAppendingPathComponent:@"index.m3u8"];
     
-    //_outputFile = [[FFOutputFile alloc] initWithPath:outputPath options:@{kFFmpegOutputFormatKey: @"flv"}];
+    //_outputFile = [[FFOutputFile alloc] initWithPath:@"rtmp://live64.us-va.zencoder.io:1935/live/1ca1f2965127753fc9320f3cc83d95bc" options:@{kFFmpegOutputFormatKey: @"flv"}];
     
     _outputFile = [[FFOutputFile alloc] initWithPath:outputPath options:@{kFFmpegOutputFormatKey: @"hls"}];
     
@@ -69,7 +69,7 @@
 - (void) addVideoStreamWithWidth:(int)width height:(int)height {
     _videoStream = [[FFOutputStream alloc] initWithOutputFile:_outputFile outputCodec:@"h264"];
     [_videoStream setupVideoContextWithWidth:width height:height];
-    av_opt_set_int(_outputFile.formatContext->priv_data, "hls_time", _segmentDurationSeconds, 0);
+    //av_opt_set_int(_outputFile.formatContext->priv_data, "hls_time", _segmentDurationSeconds, 0);
 }
 
 - (void) addAudioStreamWithSampleRate:(int)sampleRate {
@@ -90,6 +90,9 @@
 
 
 - (void) processEncodedData:(NSData*)data presentationTimestamp:(CMTime)pts streamIndex:(NSUInteger)streamIndex {
+    if (data.length == 0) {
+        return;
+    }
     dispatch_async(_conversionQueue, ^{
         av_init_packet(_packet);
         
@@ -109,7 +112,7 @@
         if (error) {
             DDLogError(@"Error writing packet at streamIndex %d and PTS %lld: %@", streamIndex, originalPTS, error.description);
         } else {
-            //NSLog(@"Wrote packet of length %d at streamIndex %d and PTS %lld", data.length, streamIndex, originalPTS);
+            //DDLogVerbose(@"Wrote packet of length %d at streamIndex %d and \t oPTS %lld \t scaledPTS %lld", data.length, streamIndex, originalPTS, scaledPTS);
         }
     });
 }
