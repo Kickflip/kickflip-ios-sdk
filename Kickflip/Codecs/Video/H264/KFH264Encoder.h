@@ -6,10 +6,9 @@
 //  Copyright (c) 2014 Kickflip. All rights reserved.
 //
 
-#import "KFEncoder.h"
 
-@interface KFH264Encoder : KFEncoder
+#import "KFVideoEncoder.h"
 
-- (id) initWithWidth:(int)width height:(int)height;
+@interface KFH264Encoder : KFVideoEncoder <KFSampleBufferEncoder>
 
 @end

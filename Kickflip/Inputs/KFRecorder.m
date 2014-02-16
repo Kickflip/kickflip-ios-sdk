@@ -15,6 +15,8 @@
 #import "KFLog.h"
 #import "KFAPIClient.h"
 #import "KFS3EndpointResponse.h"
+#import "KFFrame.h"
+#import "KFVideoFrame.h"
 
 @interface KFRecorder()
 @property (nonatomic) BOOL shouldBroadcast;
@@ -24,9 +26,6 @@
 
 - (id) init {
     if (self = [super init]) {
-        self.audioSampleRate = 44100;
-        self.videoHeight = 720;
-        self.videoWidth = 1280;
         [self setupSession];
         [self setupEncoders];
     }
@@ -56,10 +55,15 @@
 }
 
 - (void) setupEncoders {
-    _h264Encoder = [[KFH264Encoder alloc] initWithWidth:self.videoWidth height:self.videoHeight];
+    self.audioSampleRate = 44100;
+    self.videoHeight = 720;
+    self.videoWidth = 1280;
+    int videoBitrate = 2000 * 1000; // 2 Mbps
+    int audioBitrate = 64 * 1000; // 64 Kbps
+    _h264Encoder = [[KFH264Encoder alloc] initWithBitrate:videoBitrate width:self.videoWidth height:self.videoHeight];
     _h264Encoder.delegate = self;
     
-    _aacEncoder = [[KFAACEncoder alloc] init];
+    _aacEncoder = [[KFAACEncoder alloc] initWithBitrate:audioBitrate sampleRate:self.audioSampleRate channels:1];
     _aacEncoder.delegate = self;
     _aacEncoder.addADTSHeader = YES;
 }
@@ -115,11 +119,12 @@
 }
 
 #pragma mark KFEncoderDelegate method
-- (void) encoder:(KFEncoder *)encoder encodedData:(NSData *)data pts:(CMTime)pts {
+- (void) encoder:(KFEncoder*)encoder encodedFrame:(KFFrame *)frame {
     if (encoder == _h264Encoder) {
-        [_hlsWriter processEncodedData:data presentationTimestamp:pts streamIndex:0];
+        KFVideoFrame *videoFrame = (KFVideoFrame*)frame;
+        [_hlsWriter processEncodedData:videoFrame.data presentationTimestamp:videoFrame.pts streamIndex:0 isKeyFrame:videoFrame.isKeyFrame];
     } else if (encoder == _aacEncoder) {
-        [_hlsWriter processEncodedData:data presentationTimestamp:pts streamIndex:1];
+        [_hlsWriter processEncodedData:frame.data presentationTimestamp:frame.pts streamIndex:1 isKeyFrame:NO];
     }
 }
 

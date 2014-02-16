@@ -47,7 +47,7 @@
         _videoTimeBase.den = 1000000000;
         _audioTimeBase.num = 1;
         _audioTimeBase.den = 1000000000;
-        _segmentDurationSeconds = 5;
+        _segmentDurationSeconds = 10;
         [self setupOutputFile];
         _conversionQueue = dispatch_queue_create("HLS Write queue", DISPATCH_QUEUE_SERIAL);
         _uuid = [[NSUUID UUID] UUIDString];
@@ -69,7 +69,7 @@
 - (void) addVideoStreamWithWidth:(int)width height:(int)height {
     _videoStream = [[FFOutputStream alloc] initWithOutputFile:_outputFile outputCodec:@"h264"];
     [_videoStream setupVideoContextWithWidth:width height:height];
-    //av_opt_set_int(_outputFile.formatContext->priv_data, "hls_time", _segmentDurationSeconds, 0);
+    av_opt_set_int(_outputFile.formatContext->priv_data, "hls_time", _segmentDurationSeconds, 0);
 }
 
 - (void) addAudioStreamWithSampleRate:(int)sampleRate {
@@ -89,7 +89,7 @@
 }
 
 
-- (void) processEncodedData:(NSData*)data presentationTimestamp:(CMTime)pts streamIndex:(NSUInteger)streamIndex {
+- (void) processEncodedData:(NSData*)data presentationTimestamp:(CMTime)pts streamIndex:(NSUInteger)streamIndex isKeyFrame:(BOOL)isKeyFrame {
     if (data.length == 0) {
         return;
     }
@@ -97,7 +97,11 @@
         av_init_packet(_packet);
         
         uint64_t originalPTS = pts.value;
-        //DDLogInfo(@"*** Writing packet at %lld", originalPTS);
+        
+        // This lets the muxer know about H264 keyframes
+        if (streamIndex == 0 && isKeyFrame) { // this is hardcoded to video right now
+            _packet->flags |= AV_PKT_FLAG_KEY;
+        }
         
         _packet->data = (uint8_t*)data.bytes;
         _packet->size = (int)data.length;

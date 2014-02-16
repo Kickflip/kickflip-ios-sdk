@@ -20,10 +20,11 @@
 }
 
 @property NSString* path;
+@property (nonatomic, readonly) NSUInteger bitrate;
 
-+ (VideoEncoder*) encoderForPath:(NSString*) path Height:(int) height andWidth:(int) width;
++ (VideoEncoder*) encoderForPath:(NSString*) path Height:(int) height andWidth:(int) width bitrate:(int)bitrate;
 
-- (void) initPath:(NSString*)path Height:(int) height andWidth:(int) width;
+- (void) initPath:(NSString*)path Height:(int) height andWidth:(int) width bitrate:(int)bitrate;
 - (void) finishWithCompletionHandler:(void (^)(void))handler;
 - (BOOL) encodeFrame:(CMSampleBufferRef) sampleBuffer;
 

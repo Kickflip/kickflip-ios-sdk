@@ -20,7 +20,9 @@ typedef int (^param_handler_t)(NSData* params);
 
 @interface AVEncoder : NSObject
 
-+ (AVEncoder*) encoderForHeight:(int) height andWidth:(int) width;
+@property (atomic) NSUInteger bitrate;
+
++ (AVEncoder*) encoderForHeight:(int) height andWidth:(int) width bitrate:(int)bitrate;
 
 - (void) encodeWithBlock:(encoder_handler_t) block onParams: (param_handler_t) paramsHandler;
 - (void) encodeFrame:(CMSampleBufferRef) sampleBuffer;

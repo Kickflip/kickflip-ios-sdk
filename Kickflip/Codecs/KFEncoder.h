@@ -2,24 +2,29 @@
 //  KFEncoder.h
 //  Kickflip
 //
-//  Created by Christopher Ballinger on 2/11/14.
+//  Created by Christopher Ballinger on 2/14/14.
 //  Copyright (c) 2014 Kickflip. All rights reserved.
 //
 
 #import <Foundation/Foundation.h>
 #import <AVFoundation/AVFoundation.h>
 
-@class KFEncoder;
+@class KFFrame, KFEncoder;
+
+@protocol KFSampleBufferEncoder <NSObject>
+- (void) encodeSampleBuffer:(CMSampleBufferRef)sampleBuffer;
+@end
 
 @protocol KFEncoderDelegate <NSObject>
-- (void) encoder:(KFEncoder*)encoder encodedData:(NSData*)data pts:(CMTime)pts;
+- (void) encoder:(KFEncoder*)encoder encodedFrame:(KFFrame*)frame;
 @end
 
 @interface KFEncoder : NSObject
 
-@property (nonatomic, weak) id<KFEncoderDelegate> delegate;
+@property (nonatomic) NSUInteger bitrate;
 @property (nonatomic) dispatch_queue_t callbackQueue;
+@property (nonatomic, weak) id<KFEncoderDelegate> delegate;
 
-- (void) encodeSampleBuffer:(CMSampleBufferRef)sampleBuffer;
+- (instancetype) initWithBitrate:(NSUInteger)bitrate;
 
 @end

@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		D923A1FA18AAA75600C328EC /* KFEncoder.m in Sources */ = {isa = PBXBuildFile; fileRef = D923A1F918AAA75600C328EC /* KFEncoder.m */; };
 		D923A20218AAAD9500C328EC /* KFH264Encoder.mm in Sources */ = {isa = PBXBuildFile; fileRef = D923A20118AAAD9500C328EC /* KFH264Encoder.mm */; };
 		D945ADA4189853A80026F697 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D99912CE18984D3F00BFCBA4 /* Foundation.framework */; };
 		D945ADA6189853A80026F697 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D945ADA5189853A80026F697 /* CoreGraphics.framework */; };
@@ -85,6 +84,11 @@
 		D945AF6B189874AB0026F697 /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D945AF6A189874AB0026F697 /* SystemConfiguration.framework */; };
 		D945AF6C189874B80026F697 /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D945AF6A189874AB0026F697 /* SystemConfiguration.framework */; };
 		D945AF6E189874C80026F697 /* MobileCoreServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D945AF6D189874C70026F697 /* MobileCoreServices.framework */; };
+		D9692C7918B1671C00579B9B /* KFFrame.m in Sources */ = {isa = PBXBuildFile; fileRef = D9692C7818B1671C00579B9B /* KFFrame.m */; };
+		D9692C8418B16A5600579B9B /* KFAudioEncoder.m in Sources */ = {isa = PBXBuildFile; fileRef = D9692C8318B16A5600579B9B /* KFAudioEncoder.m */; };
+		D9692C8918B16A7600579B9B /* KFVideoEncoder.m in Sources */ = {isa = PBXBuildFile; fileRef = D9692C8618B16A7600579B9B /* KFVideoEncoder.m */; };
+		D9692C8A18B16A7600579B9B /* KFVideoFrame.m in Sources */ = {isa = PBXBuildFile; fileRef = D9692C8818B16A7600579B9B /* KFVideoFrame.m */; };
+		D9692C8C18B16E2F00579B9B /* KFEncoder.m in Sources */ = {isa = PBXBuildFile; fileRef = D9692C8B18B16E2F00579B9B /* KFEncoder.m */; };
 		D99912CF18984D3F00BFCBA4 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D99912CE18984D3F00BFCBA4 /* Foundation.framework */; };
 		D9EB7822189B34CE0020B455 /* librtmp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = D9EB7821189B34CE0020B455 /* librtmp.a */; };
 		D9EB782C189B351D0020B455 /* libcrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = D9EB782A189B351D0020B455 /* libcrypto.a */; };
@@ -144,8 +148,6 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		D923A1F818AAA75600C328EC /* KFEncoder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = KFEncoder.h; path = Kickflip/Codecs/KFEncoder.h; sourceTree = SOURCE_ROOT; };
-		D923A1F918AAA75600C328EC /* KFEncoder.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = KFEncoder.m; path = Kickflip/Codecs/KFEncoder.m; sourceTree = SOURCE_ROOT; };
 		D923A20018AAAD9500C328EC /* KFH264Encoder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = KFH264Encoder.h; sourceTree = "<group>"; };
 		D923A20118AAAD9500C328EC /* KFH264Encoder.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = KFH264Encoder.mm; sourceTree = "<group>"; };
 		D945AD3C1898536D0026F697 /* KFAPIClient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = KFAPIClient.h; sourceTree = "<group>"; };
@@ -357,10 +359,20 @@
 		D945AF67189873900026F697 /* libc++.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = "libc++.dylib"; path = "usr/lib/libc++.dylib"; sourceTree = SDKROOT; };
 		D945AF6A189874AB0026F697 /* SystemConfiguration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SystemConfiguration.framework; path = System/Library/Frameworks/SystemConfiguration.framework; sourceTree = SDKROOT; };
 		D945AF6D189874C70026F697 /* MobileCoreServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MobileCoreServices.framework; path = System/Library/Frameworks/MobileCoreServices.framework; sourceTree = SDKROOT; };
+		D9692C7718B1671C00579B9B /* KFFrame.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = KFFrame.h; sourceTree = "<group>"; };
+		D9692C7818B1671C00579B9B /* KFFrame.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = KFFrame.m; sourceTree = "<group>"; };
+		D9692C8218B16A5600579B9B /* KFAudioEncoder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = KFAudioEncoder.h; sourceTree = "<group>"; };
+		D9692C8318B16A5600579B9B /* KFAudioEncoder.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = KFAudioEncoder.m; sourceTree = "<group>"; };
+		D9692C8518B16A7600579B9B /* KFVideoEncoder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = KFVideoEncoder.h; sourceTree = "<group>"; };
+		D9692C8618B16A7600579B9B /* KFVideoEncoder.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = KFVideoEncoder.m; sourceTree = "<group>"; };
+		D9692C8718B16A7600579B9B /* KFVideoFrame.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = KFVideoFrame.h; sourceTree = "<group>"; };
+		D9692C8818B16A7600579B9B /* KFVideoFrame.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = KFVideoFrame.m; sourceTree = "<group>"; };
+		D9692C8B18B16E2F00579B9B /* KFEncoder.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = KFEncoder.m; sourceTree = "<group>"; };
 		D99912CB18984D3F00BFCBA4 /* libKickflip.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libKickflip.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		D99912CE18984D3F00BFCBA4 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		D99912DC18984D3F00BFCBA4 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
 		D99912DF18984D3F00BFCBA4 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = Library/Frameworks/UIKit.framework; sourceTree = DEVELOPER_DIR; };
+		D999AB9A18AEF7CF00DE7EA5 /* KFEncoder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = KFEncoder.h; sourceTree = "<group>"; };
 		D9E9EDD2189B430900FC89E6 /* amf.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = amf.c; sourceTree = "<group>"; };
 		D9E9EDD3189B430900FC89E6 /* amf.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = amf.h; sourceTree = "<group>"; };
 		D9E9EDD4189B430900FC89E6 /* bytes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = bytes.h; sourceTree = "<group>"; };
@@ -2888,8 +2900,10 @@
 		D945AD401898536D0026F697 /* Codecs */ = {
 			isa = PBXGroup;
 			children = (
-				D923A1F818AAA75600C328EC /* KFEncoder.h */,
-				D923A1F918AAA75600C328EC /* KFEncoder.m */,
+				D999AB9A18AEF7CF00DE7EA5 /* KFEncoder.h */,
+				D9692C8B18B16E2F00579B9B /* KFEncoder.m */,
+				D9692C7718B1671C00579B9B /* KFFrame.h */,
+				D9692C7818B1671C00579B9B /* KFFrame.m */,
 				D945AD411898536D0026F697 /* Audio */,
 				D945AD451898536D0026F697 /* Video */,
 			);
@@ -2899,6 +2913,8 @@
 		D945AD411898536D0026F697 /* Audio */ = {
 			isa = PBXGroup;
 			children = (
+				D9692C8218B16A5600579B9B /* KFAudioEncoder.h */,
+				D9692C8318B16A5600579B9B /* KFAudioEncoder.m */,
 				D945AD421898536D0026F697 /* AAC */,
 			);
 			path = Audio;
@@ -2916,6 +2932,10 @@
 		D945AD451898536D0026F697 /* Video */ = {
 			isa = PBXGroup;
 			children = (
+				D9692C8518B16A7600579B9B /* KFVideoEncoder.h */,
+				D9692C8618B16A7600579B9B /* KFVideoEncoder.m */,
+				D9692C8718B16A7600579B9B /* KFVideoFrame.h */,
+				D9692C8818B16A7600579B9B /* KFVideoFrame.m */,
 				D945AD461898536D0026F697 /* H264 */,
 			);
 			path = Video;
@@ -6317,20 +6337,24 @@
 				D945AF521898704B0026F697 /* KFBroadcastViewController.m in Sources */,
 				D945AF4D18986C9A0026F697 /* KFEndpointResponse.m in Sources */,
 				D945AE43189857D90026F697 /* KFUser.m in Sources */,
-				D923A1FA18AAA75600C328EC /* KFEncoder.m in Sources */,
 				D945AE44189857D90026F697 /* KFAACEncoder.m in Sources */,
 				D945AE45189857D90026F697 /* AVEncoder.mm in Sources */,
 				D945AF4F18986C9A0026F697 /* KFS3EndpointResponse.m in Sources */,
 				D945AF4E18986C9A0026F697 /* KFRTMPEndpointResponse.m in Sources */,
 				D945AE4A189857D90026F697 /* MP4Atom.m in Sources */,
 				D945AE4E189857D90026F697 /* VideoEncoder.m in Sources */,
+				D9692C8418B16A5600579B9B /* KFAudioEncoder.m in Sources */,
 				D945AE4F189857D90026F697 /* KFRecorder.m in Sources */,
 				D945AE50189857D90026F697 /* Kickflip.m in Sources */,
+				D9692C8C18B16E2F00579B9B /* KFEncoder.m in Sources */,
+				D9692C8A18B16A7600579B9B /* KFVideoFrame.m in Sources */,
+				D9692C7918B1671C00579B9B /* KFFrame.m in Sources */,
 				D945AE52189857D90026F697 /* KFDirectoryWatcher.m in Sources */,
 				D945AE53189857D90026F697 /* KFHLSUploader.m in Sources */,
 				D945AE54189857D90026F697 /* KFHLSWriter.m in Sources */,
 				D945AE55189857D90026F697 /* KFHLSMonitor.m in Sources */,
 				D923A20218AAAD9500C328EC /* KFH264Encoder.mm in Sources */,
+				D9692C8918B16A7600579B9B /* KFVideoEncoder.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

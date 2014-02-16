@@ -22,7 +22,7 @@
 
 - (BOOL) prepareForWriting:(NSError**)error;
 
-- (void) processEncodedData:(NSData*)data presentationTimestamp:(CMTime)pts streamIndex:(NSUInteger)streamIndex;
+- (void) processEncodedData:(NSData*)data presentationTimestamp:(CMTime)pts streamIndex:(NSUInteger)streamIndex isKeyFrame:(BOOL)isKeyFrame; // TODO refactor this
 
 - (BOOL) finishWriting:(NSError**)error;
 

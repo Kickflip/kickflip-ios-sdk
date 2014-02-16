@@ -12,17 +12,18 @@
 
 @synthesize path = _path;
 
-+ (VideoEncoder*) encoderForPath:(NSString*) path Height:(int) height andWidth:(int) width
++ (VideoEncoder*) encoderForPath:(NSString*) path Height:(int) height andWidth:(int) width bitrate:(int)bitrate
 {
     VideoEncoder* enc = [VideoEncoder alloc];
-    [enc initPath:path Height:height andWidth:width];
+    [enc initPath:path Height:height andWidth:width bitrate:bitrate];
     return enc;
 }
 
 
-- (void) initPath:(NSString*)path Height:(int) height andWidth:(int) width
+- (void) initPath:(NSString*)path Height:(int) height andWidth:(int) width bitrate:(int)bitrate
 {
     self.path = path;
+    _bitrate = bitrate;
     
     [[NSFileManager defaultManager] removeItemAtPath:self.path error:nil];
     NSURL* url = [NSURL fileURLWithPath:self.path];
@@ -33,7 +34,7 @@
         AVVideoWidthKey: @(width),
         AVVideoHeightKey: @(height),
         AVVideoCompressionPropertiesKey: @{
-             AVVideoAverageBitRateKey: @(2000000),
+             AVVideoAverageBitRateKey: @(self.bitrate),
              AVVideoMaxKeyFrameIntervalKey: @(150),
              AVVideoProfileLevelKey: AVVideoProfileLevelH264BaselineAutoLevel,
              AVVideoAllowFrameReorderingKey: @NO,

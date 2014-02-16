@@ -10,6 +10,7 @@
 #import "AVEncoder.h"
 #import "NALUnit.h"
 #import "KFLog.h"
+#import "KFVideoFrame.h"
 
 @interface KFH264Encoder()
 @property (nonatomic, strong) AVEncoder* encoder;
@@ -25,12 +26,12 @@
     [_encoder shutdown];
 }
 
-- (id) initWithWidth:(int)width height:(int)height {
-    if (self = [super init]) {
+- (instancetype) initWithBitrate:(NSUInteger)bitrate width:(int)width height:(int)height {
+    if (self = [super initWithBitrate:bitrate]) {
         [self initializeNALUnitStartCode];
         _timescale = 0;
         self.orphanedFrames = [NSMutableArray arrayWithCapacity:2];
-        _encoder = [AVEncoder encoderForHeight:height andWidth:width];
+        _encoder = [AVEncoder encoderForHeight:height andWidth:width bitrate:bitrate];
         [_encoder encodeWithBlock:^int(NSArray* dataArray, CMTimeValue ptsValue) {
             [self writeVideoFrames:dataArray ptsValue:ptsValue];
             return 0;
@@ -49,6 +50,11 @@
     nalu[2] = 0x00;
     nalu[3] = 0x01;
     _naluStartCode = [NSData dataWithBytesNoCopy:nalu length:naluLength freeWhenDone:YES];
+}
+
+- (void) setBitrate:(NSUInteger)bitrate {
+    [super setBitrate:bitrate];
+    _encoder.bitrate = self.bitrate;
 }
 
 - (void) encodeSampleBuffer:(CMSampleBufferRef)sampleBuffer {
@@ -81,7 +87,7 @@
         unsigned char* pNal = (unsigned char*)[data bytes];
         int idc = pNal[0] & 0x60;
         int naltype = pNal[0] & 0x1f;
-        DDLogInfo(@"Orphaned frame info: idc(%d) naltype(%d) size(%d)", idc, naltype, data.length);
+        DDLogInfo(@"Orphaned frame info: idc(%d) naltype(%d) size(%lu)", idc, naltype, (unsigned long)data.length);
         [self.orphanedFrames addObject:data];
     }
 }
@@ -106,17 +112,19 @@
     
     NSMutableData *aggregateFrameData = [NSMutableData data];
     NSData *sei = nil; // Supplemental enhancement information
-    
+    BOOL hasKeyframe = NO;
     for (NSData *data in totalFrames) {
         unsigned char* pNal = (unsigned char*)[data bytes];
         int idc = pNal[0] & 0x60;
         int naltype = pNal[0] & 0x1f;
         NSData *videoData = nil;
         
+        
         if (idc == 0 && naltype == 6) { // SEI
             sei = data;
             continue;
         } else if (naltype == 5) { // IDR
+            hasKeyframe = YES;
             NSMutableData *IDRData = [NSMutableData dataWithData:_videoSPSandPPS];
             if (sei) {
                 [IDRData appendData:_naluStartCode];
@@ -134,8 +142,10 @@
         [aggregateFrameData appendData:videoData];
     }
     if (self.delegate) {
+        KFVideoFrame *videoFrame = [[KFVideoFrame alloc] initWithData:aggregateFrameData pts:presentationTimeStamp];
+        videoFrame.isKeyFrame = hasKeyframe;
         dispatch_async(self.callbackQueue, ^{
-            [self.delegate encoder:self encodedData:aggregateFrameData pts:presentationTimeStamp];
+            [self.delegate encoder:self encodedFrame:videoFrame];
         });
     }
 }

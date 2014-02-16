@@ -2,7 +2,7 @@
 //  KFEncoder.m
 //  Kickflip
 //
-//  Created by Christopher Ballinger on 2/11/14.
+//  Created by Christopher Ballinger on 2/16/14.
 //  Copyright (c) 2014 Kickflip. All rights reserved.
 //
 
@@ -10,15 +10,12 @@
 
 @implementation KFEncoder
 
-- (id) init {
+- (instancetype) initWithBitrate:(NSUInteger)bitrate {
     if (self = [super init]) {
-        self.callbackQueue = dispatch_queue_create("KF Encoder Callback Queue", DISPATCH_QUEUE_SERIAL);
+        self.bitrate = bitrate;
+        self.callbackQueue = dispatch_queue_create("KFEncoder Callback Queue", NULL);
     }
     return self;
-}
-
-- (void) encodeSampleBuffer:(CMSampleBufferRef)sampleBuffer {
-    
 }
 
 @end

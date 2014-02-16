@@ -8,9 +8,10 @@
 
 #import <Foundation/Foundation.h>
 #import <AVFoundation/AVFoundation.h>
-#import "KFEncoder.h"
+#import "KFAACEncoder.h"
+#import "KFH264Encoder.h"
 
-@class KFRecorder, KFAACEncoder, KFH264Encoder, KFHLSWriter;
+@class KFRecorder, KFHLSWriter;
 
 @protocol KFRecorderDelegate <NSObject>
 - (void) recorderDidStartRecording:(KFRecorder*)recorder;

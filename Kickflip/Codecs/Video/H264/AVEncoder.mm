@@ -9,6 +9,8 @@
 #import "AVEncoder.h"
 #import "NALUnit.h"
 
+static void * AVEncoderContext = &AVEncoderContext;
+
 static unsigned int to_host(unsigned char* p)
 {
     return (p[0] << 24) + (p[1] << 16) + (p[2] << 8) + p[3];
@@ -65,7 +67,7 @@ static unsigned int to_host(unsigned char* p)
     CMTimeValue _firstpts;
 }
 
-- (void) initForHeight:(int) height andWidth:(int) width;
+@property (atomic) BOOL bitrateChanged;
 
 @end
 
@@ -73,10 +75,10 @@ static unsigned int to_host(unsigned char* p)
 
 @synthesize bitspersecond = _bitspersecond;
 
-+ (AVEncoder*) encoderForHeight:(int) height andWidth:(int) width
++ (AVEncoder*) encoderForHeight:(int) height andWidth:(int) width bitrate:(int)bitrate
 {
     AVEncoder* enc = [AVEncoder alloc];
-    [enc initForHeight:height andWidth:width];
+    [enc initForHeight:height andWidth:width bitrate:bitrate];
     return enc;
 }
 
@@ -86,17 +88,30 @@ static unsigned int to_host(unsigned char* p)
     NSString* path = [NSTemporaryDirectory() stringByAppendingPathComponent:filename];
     return path;
 }
-- (void) initForHeight:(int)height andWidth:(int)width
+
+- (void) initForHeight:(int)height andWidth:(int)width bitrate:(int)bitrate
 {
     _height = height;
     _width = width;
+    _bitrate = bitrate;
     NSString* path = [NSTemporaryDirectory() stringByAppendingPathComponent:@"params.mp4"];
-    _headerWriter = [VideoEncoder encoderForPath:path Height:height andWidth:width];
+    _headerWriter = [VideoEncoder encoderForPath:path Height:height andWidth:width bitrate:self.bitrate];
     _times = [NSMutableArray arrayWithCapacity:10];
     
     // swap between 3 filenames
     _currentFile = 1;
-    _writer = [VideoEncoder encoderForPath:[self makeFilename] Height:height andWidth:width];
+    _writer = [VideoEncoder encoderForPath:[self makeFilename] Height:height andWidth:width bitrate:self.bitrate];
+    
+    [self addObserver:self forKeyPath:NSStringFromSelector(@selector(bitrate)) options:0 context:AVEncoderContext];
+}
+
+- (void)observeValueForKeyPath:(NSString *)keyPath
+                      ofObject:(id)object
+                        change:(NSDictionary *)change
+                       context:(void *)context {
+    if (context == AVEncoderContext && [keyPath isEqualToString:NSStringFromSelector(@selector(bitrate))]) {
+        self.bitrateChanged = YES;
+    }
 }
 
 - (void) encodeWithBlock:(encoder_handler_t) block onParams: (param_handler_t) paramsHandler
@@ -240,8 +255,9 @@ static unsigned int to_host(unsigned char* p)
         {
             struct stat st;
             fstat([_inputFile fileDescriptor], &st);
-            if (st.st_size > OUTPUT_FILE_SWITCH_POINT)
+            if (st.st_size > OUTPUT_FILE_SWITCH_POINT || self.bitrateChanged)
             {
+                self.bitrateChanged = NO;
                 _swapping = YES;
                 VideoEncoder* oldVideo = _writer;
                 
@@ -251,8 +267,7 @@ static unsigned int to_host(unsigned char* p)
                     _currentFile = 1;
                 }
                 NSLog(@"Swap to file %d", _currentFile);
-                _writer = [VideoEncoder encoderForPath:[self makeFilename] Height:_height andWidth:_width];
-                
+                _writer = [VideoEncoder encoderForPath:[self makeFilename] Height:_height andWidth:_width bitrate:self.bitrate];
                 
                 // to do this seamlessly requires a few steps in the right order
                 // first, suspend the read source

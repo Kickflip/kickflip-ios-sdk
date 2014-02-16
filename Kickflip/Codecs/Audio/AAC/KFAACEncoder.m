@@ -10,6 +10,7 @@
 #import "KFAACEncoder.h"
 #import <AVFoundation/AVFoundation.h>
 #import <AudioToolbox/AudioToolbox.h>
+#import "KFFrame.h"
 
 @interface KFAACEncoder()
 @property (nonatomic) AudioConverterRef audioConverter;
@@ -17,7 +18,6 @@
 @property (nonatomic) NSUInteger aacBufferSize;
 @property (nonatomic) char *pcmBuffer;
 @property (nonatomic) size_t pcmBufferSize;
-
 @end
 
 @implementation KFAACEncoder
@@ -27,8 +27,8 @@
     free(_aacBuffer);
 }
 
-- (id) init {
-    if (self = [super init]) {
+- (instancetype) initWithBitrate:(NSUInteger)bitrate sampleRate:(NSUInteger)sampleRate channels:(NSUInteger)channels {
+    if (self = [super initWithBitrate:bitrate sampleRate:sampleRate channels:channels]) {
         self.encoderQueue = dispatch_queue_create("KF Encoder Queue", DISPATCH_QUEUE_SERIAL);
         _audioConverter = NULL;
         _pcmBufferSize = 0;
@@ -41,17 +41,31 @@
     return self;
 }
 
-- (void) setupEncoderFromSampleBuffer:(CMSampleBufferRef)sampleBuffer {
+- (void) setupAACEncoderFromSampleBuffer:(CMSampleBufferRef)sampleBuffer {
     AudioStreamBasicDescription inAudioStreamBasicDescription = *CMAudioFormatDescriptionGetStreamBasicDescription((CMAudioFormatDescriptionRef)CMSampleBufferGetFormatDescription(sampleBuffer));
     
     AudioStreamBasicDescription outAudioStreamBasicDescription = {0}; // Always initialize the fields of a new audio stream basic description structure to zero, as shown here: ...
-    outAudioStreamBasicDescription.mSampleRate = inAudioStreamBasicDescription.mSampleRate; // The number of frames per second of the data in the stream, when the stream is played at normal speed. For compressed formats, this field indicates the number of frames per second of equivalent decompressed data. The mSampleRate field must be nonzero, except when this structure is used in a listing of supported formats (see “kAudioStreamAnyRate”).
+    
+    // The number of frames per second of the data in the stream, when the stream is played at normal speed. For compressed formats, this field indicates the number of frames per second of equivalent decompressed data. The mSampleRate field must be nonzero, except when this structure is used in a listing of supported formats (see “kAudioStreamAnyRate”).
+    if (self.sampleRate != 0) {
+        outAudioStreamBasicDescription.mSampleRate = self.sampleRate;
+    } else {
+        outAudioStreamBasicDescription.mSampleRate = inAudioStreamBasicDescription.mSampleRate;
+
+    }
     outAudioStreamBasicDescription.mFormatID = kAudioFormatMPEG4AAC; // kAudioFormatMPEG4AAC_HE does not work. Can't find `AudioClassDescription`. `mFormatFlags` is set to 0.
     outAudioStreamBasicDescription.mFormatFlags = kMPEG4Object_AAC_LC; // Format-specific flags to specify details of the format. Set to 0 to indicate no format flags. See “Audio Data Format Identifiers” for the flags that apply to each format.
     outAudioStreamBasicDescription.mBytesPerPacket = 0; // The number of bytes in a packet of audio data. To indicate variable packet size, set this field to 0. For a format that uses variable packet size, specify the size of each packet using an AudioStreamPacketDescription structure.
     outAudioStreamBasicDescription.mFramesPerPacket = 1024; // The number of frames in a packet of audio data. For uncompressed audio, the value is 1. For variable bit-rate formats, the value is a larger fixed number, such as 1024 for AAC. For formats with a variable number of frames per packet, such as Ogg Vorbis, set this field to 0.
     outAudioStreamBasicDescription.mBytesPerFrame = 0; // The number of bytes from the start of one frame to the start of the next frame in an audio buffer. Set this field to 0 for compressed formats. ...
-    outAudioStreamBasicDescription.mChannelsPerFrame = 1; // The number of channels in each frame of audio data. This value must be nonzero.
+    
+    // The number of channels in each frame of audio data. This value must be nonzero.
+    if (self.channels != 0) {
+        outAudioStreamBasicDescription.mChannelsPerFrame = inAudioStreamBasicDescription.mChannelsPerFrame;
+    } else {
+        outAudioStreamBasicDescription.mChannelsPerFrame = self.channels;
+    }
+    
     outAudioStreamBasicDescription.mBitsPerChannel = 0; // ... Set this field to 0 for compressed formats.
     outAudioStreamBasicDescription.mReserved = 0; // Pads the structure out to force an even 8-byte alignment. Must be set to 0.
     AudioClassDescription *description = [self
@@ -61,6 +75,12 @@
     OSStatus status = AudioConverterNewSpecific(&inAudioStreamBasicDescription, &outAudioStreamBasicDescription, 1, description, &_audioConverter);
     if (status != 0) {
         NSLog(@"setup converter: %d", (int)status);
+    }
+    
+    if (self.bitrate != 0) {
+        UInt32 ulBitRate = (UInt32)self.bitrate;
+        UInt32 ulSize = sizeof(ulBitRate);
+        AudioConverterSetProperty(_audioConverter, kAudioConverterEncodeBitRate, ulSize, & ulBitRate);
     }
 }
 
@@ -133,22 +153,12 @@ static OSStatus inInputDataProc(AudioConverterRef inAudioConverter, UInt32 *ioNu
     return originalBufferSize;
 }
 
+
 - (void) encodeSampleBuffer:(CMSampleBufferRef)sampleBuffer {
-    [self encodeSampleBuffer:sampleBuffer completionBlock:^(NSData *encodedData, CMTime presentationTimeStamp, NSError *error) {
-        if (self.delegate) {
-            dispatch_async(self.callbackQueue, ^{
-                [self.delegate encoder:self encodedData:encodedData pts:presentationTimeStamp];
-            });
-        }
-    }];
-}
-
-
-- (void) encodeSampleBuffer:(CMSampleBufferRef)sampleBuffer completionBlock:(void (^)(NSData * encodedData, CMTime pts, NSError* error))completionBlock {
     CFRetain(sampleBuffer);
     dispatch_async(self.encoderQueue, ^{
         if (!_audioConverter) {
-            [self setupEncoderFromSampleBuffer:sampleBuffer];
+            [self setupAACEncoderFromSampleBuffer:sampleBuffer];
         }
         CMBlockBufferRef blockBuffer = CMSampleBufferGetDataBuffer(sampleBuffer);
         CFRetain(blockBuffer);
@@ -185,9 +195,10 @@ static OSStatus inInputDataProc(AudioConverterRef inAudioConverter, UInt32 *ioNu
         } else {
             error = [NSError errorWithDomain:NSOSStatusErrorDomain code:status userInfo:nil];
         }
-        if (completionBlock) {
+        if (self.delegate) {
+            KFFrame *frame = [[KFFrame alloc] initWithData:data pts:pts];
             dispatch_async(self.callbackQueue, ^{
-                completionBlock(data, pts, error);
+                [self.delegate encoder:self encodedFrame:frame];
             });
         }
         CFRelease(sampleBuffer);

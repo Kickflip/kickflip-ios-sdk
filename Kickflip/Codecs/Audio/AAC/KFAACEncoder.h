@@ -6,13 +6,11 @@
 //  Copyright (c) 2013 Christopher Ballinger. All rights reserved.
 //
 
-#import "KFEncoder.h"
+#import "KFAudioEncoder.h"
 
-@interface KFAACEncoder : KFEncoder
+@interface KFAACEncoder : KFAudioEncoder <KFSampleBufferEncoder>
 
 @property (nonatomic) dispatch_queue_t encoderQueue;
 @property (nonatomic) BOOL addADTSHeader;
-
-- (void) encodeSampleBuffer:(CMSampleBufferRef)sampleBuffer completionBlock:(void (^)(NSData *encodedData, CMTime presentationTimeStamp, NSError* error))completionBlock;
 
 @end
