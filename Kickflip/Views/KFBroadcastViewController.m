@@ -10,6 +10,7 @@
 #import "KFRecorder.h"
 #import "KFAPIClient.h"
 #import "KFUser.h"
+#import "KFLog.h"
 
 @implementation KFBroadcastViewController
 
@@ -79,21 +80,7 @@
     _startButton.frame = CGRectMake(50, 300, 200, 30);
     
     [self startPreview];
-
-    //[self testOAuthStuff];
 }
-
-- (void) testOAuthStuff {
-    [[KFAPIClient sharedClient] requestRecordingEndpoint:^(KFEndpointResponse *endpointResponse, NSError *error) {
-        if (!error) {
-            NSLog(@"broadcast url: %@", endpointResponse.broadcastURL);
-        } else {
-            NSLog(@"error getting endpoint: %@", error);
-        }
-    }];
-}
-
-
 
 - (void) willAnimateRotationToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation duration:(NSTimeInterval)duration
 {

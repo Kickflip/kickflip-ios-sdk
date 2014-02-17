@@ -11,9 +11,7 @@
 @interface KFUser : NSObject
 
 @property (readonly, nonatomic, strong) NSString *username;
-@property (readonly, nonatomic, strong) NSString *awsSecretKey;
-@property (readonly, nonatomic, strong) NSString *awsAccessKey;
-@property (readonly, nonatomic, strong) NSString *appName;
+@property (readonly, nonatomic, strong) NSString *uuid;
 
 + (instancetype) activeUser;
 + (instancetype) activeUserWithDictionary:(NSDictionary*)dictionary;

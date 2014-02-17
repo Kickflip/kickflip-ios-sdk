@@ -11,7 +11,7 @@
 #import "AFOAuth2Client.h"
 #import "KFLog.h"
 #import "KFUser.h"
-#import "KFS3EndpointResponse.h"
+#import "KFS3Endpoint.h"
 #import "Kickflip.h"
 
 static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
@@ -33,11 +33,9 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
         [self registerHTTPOperationClass:[AFJSONRequestOperation class]];
         [self setDefaultHeader:@"Accept" value:@"application/json"];
         
-        [self checkOAuthCredentialsWithCallback:^(BOOL success, NSError *error) {
-            if (success) {
-                [self requestRecordingEndpoint:nil];
-            }
-        }];
+        
+        
+        [self checkOAuthCredentialsWithCallback:nil];
     }
     return self;
 }
@@ -112,7 +110,42 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
     }];
 }
 
-- (void) requestRecordingEndpoint:(void (^)(KFEndpointResponse *, NSError *))endpointCallback {
+- (void) requestNewEndpointWithUser:(KFUser*)user callback:(void (^)(KFEndpoint *endpoint, NSError *error))endpointCallback {
+    [self postPath:@"/api/stream/start" parameters:@{@"uuid": user.uuid} success:^(AFHTTPRequestOperation *operation, id responseObject) {
+        if (responseObject && [responseObject isKindOfClass:[NSDictionary class]]) {
+            NSDictionary *responseDictionary = (NSDictionary*)responseObject;
+            if (![[responseDictionary objectForKey:@"success"] boolValue]) {
+                if (endpointCallback) {
+                    NSError *error = [NSError errorWithDomain:kKFAPIClientErrorDomain code:103 userInfo:@{NSLocalizedDescriptionKey: @"Bad request", @"response": responseObject}];
+                    endpointCallback(nil, error);
+                }
+                return;
+            }
+            KFEndpoint *endpoint = nil;
+            NSString *streamType = responseDictionary[KFEndpointStreamTypeKey];
+            if ([streamType isEqualToString:KFS3EndpointStreamType]) {
+                endpoint = [[KFS3Endpoint alloc] initWithUser:user parameters:responseDictionary];
+            }
+            
+            if (endpoint) {
+                endpointCallback(endpointCallback, nil);
+            } else {
+                endpointCallback(nil, [NSError errorWithDomain:kKFAPIClientErrorDomain code:104 userInfo:@{NSLocalizedDescriptionKey: @"Error parsing response", @"response": responseDictionary}]);
+            }
+        } else {
+            if (endpointCallback) {
+                NSError *error = [NSError errorWithDomain:kKFAPIClientErrorDomain code:103 userInfo:@{NSLocalizedDescriptionKey: @"Bad request", @"response": responseObject}];
+                endpointCallback(nil, error);
+            }
+        }
+    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+        if (endpointCallback) {
+            endpointCallback(nil, error);
+        }
+    }];
+}
+
+- (void) requestNewEndpoint:(void (^)(KFEndpoint *, NSError *))endpointCallback {
     [self checkOAuthCredentialsWithCallback:^(BOOL success, NSError *error) {
         if (!success) {
             if (endpointCallback) {
@@ -121,24 +154,19 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
             return;
         }
         KFUser *activeUser = [KFUser activeUser];
-        if (activeUser) { // this will change when we support RTMP
-            KFS3EndpointResponse *endpointResponse = [KFS3EndpointResponse endpointResponseForUser:activeUser];
-            if (endpointCallback) {
-                endpointCallback(endpointResponse, nil);
-            }
+        if (activeUser) {
+            [self requestNewEndpointWithUser:activeUser callback:endpointCallback];
             return;
         }
         [self requestNewUser:^(KFUser *newUser, NSError *error) {
             if (error) {
-                endpointCallback(nil, error);
+                if (endpointCallback) {
+                    endpointCallback(nil, error);
+                }
                 return;
             }
-            KFS3EndpointResponse *endpointResponse = [KFS3EndpointResponse endpointResponseForUser:activeUser];
-            if (endpointCallback) {
-                endpointCallback(endpointResponse, nil);
-            }
+            [self requestNewEndpointWithUser:newUser callback:endpointCallback];
         }];
-        
     }];
 }
 

@@ -66,9 +66,9 @@
 		D945AF32189859AC0026F697 /* SSKeychain.m in Sources */ = {isa = PBXBuildFile; fileRef = D945AF2F189859AC0026F697 /* SSKeychain.m */; };
 		D945AF33189859AC0026F697 /* SSKeychainQuery.m in Sources */ = {isa = PBXBuildFile; fileRef = D945AF31189859AC0026F697 /* SSKeychainQuery.m */; };
 		D945AF411898635A0026F697 /* KFDemoViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = D945AF401898635A0026F697 /* KFDemoViewController.m */; };
-		D945AF4D18986C9A0026F697 /* KFEndpointResponse.m in Sources */ = {isa = PBXBuildFile; fileRef = D945AF4818986C9A0026F697 /* KFEndpointResponse.m */; };
-		D945AF4E18986C9A0026F697 /* KFRTMPEndpointResponse.m in Sources */ = {isa = PBXBuildFile; fileRef = D945AF4A18986C9A0026F697 /* KFRTMPEndpointResponse.m */; };
-		D945AF4F18986C9A0026F697 /* KFS3EndpointResponse.m in Sources */ = {isa = PBXBuildFile; fileRef = D945AF4C18986C9A0026F697 /* KFS3EndpointResponse.m */; };
+		D945AF4D18986C9A0026F697 /* KFEndpoint.m in Sources */ = {isa = PBXBuildFile; fileRef = D945AF4818986C9A0026F697 /* KFEndpoint.m */; };
+		D945AF4E18986C9A0026F697 /* KFRTMPEndpoint.m in Sources */ = {isa = PBXBuildFile; fileRef = D945AF4A18986C9A0026F697 /* KFRTMPEndpoint.m */; };
+		D945AF4F18986C9A0026F697 /* KFS3Endpoint.m in Sources */ = {isa = PBXBuildFile; fileRef = D945AF4C18986C9A0026F697 /* KFS3Endpoint.m */; };
 		D945AF521898704B0026F697 /* KFBroadcastViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = D945AF511898704B0026F697 /* KFBroadcastViewController.m */; };
 		D945AF571898724A0026F697 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D945AF531898722B0026F697 /* AVFoundation.framework */; };
 		D945AF581898724E0026F697 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = D945AF55189872360026F697 /* libz.dylib */; };
@@ -341,12 +341,12 @@
 		D945AF3418985A5E0026F697 /* KFSecrets.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = KFSecrets.h; sourceTree = "<group>"; };
 		D945AF3F1898635A0026F697 /* KFDemoViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = KFDemoViewController.h; sourceTree = "<group>"; };
 		D945AF401898635A0026F697 /* KFDemoViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = KFDemoViewController.m; sourceTree = "<group>"; };
-		D945AF4718986C9A0026F697 /* KFEndpointResponse.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = KFEndpointResponse.h; sourceTree = "<group>"; };
-		D945AF4818986C9A0026F697 /* KFEndpointResponse.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = KFEndpointResponse.m; sourceTree = "<group>"; };
-		D945AF4918986C9A0026F697 /* KFRTMPEndpointResponse.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = KFRTMPEndpointResponse.h; sourceTree = "<group>"; };
-		D945AF4A18986C9A0026F697 /* KFRTMPEndpointResponse.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = KFRTMPEndpointResponse.m; sourceTree = "<group>"; };
-		D945AF4B18986C9A0026F697 /* KFS3EndpointResponse.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = KFS3EndpointResponse.h; sourceTree = "<group>"; };
-		D945AF4C18986C9A0026F697 /* KFS3EndpointResponse.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = KFS3EndpointResponse.m; sourceTree = "<group>"; };
+		D945AF4718986C9A0026F697 /* KFEndpoint.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = KFEndpoint.h; sourceTree = "<group>"; };
+		D945AF4818986C9A0026F697 /* KFEndpoint.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = KFEndpoint.m; sourceTree = "<group>"; };
+		D945AF4918986C9A0026F697 /* KFRTMPEndpoint.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = KFRTMPEndpoint.h; sourceTree = "<group>"; };
+		D945AF4A18986C9A0026F697 /* KFRTMPEndpoint.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = KFRTMPEndpoint.m; sourceTree = "<group>"; };
+		D945AF4B18986C9A0026F697 /* KFS3Endpoint.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = KFS3Endpoint.h; sourceTree = "<group>"; };
+		D945AF4C18986C9A0026F697 /* KFS3Endpoint.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = KFS3Endpoint.m; sourceTree = "<group>"; };
 		D945AF501898704B0026F697 /* KFBroadcastViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = KFBroadcastViewController.h; sourceTree = "<group>"; };
 		D945AF511898704B0026F697 /* KFBroadcastViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = KFBroadcastViewController.m; sourceTree = "<group>"; };
 		D945AF531898722B0026F697 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
@@ -2883,12 +2883,7 @@
 		D945AD3B1898536D0026F697 /* API */ = {
 			isa = PBXGroup;
 			children = (
-				D945AF4718986C9A0026F697 /* KFEndpointResponse.h */,
-				D945AF4818986C9A0026F697 /* KFEndpointResponse.m */,
-				D945AF4918986C9A0026F697 /* KFRTMPEndpointResponse.h */,
-				D945AF4A18986C9A0026F697 /* KFRTMPEndpointResponse.m */,
-				D945AF4B18986C9A0026F697 /* KFS3EndpointResponse.h */,
-				D945AF4C18986C9A0026F697 /* KFS3EndpointResponse.m */,
+				D9692C8D18B1843000579B9B /* Endpoints */,
 				D945AD3C1898536D0026F697 /* KFAPIClient.h */,
 				D945AD3D1898536D0026F697 /* KFAPIClient.m */,
 				D945AD3E1898536D0026F697 /* KFUser.h */,
@@ -3367,6 +3362,19 @@
 			name = SSKeychain;
 			path = Submodules/SSKeychain/SSKeychain;
 			sourceTree = SOURCE_ROOT;
+		};
+		D9692C8D18B1843000579B9B /* Endpoints */ = {
+			isa = PBXGroup;
+			children = (
+				D945AF4718986C9A0026F697 /* KFEndpoint.h */,
+				D945AF4818986C9A0026F697 /* KFEndpoint.m */,
+				D945AF4918986C9A0026F697 /* KFRTMPEndpoint.h */,
+				D945AF4A18986C9A0026F697 /* KFRTMPEndpoint.m */,
+				D945AF4B18986C9A0026F697 /* KFS3Endpoint.h */,
+				D945AF4C18986C9A0026F697 /* KFS3Endpoint.m */,
+			);
+			name = Endpoints;
+			sourceTree = "<group>";
 		};
 		D99912C218984D3F00BFCBA4 = {
 			isa = PBXGroup;
@@ -6335,12 +6343,12 @@
 				D945AF69189874560026F697 /* NALUnit.cpp in Sources */,
 				D945AE42189857D90026F697 /* KFAPIClient.m in Sources */,
 				D945AF521898704B0026F697 /* KFBroadcastViewController.m in Sources */,
-				D945AF4D18986C9A0026F697 /* KFEndpointResponse.m in Sources */,
+				D945AF4D18986C9A0026F697 /* KFEndpoint.m in Sources */,
 				D945AE43189857D90026F697 /* KFUser.m in Sources */,
 				D945AE44189857D90026F697 /* KFAACEncoder.m in Sources */,
 				D945AE45189857D90026F697 /* AVEncoder.mm in Sources */,
-				D945AF4F18986C9A0026F697 /* KFS3EndpointResponse.m in Sources */,
-				D945AF4E18986C9A0026F697 /* KFRTMPEndpointResponse.m in Sources */,
+				D945AF4F18986C9A0026F697 /* KFS3Endpoint.m in Sources */,
+				D945AF4E18986C9A0026F697 /* KFRTMPEndpoint.m in Sources */,
 				D945AE4A189857D90026F697 /* MP4Atom.m in Sources */,
 				D945AE4E189857D90026F697 /* VideoEncoder.m in Sources */,
 				D9692C8418B16A5600579B9B /* KFAudioEncoder.m in Sources */,

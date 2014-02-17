@@ -8,6 +8,8 @@
 
 #import "KFDemoViewController.h"
 #import "Kickflip.h"
+#import "KFAPIClient.h"
+#import "KFLog.h"
 
 @interface KFDemoViewController ()
 @property (nonatomic, strong, readwrite) UIButton *broadcastButton;
@@ -24,7 +26,21 @@
     return self;
 }
 
+- (void) testOAuthStuff {
+    
+    [[KFAPIClient sharedClient] requestNewEndpoint:^(KFEndpoint *newEndpoint, NSError *error) {
+        if (error) {
+            DDLogError(@"Error getting new stream: %@", error);
+        } else {
+            DDLogInfo(@"New endpoint: %@", newEndpoint);
+        }
+    }];
+}
+
 - (void) broadcastButtonPressed:(id)sender {
+    [self testOAuthStuff];
+    return;
+    
     [Kickflip presentBroadcasterFromViewController:self ready:^(NSURL *streamURL, NSError *error) {
         if (streamURL) {
             NSLog(@"Stream is ready at URL: %@", streamURL);

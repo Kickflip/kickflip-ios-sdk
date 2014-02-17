@@ -1,14 +1,13 @@
 //
-//  KFEndpointResponse.m
-//  FFmpegEncoder
+//  KFRTMPEndpoint.m
+//  Kickflip
 //
 //  Created by Christopher Ballinger on 1/16/14.
 //  Copyright (c) 2014 Christopher Ballinger. All rights reserved.
 //
 
-#import "KFEndpointResponse.h"
+#import "KFRTMPEndpoint.h"
 
-@implementation KFEndpointResponse
-
+@implementation KFRTMPEndpoint
 
 @end

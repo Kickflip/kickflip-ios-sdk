@@ -7,14 +7,14 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "KFEndpointResponse.h"
+#import "KFEndpoint.h"
 #import "AFNetworking.h"
 
 @interface KFAPIClient : AFHTTPClient
 
 + (KFAPIClient*) sharedClient;
 
-- (void) requestRecordingEndpoint:(void (^)(KFEndpointResponse *endpointResponse, NSError *error))endpointCallback;
+- (void) requestNewEndpoint:(void (^)(KFEndpoint *newEndpoint, NSError *error))endpointCallback;
 - (void) requestNewUser:(void (^)(KFUser *newUser, NSError *error))userCallback;
 
 @end
