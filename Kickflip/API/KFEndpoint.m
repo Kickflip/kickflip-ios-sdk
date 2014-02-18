@@ -35,4 +35,28 @@ static NSString * const KFEndpointChatURLKey = @"chat_url";
     self.chatURL = [NSURL URLWithString:parameters[KFEndpointChatURLKey]];
 }
 
+- (NSDictionary*) dictionaryRepresentation {
+    NSMutableDictionary *dict = [NSMutableDictionary dictionary];
+    if (self.streamType) {
+        [dict setObject:self.streamType forKey:KFEndpointStreamTypeKey];
+    }
+    if (self.streamID) {
+        [dict setObject:self.streamID forKey:KFEndpointStreamIDKey];
+    }
+    if (self.streamURL) {
+        [dict setObject:self.streamURL forKey:KFEndpointStreamURLKey];
+    }
+    if (self.kickflipURL) {
+        [dict setObject:self.kickflipURL forKey:KFEndpointKickflipURLKey];
+    }
+    if (self.chatURL) {
+        [dict setObject:self.chatURL forKey:KFEndpointChatURLKey];
+    }
+    return dict;
+}
+
+- (NSString*) description {
+    return [self dictionaryRepresentation].description;
+}
+
 @end

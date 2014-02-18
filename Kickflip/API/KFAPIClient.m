@@ -76,11 +76,11 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
     [self setDefaultHeader:@"Authorization" value:[NSString stringWithFormat:@"Bearer %@", credential.accessToken]];
 }
 
-- (void) requestNewUser:(void (^)(KFUser *newUser, NSError *error))userCallback {
+- (void) requestNewUserWithUsername:(NSString*)username callbackBlock:(void (^)(KFUser *newUser, NSError *error))callbackBlock {
     [self checkOAuthCredentialsWithCallback:^(BOOL success, NSError *error) {
         if (!success) {
-            if (userCallback) {
-                userCallback(nil, error);
+            if (callbackBlock) {
+                callbackBlock(nil, error);
             }
             return;
         }
@@ -88,23 +88,23 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
             if (responseObject && [responseObject isKindOfClass:[NSDictionary class]]) {
                 NSDictionary *responseDictionary = (NSDictionary*)responseObject;
                 KFUser *activeUser = [KFUser activeUserWithDictionary:responseDictionary];
-                if (!userCallback) {
+                if (!callbackBlock) {
                     return;
                 }
                 if (!activeUser) {
-                    userCallback(nil, [NSError errorWithDomain:kKFAPIClientErrorDomain code:100 userInfo:@{NSLocalizedDescriptionKey: @"User response error, no user", @"operation": operation}]);
+                    callbackBlock(nil, [NSError errorWithDomain:kKFAPIClientErrorDomain code:100 userInfo:@{NSLocalizedDescriptionKey: @"User response error, no user", @"operation": operation, @"response": responseDictionary}]);
                     return;
                 }
-                userCallback(activeUser, nil);
+                callbackBlock(activeUser, nil);
             } else {
-                if (userCallback) {
-                    userCallback(nil, [NSError errorWithDomain:kKFAPIClientErrorDomain code:101 userInfo:@{NSLocalizedDescriptionKey: @"User response error, bad server response", @"operation": operation}]);
+                if (callbackBlock) {
+                    callbackBlock(nil, [NSError errorWithDomain:kKFAPIClientErrorDomain code:101 userInfo:@{NSLocalizedDescriptionKey: @"User response error, bad server response", @"operation": operation}]);
                 }
             }
             
         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-            if (error && userCallback) {
-                userCallback(nil, error);
+            if (error && callbackBlock) {
+                callbackBlock(nil, error);
             }
         }];
     }];
@@ -128,7 +128,7 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
             }
             
             if (endpoint) {
-                endpointCallback(endpointCallback, nil);
+                endpointCallback(endpoint, nil);
             } else {
                 endpointCallback(nil, [NSError errorWithDomain:kKFAPIClientErrorDomain code:104 userInfo:@{NSLocalizedDescriptionKey: @"Error parsing response", @"response": responseDictionary}]);
             }
@@ -158,7 +158,7 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
             [self requestNewEndpointWithUser:activeUser callback:endpointCallback];
             return;
         }
-        [self requestNewUser:^(KFUser *newUser, NSError *error) {
+        [self requestNewUserWithUsername:nil callbackBlock:^(KFUser *newUser, NSError *error) {
             if (error) {
                 if (endpointCallback) {
                     endpointCallback(nil, error);

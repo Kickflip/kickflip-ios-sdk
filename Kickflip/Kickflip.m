@@ -32,7 +32,7 @@ static NSString *_apiSecret;
     _apiSecret = [secret copy];
     KFUser *activeUser = [KFUser activeUser];
     if (!activeUser) {
-        [[KFAPIClient sharedClient] requestNewUser:^(KFUser *newUser, NSError *error) {
+        [[KFAPIClient sharedClient] requestNewUserWithUsername:nil callbackBlock:^(KFUser *newUser, NSError *error) {
             if (error) {
                 DDLogError(@"Error pre-fetching new user: %@", error);
             } else {

@@ -24,4 +24,6 @@ extern NSString * const KFEndpointStreamTypeKey;
 
 - (instancetype) initWithUser:(KFUser*)user parameters:(NSDictionary*)parameters;
 
+- (NSDictionary*) dictionaryRepresentation;
+
 @end

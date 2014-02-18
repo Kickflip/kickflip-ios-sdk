@@ -12,6 +12,7 @@
 
 @property (readonly, nonatomic, strong) NSString *username;
 @property (readonly, nonatomic, strong) NSString *uuid;
+@property (readonly, nonatomic, strong) NSString *appName;
 
 + (instancetype) activeUser;
 + (instancetype) activeUserWithDictionary:(NSDictionary*)dictionary;

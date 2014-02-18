@@ -28,5 +28,19 @@ static NSString * const KFS3EndpointAWSSecretKey = @"aws_secret_key";
     return self;
 }
 
+- (NSDictionary*) dictionaryRepresentation {
+    NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithDictionary:[super dictionaryRepresentation]];
+    if (self.bucketName) {
+        [dict setObject:self.bucketName forKey:KFS3EndpointBucketNameKey];
+    }
+    if (self.awsAccessKey) {
+        [dict setObject:self.awsAccessKey forKey:KFS3EndpointAWSAccessKey];
+    }
+    if (self.awsSecretKey) {
+        [dict setObject:self.awsSecretKey forKey:KFS3EndpointAWSSecretKey];
+    }
+    return dict;
+}
+
 
 @end

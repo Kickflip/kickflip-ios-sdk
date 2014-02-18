@@ -15,6 +15,6 @@
 + (KFAPIClient*) sharedClient;
 
 - (void) requestNewEndpoint:(void (^)(KFEndpoint *newEndpoint, NSError *error))endpointCallback;
-- (void) requestNewUser:(void (^)(KFUser *newUser, NSError *error))userCallback;
+- (void) requestNewUserWithUsername:(NSString*)username callbackBlock:(void (^)(KFUser *newUser, NSError *error))callbackBlock;
 
 @end

@@ -11,10 +11,12 @@
 
 static NSString * const KFUserUsernameKey = @"KFUserUsernameKey";
 static NSString * const KFUserUUIDKey = @"KFUserUUIDKey";
+static NSString * const KFUserAppNameKey = @"KFUserAppNameKey";
 
 @interface KFUser()
 @property (readwrite, nonatomic, strong) NSString *username;
 @property (readwrite, nonatomic, strong) NSString *uuid;
+@property (readwrite, nonatomic, strong) NSString* appName;
 @end
 
 @implementation KFUser
@@ -26,13 +28,14 @@ static NSString * const KFUserUUIDKey = @"KFUserUUIDKey";
         return nil;
     }
     NSString *uuid = [defaults objectForKey:KFUserUUIDKey];
-    if (uuid) {
+    if (!uuid) {
         return nil;
     }
     
     KFUser *user = [[KFUser alloc] init];
     user.username = username;
     user.uuid = uuid;
+    user.appName = [defaults objectForKey:KFUserAppNameKey];
     return user;
 }
 
@@ -51,6 +54,12 @@ static NSString * const KFUserUUIDKey = @"KFUserUUIDKey";
     }
     [defaults setObject:username forKey:KFUserUsernameKey];
     [defaults setObject:uuid forKey:KFUserUUIDKey];
+    
+    NSString *appName = dictionary[@"app"];
+    if (appName) {
+        [defaults setObject:appName forKey:KFUserAppNameKey];
+    }
+    
     [defaults synchronize];
     return [self activeUser];
 }
@@ -59,6 +68,7 @@ static NSString * const KFUserUUIDKey = @"KFUserUUIDKey";
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
     [defaults removeObjectForKey:KFUserUsernameKey];
     [defaults removeObjectForKey:KFUserUUIDKey];
+    [defaults removeObjectForKey:KFUserAppNameKey];
     [defaults synchronize];
 }
 
