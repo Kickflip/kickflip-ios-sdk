@@ -23,26 +23,24 @@ static NSString * const kUploadStateUploading = @"uploading";
 @property (nonatomic) NSUInteger numbersOffset;
 @property (nonatomic, strong) NSMutableDictionary *queuedSegments;
 @property (nonatomic) NSUInteger nextSegmentIndexToUpload;
-@property (nonatomic, strong) NSString *bucketName;
 @end
 
 @implementation KFHLSUploader
 
-- (id) initWithDirectoryPath:(NSString *)directoryPath endpoint:(KFS3Stream *)endpoint {
+- (id) initWithDirectoryPath:(NSString *)directoryPath stream:(KFS3Stream *)stream {
     if (self = [super init]) {
-        self.endpoint = endpoint;
+        self.stream = stream;
         _directoryPath = [directoryPath copy];
         _directoryWatcher = [KFDirectoryWatcher watchFolderWithPath:_directoryPath delegate:self];
         _files = [NSMutableDictionary dictionary];
-        _remoteFolderName = endpoint.streamID;
         _scanningQueue = dispatch_queue_create("Scanning Queue", DISPATCH_QUEUE_SERIAL);
         _queuedSegments = [NSMutableDictionary dictionaryWithCapacity:5];
         _numbersOffset = 0;
         _nextSegmentIndexToUpload = 0;
-        self.s3Client = [[OWS3Client alloc] initWithAccessKey:self.endpoint.awsAccessKey secretKey:self.endpoint.awsSecretKey];
-        self.s3Client.region = US_EAST_1;
+        self.s3Client = [[OWS3Client alloc] initWithAccessKey:self.stream.awsAccessKey secretKey:self.stream.awsSecretKey];
+        //self.s3Client.region = US_WEST_1;
         self.s3Client.useSSL = NO;
-        self.bucketName = self.endpoint.bucketName;
+        self.s3Client.s3.timeout = 10;
     }
     return self;
 }
@@ -63,9 +61,9 @@ static NSString * const kUploadStateUploading = @"uploading";
     }
     [_files setObject:kUploadStateUploading forKey:fileName];
     NSString *filePath = [_directoryPath stringByAppendingPathComponent:fileName];
-    NSString *key = [NSString stringWithFormat:@"%@/%@", _remoteFolderName, fileName];
+    NSString *key = [self awsKeyForStream:self.stream fileName:fileName];
     
-    [self.s3Client postObjectWithFile:filePath bucket:self.bucketName key:key acl:@"public-read" success:^(S3PutObjectResponse *responseObject) {
+    [self.s3Client postObjectWithFile:filePath bucket:self.stream.bucketName key:key acl:@"public-read" success:^(S3PutObjectResponse *responseObject) {
         dispatch_async(_scanningQueue, ^{
             DDLogVerbose(@"Uploaded %@", fileName);
             [_files setObject:kUploadStateFinished forKey:fileName];
@@ -88,10 +86,14 @@ static NSString * const kUploadStateUploading = @"uploading";
     }];
 }
 
+- (NSString*) awsKeyForStream:(KFStream*)stream fileName:(NSString*)fileName {
+    return [NSString stringWithFormat:@"%@/%@/%@", stream.user.username, stream.streamID, fileName];
+}
+
 - (void) updateManifestWithString:(NSString*)manifestString {
     NSData *data = [manifestString dataUsingEncoding:NSUTF8StringEncoding];
-    NSString *key = [NSString stringWithFormat:@"%@/%@", _remoteFolderName, [_manifestPath lastPathComponent]];
-    [self.s3Client postObjectWithData:data bucket:self.bucketName key:key acl:@"public-read" success:^(S3PutObjectResponse *responseObject) {
+    NSString *key = [self awsKeyForStream:self.stream fileName:[_manifestPath lastPathComponent]];
+    [self.s3Client postObjectWithData:data bucket:self.stream.bucketName key:key acl:@"public-read" success:^(S3PutObjectResponse *responseObject) {
         DDLogInfo(@"Manifest updated");
     } failure:^(NSError *error) {
         DDLogError(@"Error updating manifest: %@", error.description);
@@ -160,8 +162,13 @@ static NSString * const kUploadStateUploading = @"uploading";
     return [numbers integerValue];
 }
 
-- (NSURL*) manifestURL {
-    NSString *urlString = [NSString stringWithFormat:@"http://%@.s3.amazonaws.com/%@/%@", self.bucketName, _remoteFolderName, [_manifestPath lastPathComponent]];
+- (NSURL*) manifestURLWithSSL:(BOOL)withSSL {
+    NSString *key = [self awsKeyForStream:self.stream fileName:[_manifestPath lastPathComponent]];
+    NSString *ssl = @"";
+    if (withSSL) {
+        ssl = @"s";
+    }
+    NSString *urlString = [NSString stringWithFormat:@"http%@://%@.s3.amazonaws.com/%@", ssl, self.stream.bucketName, key];
     return [NSURL URLWithString:urlString];
 }
 

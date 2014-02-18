@@ -157,7 +157,7 @@
 }
 
 - (void) startRecording {
-    [[KFAPIClient sharedClient] requestNewEndpoint:^(KFStream *endpointResponse, NSError *error) {
+    [[KFAPIClient sharedClient] startNewStream:^(KFStream *endpointResponse, NSError *error) {
         if (error) {
             DDLogError(@"Error fetching endpoint: %@", error);
             return;
@@ -165,6 +165,7 @@
         if ([endpointResponse isKindOfClass:[KFS3Stream class]]) {
             
             KFS3Stream *s3Endpoint = (KFS3Stream*)endpointResponse;
+            s3Endpoint.streamState = KFStreamStateStreaming;
             [self setupHLSWriterWithEndpoint:s3Endpoint];
             
             [[KFHLSMonitor sharedMonitor] monitorFolderPath:_hlsWriter.directoryPath endpoint:s3Endpoint];

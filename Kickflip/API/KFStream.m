@@ -15,6 +15,7 @@ static NSString * const KFStreamUploadURLKey = @"upload_url";
 static NSString * const KFStreamURLKey = @"stream_url";
 static NSString * const KFStreamKickflipURLKey = @"kickflip_url";
 static NSString * const KFStreamChatURLKey = @"chat_url";
+static NSString * const KFStreamStateKey = @"KFStreamStateKey";
 
 @implementation KFStream
 
@@ -33,6 +34,8 @@ static NSString * const KFStreamChatURLKey = @"chat_url";
     self.streamURL = [NSURL URLWithString:parameters[KFStreamURLKey]];
     self.kickflipURL = [NSURL URLWithString:parameters[KFStreamKickflipURLKey]];
     self.chatURL = [NSURL URLWithString:parameters[KFStreamChatURLKey]];
+    NSNumber *streamStateNumber = parameters[KFStreamStateKey];
+    self.streamState = streamStateNumber.intValue;
 }
 
 - (NSDictionary*) dictionaryRepresentation {
@@ -52,6 +55,7 @@ static NSString * const KFStreamChatURLKey = @"chat_url";
     if (self.chatURL) {
         [dict setObject:self.chatURL forKey:KFStreamChatURLKey];
     }
+    [dict setObject:@(self.streamState) forKey:KFStreamStateKey];
     return dict;
 }
 

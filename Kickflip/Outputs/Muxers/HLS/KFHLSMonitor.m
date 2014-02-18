@@ -33,7 +33,7 @@ static KFHLSMonitor *_sharedMonitor = nil;
 }
 
 - (void) monitorFolderPath:(NSString *)path endpoint:(KFS3Stream *)endpoint {
-    KFHLSUploader *hlsUploader = [[KFHLSUploader alloc] initWithDirectoryPath:path endpoint:endpoint];
+    KFHLSUploader *hlsUploader = [[KFHLSUploader alloc] initWithDirectoryPath:path stream:endpoint];
     [self.hlsUploaders addObject:hlsUploader];
 }
 

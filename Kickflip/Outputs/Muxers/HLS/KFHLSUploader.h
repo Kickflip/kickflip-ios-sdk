@@ -17,13 +17,12 @@
 @property (nonatomic, strong) NSString *directoryPath;
 @property (nonatomic, strong) NSMutableDictionary *files;
 @property (nonatomic, strong) NSString *manifestPath;
-@property (nonatomic, strong) NSString *remoteFolderName;
 @property (nonatomic) dispatch_queue_t scanningQueue;
 @property (nonatomic, strong) OWS3Client *s3Client;
-@property (nonatomic, strong) KFS3Stream *endpoint;
+@property (nonatomic, strong) KFS3Stream *stream;
 
-- (id) initWithDirectoryPath:(NSString*)directoryPath endpoint:(KFS3Stream*)endpoint;
+- (id) initWithDirectoryPath:(NSString*)directoryPath stream:(KFS3Stream*)stream;
 
-- (NSURL*) manifestURL;
+- (NSURL*) manifestURLWithSSL:(BOOL)withSSL;
 
 @end

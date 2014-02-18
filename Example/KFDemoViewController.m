@@ -27,8 +27,7 @@
 }
 
 - (void) testOAuthStuff {
-    
-    [[KFAPIClient sharedClient] requestNewEndpoint:^(KFStream *newEndpoint, NSError *error) {
+    [[KFAPIClient sharedClient] startNewStream:^(KFStream *newEndpoint, NSError *error) {
         if (error) {
             DDLogError(@"Error getting new stream: %@", error);
         } else {

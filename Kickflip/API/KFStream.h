@@ -10,6 +10,14 @@
 
 @class KFUser;
 
+typedef NS_ENUM(NSUInteger, KFStreamState) {
+    KFStreamStateUndefined = 0,
+    KFStreamStateStreaming = 1,
+    KFStreamStatePaused = 2,
+    KFStreamStateFinished = 3,
+    KFStreamStateFailed = 4
+};
+
 extern NSString * const KFStreamTypeKey;
 
 @interface KFStream : NSObject
@@ -21,6 +29,7 @@ extern NSString * const KFStreamTypeKey;
 @property (nonatomic, strong) NSURL *streamURL;
 @property (nonatomic, strong) NSURL *kickflipURL;
 @property (nonatomic, strong) NSURL *chatURL;
+@property (nonatomic) KFStreamState streamState;
 
 - (instancetype) initWithUser:(KFUser*)user parameters:(NSDictionary*)parameters;
 
