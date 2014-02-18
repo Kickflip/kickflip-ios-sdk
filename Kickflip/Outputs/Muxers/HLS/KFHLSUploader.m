@@ -7,7 +7,7 @@
 //
 
 #import "KFHLSUploader.h"
-#import "KFS3Endpoint.h"
+#import "KFS3Stream.h"
 #import "OWS3Client.h"
 #import "KFUser.h"
 #import "KFLog.h"
@@ -28,7 +28,7 @@ static NSString * const kUploadStateUploading = @"uploading";
 
 @implementation KFHLSUploader
 
-- (id) initWithDirectoryPath:(NSString *)directoryPath endpoint:(KFS3Endpoint *)endpoint {
+- (id) initWithDirectoryPath:(NSString *)directoryPath endpoint:(KFS3Stream *)endpoint {
     if (self = [super init]) {
         self.endpoint = endpoint;
         _directoryPath = [directoryPath copy];

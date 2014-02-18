@@ -14,7 +14,7 @@
 #import "KFHLSWriter.h"
 #import "KFLog.h"
 #import "KFAPIClient.h"
-#import "KFS3Endpoint.h"
+#import "KFS3Stream.h"
 #import "KFFrame.h"
 #import "KFVideoFrame.h"
 
@@ -41,7 +41,7 @@
     return nil;
 }
 
-- (void) setupHLSWriterWithEndpoint:(KFS3Endpoint*)endpoint {
+- (void) setupHLSWriterWithEndpoint:(KFS3Stream*)endpoint {
     
     NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
     NSString *basePath = ([paths count] > 0) ? [paths objectAtIndex:0] : nil;
@@ -157,14 +157,14 @@
 }
 
 - (void) startRecording {
-    [[KFAPIClient sharedClient] requestNewEndpoint:^(KFEndpoint *endpointResponse, NSError *error) {
+    [[KFAPIClient sharedClient] requestNewEndpoint:^(KFStream *endpointResponse, NSError *error) {
         if (error) {
             DDLogError(@"Error fetching endpoint: %@", error);
             return;
         }
-        if ([endpointResponse isKindOfClass:[KFS3Endpoint class]]) {
+        if ([endpointResponse isKindOfClass:[KFS3Stream class]]) {
             
-            KFS3Endpoint *s3Endpoint = (KFS3Endpoint*)endpointResponse;
+            KFS3Stream *s3Endpoint = (KFS3Stream*)endpointResponse;
             [self setupHLSWriterWithEndpoint:s3Endpoint];
             
             [[KFHLSMonitor sharedMonitor] monitorFolderPath:_hlsWriter.directoryPath endpoint:s3Endpoint];

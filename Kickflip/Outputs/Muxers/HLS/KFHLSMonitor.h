@@ -8,12 +8,12 @@
 
 #import <Foundation/Foundation.h>
 
-@class KFS3Endpoint;
+@class KFS3Stream;
 
 @interface KFHLSMonitor : NSObject
 
 + (KFHLSMonitor*) sharedMonitor;
 
-- (void) monitorFolderPath:(NSString*)path endpoint:(KFS3Endpoint*)endpoint;
+- (void) monitorFolderPath:(NSString*)path endpoint:(KFS3Stream*)endpoint;
 
 @end

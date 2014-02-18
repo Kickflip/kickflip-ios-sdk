@@ -1,5 +1,5 @@
 //
-//  KFEndpoint.h
+//  KFStream.h
 //  Kickflip
 //
 //  Created by Christopher Ballinger on 1/16/14.
@@ -10,9 +10,9 @@
 
 @class KFUser;
 
-extern NSString * const KFEndpointStreamTypeKey;
+extern NSString * const KFStreamTypeKey;
 
-@interface KFEndpoint : NSObject
+@interface KFStream : NSObject
 
 @property (nonatomic, strong) KFUser *user;
 @property (nonatomic, strong) NSString *streamType;

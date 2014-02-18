@@ -11,7 +11,7 @@
 #import "AFOAuth2Client.h"
 #import "KFLog.h"
 #import "KFUser.h"
-#import "KFS3Endpoint.h"
+#import "KFS3Stream.h"
 #import "Kickflip.h"
 
 static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
@@ -110,7 +110,7 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
     }];
 }
 
-- (void) requestNewEndpointWithUser:(KFUser*)user callback:(void (^)(KFEndpoint *endpoint, NSError *error))endpointCallback {
+- (void) requestNewEndpointWithUser:(KFUser*)user callback:(void (^)(KFStream *endpoint, NSError *error))endpointCallback {
     [self postPath:@"/api/stream/start" parameters:@{@"uuid": user.uuid} success:^(AFHTTPRequestOperation *operation, id responseObject) {
         if (responseObject && [responseObject isKindOfClass:[NSDictionary class]]) {
             NSDictionary *responseDictionary = (NSDictionary*)responseObject;
@@ -121,10 +121,10 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
                 }
                 return;
             }
-            KFEndpoint *endpoint = nil;
-            NSString *streamType = responseDictionary[KFEndpointStreamTypeKey];
-            if ([streamType isEqualToString:KFS3EndpointStreamType]) {
-                endpoint = [[KFS3Endpoint alloc] initWithUser:user parameters:responseDictionary];
+            KFStream *endpoint = nil;
+            NSString *streamType = responseDictionary[KFStreamTypeKey];
+            if ([streamType isEqualToString:KFS3StreamType]) {
+                endpoint = [[KFS3Stream alloc] initWithUser:user parameters:responseDictionary];
             }
             
             if (endpoint) {
@@ -145,7 +145,7 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
     }];
 }
 
-- (void) requestNewEndpoint:(void (^)(KFEndpoint *, NSError *))endpointCallback {
+- (void) requestNewEndpoint:(void (^)(KFStream *, NSError *))endpointCallback {
     [self checkOAuthCredentialsWithCallback:^(BOOL success, NSError *error) {
         if (!success) {
             if (endpointCallback) {

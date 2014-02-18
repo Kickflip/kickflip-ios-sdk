@@ -28,7 +28,7 @@
 
 - (void) testOAuthStuff {
     
-    [[KFAPIClient sharedClient] requestNewEndpoint:^(KFEndpoint *newEndpoint, NSError *error) {
+    [[KFAPIClient sharedClient] requestNewEndpoint:^(KFStream *newEndpoint, NSError *error) {
         if (error) {
             DDLogError(@"Error getting new stream: %@", error);
         } else {
@@ -38,9 +38,6 @@
 }
 
 - (void) broadcastButtonPressed:(id)sender {
-    [self testOAuthStuff];
-    return;
-    
     [Kickflip presentBroadcasterFromViewController:self ready:^(NSURL *streamURL, NSError *error) {
         if (streamURL) {
             NSLog(@"Stream is ready at URL: %@", streamURL);

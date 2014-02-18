@@ -9,7 +9,7 @@
 #import <Foundation/Foundation.h>
 #import "KFDirectoryWatcher.h"
 
-@class OWS3Client, KFS3Endpoint;
+@class OWS3Client, KFS3Stream;
 
 @interface KFHLSUploader : NSObject <KFDirectoryWatcherDelegate>
 
@@ -20,9 +20,9 @@
 @property (nonatomic, strong) NSString *remoteFolderName;
 @property (nonatomic) dispatch_queue_t scanningQueue;
 @property (nonatomic, strong) OWS3Client *s3Client;
-@property (nonatomic, strong) KFS3Endpoint *endpoint;
+@property (nonatomic, strong) KFS3Stream *endpoint;
 
-- (id) initWithDirectoryPath:(NSString*)directoryPath endpoint:(KFS3Endpoint*)endpoint;
+- (id) initWithDirectoryPath:(NSString*)directoryPath endpoint:(KFS3Stream*)endpoint;
 
 - (NSURL*) manifestURL;
 
