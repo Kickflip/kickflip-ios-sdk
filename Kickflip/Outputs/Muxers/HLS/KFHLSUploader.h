@@ -12,7 +12,7 @@
 @class KFS3Stream, KFHLSUploader;
 
 @protocol KFHLSUploaderDelegate <NSObject>
-- (void) uploader:(KFHLSUploader*)uploader didUploadSegmentAtURL:(NSURL*)segmentURL uploadSpeed:(double)uploadSpeed; //KBps
+- (void) uploader:(KFHLSUploader*)uploader didUploadSegmentAtURL:(NSURL*)segmentURL uploadSpeed:(double)uploadSpeed numberOfQueuedSegments:(NSUInteger)numberOfQueuedSegments; //KBps
 - (void) uploader:(KFHLSUploader *)uploader manifestReadyAtURL:(NSURL*)manifestURL;
 @end
 

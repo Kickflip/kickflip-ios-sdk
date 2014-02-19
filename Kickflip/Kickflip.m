@@ -17,9 +17,11 @@ static NSString *_apiSecret;
 
 @implementation Kickflip
 
-+ (void) presentBroadcasterFromViewController:(UIViewController *)viewController ready:(void (^)(NSURL *, NSError *))readyBlock completion:(void (^)(void))completionBlock {
++ (void) presentBroadcasterFromViewController:(UIViewController *)viewController ready:(KFBroadcastReadyBlock)readyBlock completion:(KFBroadcastCompletionBlock)completionBlock {
     KFBroadcastViewController *broadcastViewController = [[KFBroadcastViewController alloc] init];
-    [viewController presentViewController:broadcastViewController animated:YES completion:completionBlock];
+    broadcastViewController.readyBlock = readyBlock;
+    broadcastViewController.completionBlock = completionBlock;
+    [viewController presentViewController:broadcastViewController animated:YES completion:nil];
 }
 
 + (void) initialize {

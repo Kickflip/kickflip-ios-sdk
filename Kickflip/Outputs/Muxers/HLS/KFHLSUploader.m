@@ -94,13 +94,14 @@ static NSString * const kUploadStateUploading = @"uploading";
                 DDLogError(@"Error removing uploaded segment: %@", error.description);
             }
             [_queuedSegments removeObjectForKey:@(_nextSegmentIndexToUpload)];
+            NSUInteger queuedSegmentsCount = _queuedSegments.count;
             [self updateManifestWithString:manifest];
             _nextSegmentIndexToUpload++;
             [self uploadNextSegment];
-            if (self.delegate && [self.delegate respondsToSelector:@selector(uploader:didUploadSegmentAtURL:uploadSpeed:)]) {
+            if (self.delegate && [self.delegate respondsToSelector:@selector(uploader:didUploadSegmentAtURL:uploadSpeed:numberOfQueuedSegments:)]) {
                 NSURL *url = [self urlWithFileName:fileName];
                 dispatch_async(self.callbackQueue, ^{
-                    [self.delegate uploader:self didUploadSegmentAtURL:url uploadSpeed:KBps];
+                    [self.delegate uploader:self didUploadSegmentAtURL:url uploadSpeed:KBps numberOfQueuedSegments:queuedSegmentsCount];
                 });
             }
         });

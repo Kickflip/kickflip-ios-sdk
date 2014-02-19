@@ -21,44 +21,37 @@
         _shareButton = [UIButton buttonWithType:UIButtonTypeRoundedRect];
         [_shareButton addTarget:self action:@selector(shareButtonPressed:) forControlEvents:UIControlEventTouchUpInside];
         [_shareButton setTitle:@"Share" forState:UIControlStateNormal];
+        self.shareButton.enabled = NO;
         
-        self.startButton = [UIButton buttonWithType:UIButtonTypeRoundedRect];
-        [_startButton setTitle:@"Start" forState:UIControlStateNormal];
-        [_startButton addTarget:self action:@selector(startButtonPressed:) forControlEvents:UIControlEventTouchUpInside];
-        self.doneButton = [UIButton buttonWithType:UIButtonTypeRoundedRect];
-        [_doneButton setTitle:@"Done" forState:UIControlStateNormal];
-        [_doneButton addTarget:self action:@selector(doneButtonPressed:) forControlEvents:UIControlEventTouchUpInside];
-        
+        self.recordButton = [UIButton buttonWithType:UIButtonTypeRoundedRect];
+        [self.recordButton setTitle:@"Start" forState:UIControlStateNormal];
+        [self.recordButton addTarget:self action:@selector(recordButtonPressed:) forControlEvents:UIControlEventTouchUpInside];
         self.recorder = [[KFRecorder alloc] init];
-
+        self.recorder.delegate = self;
     }
     return self;
 }
 
-- (void) doneButtonPressed:(id)sender {
-    [self.recorder stopRecording];
-    [self dismissViewControllerAnimated:YES completion:nil];
-}
 
-- (void) startButtonPressed:(id)sender {
-    [self.recorder startRecording];
+- (void) recordButtonPressed:(id)sender {
+    self.recordButton.enabled = NO;
+    if (!self.recorder.isRecording) {
+        [self.recordButton setTitle:@"Stop" forState:UIControlStateNormal];
+        [self.recorder startRecording];
+    } else {
+        [self.recorder stopRecording];
+    }
 }
 
 - (void) shareButtonPressed:(id)sender {
-    /*
-    NSString *kickflipURLString = [NSString stringWithFormat:@"http://kickflip.io/video.html?v=%@", self.recorder.hlsWriter.uuid];
-    NSURL *kickflipURL = [NSURL URLWithString:kickflipURLString];
-    NSURL *manifestURL = [CameraServer server].hlsUploader.manifestURL;
-    UIActivityViewController *activityViewController = [[UIActivityViewController alloc] initWithActivityItems:@[kickflipURL, manifestURL] applicationActivities:nil];
+    UIActivityViewController *activityViewController = [[UIActivityViewController alloc] initWithActivityItems:@[self.recorder.stream.kickflipURL] applicationActivities:nil];
     
     UIActivityViewControllerCompletionHandler completionHandler = ^(NSString *activityType, BOOL completed) {
-        NSLog(@"activity: %@", activityType);
+        NSLog(@"share activity: %@", activityType);
     };
-    
     activityViewController.completionHandler = completionHandler;
     
     [self presentViewController:activityViewController animated:YES completion:nil];
-     */
 }
 
 - (void)viewDidLoad
@@ -66,8 +59,7 @@
     [super viewDidLoad];
     [self.view addSubview:_cameraView];
     [self.view addSubview:_shareButton];
-    [self.view addSubview:_doneButton];
-    [self.view addSubview:_startButton];
+    [self.view addSubview:self.recordButton];
     
 }
 
@@ -76,8 +68,7 @@
     
     _cameraView.frame = self.view.bounds;
     _shareButton.frame = CGRectMake(50, 100, 200, 30);
-    _doneButton.frame = CGRectMake(50, 200, 200, 30);
-    _startButton.frame = CGRectMake(50, 300, 200, 30);
+    _recordButton.frame = CGRectMake(50, 200, 200, 30);
     
     [self startPreview];
 }
@@ -106,6 +97,26 @@
     // Dispose of any resources that can be recreated.
 }
 
+- (void) recorderDidStartRecording:(KFRecorder *)recorder {
+    self.recordButton.enabled = YES;
+}
 
+- (void) recorder:(KFRecorder *)recorder streamReadyAtURL:(NSURL *)url {
+    self.shareButton.enabled = YES;
+    if (_readyBlock) {
+        _readyBlock(url);
+    }
+}
+
+- (void) recorderDidFinishRecording:(KFRecorder *)recorder error:(NSError *)error {
+    if (_completionBlock) {
+        if (error) {
+            _completionBlock(NO, error);
+        } else {
+            _completionBlock(YES, nil);
+        }
+    }
+    [self dismissViewControllerAnimated:YES completion:nil];
+}
 
 @end

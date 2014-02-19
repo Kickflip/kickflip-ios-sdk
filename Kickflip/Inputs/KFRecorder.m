@@ -19,7 +19,6 @@
 #import "KFVideoFrame.h"
 
 @interface KFRecorder()
-@property (nonatomic) BOOL shouldBroadcast;
 @end
 
 @implementation KFRecorder
@@ -133,7 +132,7 @@
 #pragma mark AVCaptureOutputDelegate method
 - (void) captureOutput:(AVCaptureOutput *)captureOutput didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer fromConnection:(AVCaptureConnection *)connection
 {
-    if (!_shouldBroadcast) {
+    if (!_isRecording) {
         return;
     }
     // pass frame to encoders
@@ -164,22 +163,25 @@
             DDLogError(@"Error fetching endpoint: %@", error);
             return;
         }
+        self.stream = endpointResponse;
         if ([endpointResponse isKindOfClass:[KFS3Stream class]]) {
             
             KFS3Stream *s3Endpoint = (KFS3Stream*)endpointResponse;
             s3Endpoint.streamState = KFStreamStateStreaming;
             [self setupHLSWriterWithEndpoint:s3Endpoint];
             
-            [[KFHLSMonitor sharedMonitor] monitorFolderPath:_hlsWriter.directoryPath endpoint:s3Endpoint delegate:self];
+            [[KFHLSMonitor sharedMonitor] startMonitoringFolderPath:_hlsWriter.directoryPath endpoint:s3Endpoint delegate:self];
             
             NSError *error = nil;
             [_hlsWriter prepareForWriting:&error];
             if (error) {
                 DDLogError(@"Error preparing for writing: %@", error);
             }
-            self.shouldBroadcast = YES;
-            if (self.delegate) {
-                [self.delegate recorderDidFinishRecording:self];
+            self.isRecording = YES;
+            if (self.delegate && [self.delegate respondsToSelector:@selector(recorderDidStartRecording:)]) {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [self.delegate recorderDidStartRecording:self];
+                });
             }
         }
     }];
@@ -187,20 +189,35 @@
 }
 
 - (void) stopRecording {
-    [_session stopRunning];
-    self.shouldBroadcast = NO;
-    NSError *error = nil;
-    [_hlsWriter finishWriting:&error];
-    if (error) {
-        DDLogError(@"Error stop recording: %@", error);
-    }
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        [_session stopRunning];
+        self.isRecording = NO;
+        NSError *error = nil;
+        [_hlsWriter finishWriting:&error];
+        if (error) {
+            DDLogError(@"Error stop recording: %@", error);
+        }
+        if ([self.stream isKindOfClass:[KFS3Stream class]]) {
+            [[KFHLSMonitor sharedMonitor] finishUploadingContentsAtFolderPath:_hlsWriter.directoryPath endpoint:(KFS3Stream*)self.stream];
+        }
+        if (self.delegate && [self.delegate respondsToSelector:@selector(recorderDidFinishRecording:error:)]) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [self.delegate recorderDidFinishRecording:self error:error];
+            });
+        }
+    });
 }
 
-- (void) uploader:(KFHLSUploader *)uploader didUploadSegmentAtURL:(NSURL *)segmentURL uploadSpeed:(double)uploadSpeed {
-    DDLogInfo(@"Uploaded segment %@ @ %f KB/s", segmentURL, uploadSpeed);
+- (void) uploader:(KFHLSUploader *)uploader didUploadSegmentAtURL:(NSURL *)segmentURL uploadSpeed:(double)uploadSpeed numberOfQueuedSegments:(NSUInteger)numberOfQueuedSegments {
+    DDLogInfo(@"Uploaded segment %@ @ %f KB/s, numberOfQueuedSegments %d", segmentURL, uploadSpeed, numberOfQueuedSegments);
 }
 
 - (void) uploader:(KFHLSUploader *)uploader manifestReadyAtURL:(NSURL *)manifestURL {
+    if (self.delegate && [self.delegate respondsToSelector:@selector(recorder:streamReadyAtURL:)]) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self.delegate recorder:self streamReadyAtURL:manifestURL];
+        });
+    }
     DDLogInfo(@"Manifest ready at URL: %@", manifestURL);
 }
 

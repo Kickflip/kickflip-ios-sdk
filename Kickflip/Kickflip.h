@@ -9,10 +9,13 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 
+typedef void (^KFBroadcastReadyBlock)(NSURL *streamURL);
+typedef void (^KFBroadcastCompletionBlock)(BOOL success, NSError* error);
+
 @interface Kickflip : NSObject
 
 + (void) setupWithAPIKey:(NSString*)key secret:(NSString*)secret;
-+ (void) presentBroadcasterFromViewController:(UIViewController*)viewController ready:(void (^)(NSURL *streamURL, NSError *error))readyBlock completion:(void (^)(void))completionBlock;
++ (void) presentBroadcasterFromViewController:(UIViewController*)viewController ready:(KFBroadcastReadyBlock)readyBlock completion:(KFBroadcastCompletionBlock)completionBlock;
 
 + (NSString*) apiKey;
 + (NSString*) apiSecret;

@@ -12,11 +12,12 @@
 #import "KFH264Encoder.h"
 #import "KFHLSUploader.h"
 
-@class KFRecorder, KFHLSWriter;
+@class KFRecorder, KFHLSWriter, KFStream;
 
 @protocol KFRecorderDelegate <NSObject>
 - (void) recorderDidStartRecording:(KFRecorder*)recorder;
-- (void) recorderDidFinishRecording:(KFRecorder*)recorder;
+- (void) recorderDidFinishRecording:(KFRecorder*)recorder error:(NSError*)error;
+- (void) recorder:(KFRecorder*)recorder streamReadyAtURL:(NSURL*)url;
 @end
 
 @interface KFRecorder : NSObject <AVCaptureVideoDataOutputSampleBufferDelegate, AVCaptureAudioDataOutputSampleBufferDelegate, KFEncoderDelegate, KFHLSUploaderDelegate>
@@ -33,13 +34,15 @@
 @property (nonatomic, strong) KFAACEncoder *aacEncoder;
 @property (nonatomic, strong) KFH264Encoder *h264Encoder;
 @property (nonatomic, strong) KFHLSWriter *hlsWriter;
+@property (nonatomic, strong) KFStream *stream;
 
 @property (nonatomic) NSUInteger videoWidth;
 @property (nonatomic) NSUInteger videoHeight;
 @property (nonatomic) NSUInteger audioSampleRate;
 
-@property (nonatomic, weak) id<KFRecorderDelegate> delegate;
+@property (nonatomic) BOOL isRecording;
 
+@property (nonatomic, weak) id<KFRecorderDelegate> delegate;
 
 - (void) startRecording;
 - (void) stopRecording;

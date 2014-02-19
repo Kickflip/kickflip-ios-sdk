@@ -9,10 +9,12 @@
 #import <Foundation/Foundation.h>
 #import "KFHLSUploader.h"
 
-@interface KFHLSMonitor : NSObject
+
+@interface KFHLSMonitor : NSObject <KFHLSUploaderDelegate>
 
 + (KFHLSMonitor*) sharedMonitor;
 
-- (void) monitorFolderPath:(NSString*)path endpoint:(KFS3Stream*)endpoint delegate:(id<KFHLSUploaderDelegate>)delegate;
+- (void) startMonitoringFolderPath:(NSString*)path endpoint:(KFS3Stream*)endpoint delegate:(id<KFHLSUploaderDelegate>)delegate;
+- (void) finishUploadingContentsAtFolderPath:(NSString*)path endpoint:(KFS3Stream*)endpoint; //reclaims delegate of uploader
 
 @end

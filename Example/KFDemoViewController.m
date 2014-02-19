@@ -26,25 +26,17 @@
     return self;
 }
 
-- (void) testOAuthStuff {
-    [[KFAPIClient sharedClient] startNewStream:^(KFStream *newEndpoint, NSError *error) {
-        if (error) {
-            DDLogError(@"Error getting new stream: %@", error);
-        } else {
-            DDLogInfo(@"New endpoint: %@", newEndpoint);
-        }
-    }];
-}
-
 - (void) broadcastButtonPressed:(id)sender {
-    [Kickflip presentBroadcasterFromViewController:self ready:^(NSURL *streamURL, NSError *error) {
+    [Kickflip presentBroadcasterFromViewController:self ready:^(NSURL *streamURL) {
         if (streamURL) {
-            NSLog(@"Stream is ready at URL: %@", streamURL);
-        } else {
-            NSLog(@"Error setting up stream: %@", error);
+            DDLogInfo(@"Stream is ready at URL: %@", streamURL);
         }
-    } completion:^{
-        NSLog(@"KF completion");
+    } completion:^(BOOL success, NSError* error){
+        if (!success) {
+            DDLogError(@"Error setting up stream: %@", error);
+        } else {
+            DDLogInfo(@"Done broadcasting");
+        }
     }];
 }
 
