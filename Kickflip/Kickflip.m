@@ -12,8 +12,14 @@
 #import "KFUser.h"
 #import "KFLog.h"
 
-static NSString *_apiKey;
-static NSString *_apiSecret;
+@interface Kickflip()
+@property (nonatomic, copy) NSString *apiKey;
+@property (nonatomic, copy) NSString *apiSecret;
+@property (nonatomic) NSUInteger maxBitrate;
+@property (nonatomic) BOOL useAdaptiveBitrate;
+@end
+
+static Kickflip *_kickflip = nil;
 
 @implementation Kickflip
 
@@ -24,14 +30,27 @@ static NSString *_apiSecret;
     [viewController presentViewController:broadcastViewController animated:YES completion:nil];
 }
 
-+ (void) initialize {
-    _apiKey = nil;
-    _apiSecret = nil;
++ (Kickflip*) sharedInstance {
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        _kickflip = [[Kickflip alloc] init];
+    });
+    return _kickflip;
 }
 
+- (id) init {
+    if (self = [super init]) {
+        _maxBitrate = 2000 * 1000; // 2 Mbps
+        _useAdaptiveBitrate = YES;
+    }
+    return self;
+}
+
+
 + (void) setupWithAPIKey:(NSString *)key secret:(NSString *)secret {
-    _apiKey = [key copy];
-    _apiSecret = [secret copy];
+    Kickflip *kickflip = [Kickflip sharedInstance];
+    kickflip.apiKey = key;
+    kickflip.apiSecret = secret;
     KFUser *activeUser = [KFUser activeUser];
     if (!activeUser) {
         [[KFAPIClient sharedClient] requestNewUserWithUsername:nil callbackBlock:^(KFUser *newUser, NSError *error) {
@@ -45,11 +64,27 @@ static NSString *_apiSecret;
 }
 
 + (NSString*) apiKey {
-    return _apiKey;
+    return [Kickflip sharedInstance].apiKey;
 }
 
 + (NSString*) apiSecret {
-    return _apiSecret;
+    return [Kickflip sharedInstance].apiSecret;
+}
+
++ (void) setMaxBitrate:(double)maxBitrate {
+    [Kickflip sharedInstance].maxBitrate = maxBitrate;
+}
+
++ (double) maxBitrate {
+    return [Kickflip sharedInstance].maxBitrate;
+}
+
++ (BOOL) useAdaptiveBitrate {
+    return [Kickflip sharedInstance].useAdaptiveBitrate;
+}
+
++ (void) setUseAdaptiveBitrate:(BOOL)enabled {
+    [Kickflip sharedInstance].useAdaptiveBitrate = enabled;
 }
 
 @end

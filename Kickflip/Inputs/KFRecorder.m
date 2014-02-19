@@ -17,14 +17,17 @@
 #import "KFS3Stream.h"
 #import "KFFrame.h"
 #import "KFVideoFrame.h"
+#import "Kickflip.h"
 
 @interface KFRecorder()
+@property (nonatomic) double minBitrate;
 @end
 
 @implementation KFRecorder
 
 - (id) init {
     if (self = [super init]) {
+        _minBitrate = 300 * 1000;
         [self setupSession];
         [self setupEncoders];
     }
@@ -57,16 +60,15 @@
     self.audioSampleRate = 44100;
     self.videoHeight = 720;
     self.videoWidth = 1280;
-    int videoBitrate = 500 * 1000; // 2 Mbps
     int audioBitrate = 64 * 1000; // 64 Kbps
+    int maxBitrate = [Kickflip maxBitrate];
+    int videoBitrate = maxBitrate - audioBitrate;
     _h264Encoder = [[KFH264Encoder alloc] initWithBitrate:videoBitrate width:self.videoWidth height:self.videoHeight];
     _h264Encoder.delegate = self;
     
     _aacEncoder = [[KFAACEncoder alloc] initWithBitrate:audioBitrate sampleRate:self.audioSampleRate channels:1];
     _aacEncoder.delegate = self;
     _aacEncoder.addADTSHeader = YES;
-    
-    
 }
 
 - (void) setupAudioCapture {
@@ -210,6 +212,20 @@
 
 - (void) uploader:(KFHLSUploader *)uploader didUploadSegmentAtURL:(NSURL *)segmentURL uploadSpeed:(double)uploadSpeed numberOfQueuedSegments:(NSUInteger)numberOfQueuedSegments {
     DDLogInfo(@"Uploaded segment %@ @ %f KB/s, numberOfQueuedSegments %d", segmentURL, uploadSpeed, numberOfQueuedSegments);
+    if ([Kickflip useAdaptiveBitrate]) {
+        double currentUploadBitrate = uploadSpeed * 8 * 1024; // bps
+        double maxBitrate = [Kickflip maxBitrate];
+
+        double newBitrate = currentUploadBitrate * 0.5;
+        if (newBitrate > maxBitrate) {
+            newBitrate = maxBitrate;
+        }
+        if (newBitrate < _minBitrate) {
+            newBitrate = _minBitrate;
+        }
+        double newVideoBitrate = newBitrate - self.aacEncoder.bitrate;
+        self.h264Encoder.bitrate = newVideoBitrate;
+    }
 }
 
 - (void) uploader:(KFHLSUploader *)uploader manifestReadyAtURL:(NSURL *)manifestURL {

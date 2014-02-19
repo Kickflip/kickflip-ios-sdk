@@ -17,6 +17,11 @@ typedef void (^KFBroadcastCompletionBlock)(BOOL success, NSError* error);
 + (void) setupWithAPIKey:(NSString*)key secret:(NSString*)secret;
 + (void) presentBroadcasterFromViewController:(UIViewController*)viewController ready:(KFBroadcastReadyBlock)readyBlock completion:(KFBroadcastCompletionBlock)completionBlock;
 
++ (double) maxBitrate; // defaults to 2 Mbps
++ (void) setMaxBitrate:(double)maxBitrate; // bits per second
++ (BOOL) useAdaptiveBitrate; // default YES, will reduce bitrate to maintain live stream
++ (void) setUseAdaptiveBitrate:(BOOL)enabled;
+
 + (NSString*) apiKey;
 + (NSString*) apiSecret;
 

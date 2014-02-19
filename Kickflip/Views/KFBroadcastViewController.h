@@ -14,9 +14,12 @@
 
 @property (nonatomic, copy) KFBroadcastReadyBlock readyBlock;
 @property (nonatomic, copy) KFBroadcastCompletionBlock completionBlock;
+
 @property (strong, nonatomic) UIView *cameraView;
 @property (nonatomic, strong) UIButton *shareButton;
 @property (nonatomic, strong) UIButton *recordButton;
+@property (nonatomic, strong) UIImageView *liveBanner;
+
 @property (nonatomic, strong) KFRecorder *recorder;
 @property (nonatomic, strong) NSURL *shareURL;
 

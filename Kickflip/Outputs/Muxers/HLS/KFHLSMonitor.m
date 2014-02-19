@@ -8,6 +8,7 @@
 
 #import "KFHLSMonitor.h"
 #import "KFHLSUploader.h"
+#import "KFLog.h"
 
 @interface KFHLSMonitor()
 @property (nonatomic, strong) NSMutableDictionary *hlsUploaders;
