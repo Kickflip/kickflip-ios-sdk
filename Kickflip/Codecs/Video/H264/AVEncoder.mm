@@ -416,7 +416,7 @@ static unsigned int to_host(unsigned char* p)
         }
         else
         {
-            NSLog(@"no pts for buffer");
+            //NSLog(@"no pts for buffer");
         }
     }
     if (_outputBlock != nil)

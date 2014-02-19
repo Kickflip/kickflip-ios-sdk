@@ -10,6 +10,7 @@
 #import <AVFoundation/AVFoundation.h>
 #import "KFAACEncoder.h"
 #import "KFH264Encoder.h"
+#import "KFHLSUploader.h"
 
 @class KFRecorder, KFHLSWriter;
 
@@ -18,7 +19,7 @@
 - (void) recorderDidFinishRecording:(KFRecorder*)recorder;
 @end
 
-@interface KFRecorder : NSObject <AVCaptureVideoDataOutputSampleBufferDelegate, AVCaptureAudioDataOutputSampleBufferDelegate, KFEncoderDelegate>
+@interface KFRecorder : NSObject <AVCaptureVideoDataOutputSampleBufferDelegate, AVCaptureAudioDataOutputSampleBufferDelegate, KFEncoderDelegate, KFHLSUploaderDelegate>
 
 @property (nonatomic, strong) AVCaptureSession* session;
 @property (nonatomic, strong) AVCaptureVideoPreviewLayer* previewLayer;

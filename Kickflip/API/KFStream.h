@@ -14,8 +14,9 @@ typedef NS_ENUM(NSUInteger, KFStreamState) {
     KFStreamStateUndefined = 0,
     KFStreamStateStreaming = 1,
     KFStreamStatePaused = 2,
-    KFStreamStateFinished = 3,
-    KFStreamStateFailed = 4
+    KFStreamStateStopped = 3,
+    KFStreamStateFinished = 4,
+    KFStreamStateFailed = 5
 };
 
 extern NSString * const KFStreamTypeKey;

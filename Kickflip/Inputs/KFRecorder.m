@@ -156,6 +156,8 @@
     _previewLayer.videoGravity = AVLayerVideoGravityResizeAspectFill;
 }
 
+
+
 - (void) startRecording {
     [[KFAPIClient sharedClient] startNewStream:^(KFStream *endpointResponse, NSError *error) {
         if (error) {
@@ -168,7 +170,7 @@
             s3Endpoint.streamState = KFStreamStateStreaming;
             [self setupHLSWriterWithEndpoint:s3Endpoint];
             
-            [[KFHLSMonitor sharedMonitor] monitorFolderPath:_hlsWriter.directoryPath endpoint:s3Endpoint];
+            [[KFHLSMonitor sharedMonitor] monitorFolderPath:_hlsWriter.directoryPath endpoint:s3Endpoint delegate:self];
             
             NSError *error = nil;
             [_hlsWriter prepareForWriting:&error];
@@ -192,6 +194,14 @@
     if (error) {
         DDLogError(@"Error stop recording: %@", error);
     }
+}
+
+- (void) uploader:(KFHLSUploader *)uploader didUploadSegmentAtURL:(NSURL *)segmentURL uploadSpeed:(double)uploadSpeed {
+    DDLogInfo(@"Uploaded segment %@ @ %f KB/s", segmentURL, uploadSpeed);
+}
+
+- (void) uploader:(KFHLSUploader *)uploader manifestReadyAtURL:(NSURL *)manifestURL {
+    DDLogInfo(@"Manifest ready at URL: %@", manifestURL);
 }
 
 @end

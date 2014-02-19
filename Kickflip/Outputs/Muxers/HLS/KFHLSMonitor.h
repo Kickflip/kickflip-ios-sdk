@@ -7,13 +7,12 @@
 //
 
 #import <Foundation/Foundation.h>
-
-@class KFS3Stream;
+#import "KFHLSUploader.h"
 
 @interface KFHLSMonitor : NSObject
 
 + (KFHLSMonitor*) sharedMonitor;
 
-- (void) monitorFolderPath:(NSString*)path endpoint:(KFS3Stream*)endpoint;
+- (void) monitorFolderPath:(NSString*)path endpoint:(KFS3Stream*)endpoint delegate:(id<KFHLSUploaderDelegate>)delegate;
 
 @end

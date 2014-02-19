@@ -87,7 +87,7 @@
         unsigned char* pNal = (unsigned char*)[data bytes];
         int idc = pNal[0] & 0x60;
         int naltype = pNal[0] & 0x1f;
-        DDLogInfo(@"Orphaned frame info: idc(%d) naltype(%d) size(%lu)", idc, naltype, (unsigned long)data.length);
+        DDLogVerbose(@"Orphaned frame info: idc(%d) naltype(%d) size(%lu)", idc, naltype, (unsigned long)data.length);
         [self.orphanedFrames addObject:data];
     }
 }

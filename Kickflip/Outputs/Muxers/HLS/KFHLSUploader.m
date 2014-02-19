@@ -23,6 +23,11 @@ static NSString * const kUploadStateUploading = @"uploading";
 @property (nonatomic) NSUInteger numbersOffset;
 @property (nonatomic, strong) NSMutableDictionary *queuedSegments;
 @property (nonatomic) NSUInteger nextSegmentIndexToUpload;
+@property (nonatomic, strong) OWS3Client *s3Client;
+@property (nonatomic, strong) KFDirectoryWatcher *directoryWatcher;
+@property (nonatomic, strong) NSMutableDictionary *files;
+@property (nonatomic, strong) NSString *manifestPath;
+@property (nonatomic) BOOL manifestReady;
 @end
 
 @implementation KFHLSUploader
@@ -33,22 +38,27 @@ static NSString * const kUploadStateUploading = @"uploading";
         _directoryPath = [directoryPath copy];
         _directoryWatcher = [KFDirectoryWatcher watchFolderWithPath:_directoryPath delegate:self];
         _files = [NSMutableDictionary dictionary];
-        _scanningQueue = dispatch_queue_create("Scanning Queue", DISPATCH_QUEUE_SERIAL);
+        _scanningQueue = dispatch_queue_create("KFHLSUploader Scanning Queue", DISPATCH_QUEUE_SERIAL);
+        _callbackQueue = dispatch_queue_create("KFHLSUploader Callback Queue", DISPATCH_QUEUE_SERIAL);
         _queuedSegments = [NSMutableDictionary dictionaryWithCapacity:5];
         _numbersOffset = 0;
         _nextSegmentIndexToUpload = 0;
+        _manifestReady = NO;
         self.s3Client = [[OWS3Client alloc] initWithAccessKey:self.stream.awsAccessKey secretKey:self.stream.awsSecretKey];
-        //self.s3Client.region = US_WEST_1;
         self.s3Client.useSSL = NO;
-        self.s3Client.s3.timeout = 10;
     }
     return self;
+}
+
+- (void) setUseSSL:(BOOL)useSSL {
+    _useSSL = useSSL;
+    self.s3Client.useSSL = useSSL;
 }
 
 - (void) uploadNextSegment {
     DDLogVerbose(@"nextSegmentIndexToUpload: %d, segmentCount: %d, queuedSegments: %d", _nextSegmentIndexToUpload, self.files.count, self.queuedSegments.count);
     if (_nextSegmentIndexToUpload >= self.files.count - 1) {
-        DDLogWarn(@"Cannot upload file currently being recorded at index: %d", _nextSegmentIndexToUpload);
+        DDLogVerbose(@"Cannot upload file currently being recorded at index: %d", _nextSegmentIndexToUpload);
         return;
     }
     NSDictionary *segmentInfo = [_queuedSegments objectForKey:@(_nextSegmentIndexToUpload)];
@@ -56,16 +66,27 @@ static NSString * const kUploadStateUploading = @"uploading";
     NSString *fileName = [segmentInfo objectForKey:kFileNameKey];
     NSString *fileUploadState = [_files objectForKey:fileName];
     if (![fileUploadState isEqualToString:kUploadStateQueued]) {
-        DDLogWarn(@"Trying to upload file that isn't queued (%@): %@", fileUploadState, segmentInfo);
+        DDLogVerbose(@"Trying to upload file that isn't queued (%@): %@", fileUploadState, segmentInfo);
         return;
     }
     [_files setObject:kUploadStateUploading forKey:fileName];
     NSString *filePath = [_directoryPath stringByAppendingPathComponent:fileName];
     NSString *key = [self awsKeyForStream:self.stream fileName:fileName];
     
+    NSDate *uploadStartDate = [NSDate date];
+    NSError *error = nil;
+    NSDictionary *fileStats = [[NSFileManager defaultManager] attributesOfItemAtPath:filePath error:&error];
+    if (error) {
+        DDLogError(@"Error getting stats of path %@: %@", filePath, error);
+    }
+    uint64_t fileSize = [fileStats fileSize];
+    
     [self.s3Client postObjectWithFile:filePath bucket:self.stream.bucketName key:key acl:@"public-read" success:^(S3PutObjectResponse *responseObject) {
         dispatch_async(_scanningQueue, ^{
-            DDLogVerbose(@"Uploaded %@", fileName);
+            NSDate *uploadFinishDate = [NSDate date];
+            NSTimeInterval timeToUpload = [uploadFinishDate timeIntervalSinceDate:uploadStartDate];
+            double bytesPerSecond = fileSize / timeToUpload;
+            double KBps = bytesPerSecond / 1024;
             [_files setObject:kUploadStateFinished forKey:fileName];
             NSError *error = nil;
             [[NSFileManager defaultManager] removeItemAtPath:filePath error:&error];
@@ -76,6 +97,12 @@ static NSString * const kUploadStateUploading = @"uploading";
             [self updateManifestWithString:manifest];
             _nextSegmentIndexToUpload++;
             [self uploadNextSegment];
+            if (self.delegate && [self.delegate respondsToSelector:@selector(uploader:didUploadSegmentAtURL:uploadSpeed:)]) {
+                NSURL *url = [self urlWithFileName:fileName];
+                dispatch_async(self.callbackQueue, ^{
+                    [self.delegate uploader:self didUploadSegmentAtURL:url uploadSpeed:KBps];
+                });
+            }
         });
     } failure:^(NSError *error) {
         dispatch_async(_scanningQueue, ^{
@@ -94,7 +121,14 @@ static NSString * const kUploadStateUploading = @"uploading";
     NSData *data = [manifestString dataUsingEncoding:NSUTF8StringEncoding];
     NSString *key = [self awsKeyForStream:self.stream fileName:[_manifestPath lastPathComponent]];
     [self.s3Client postObjectWithData:data bucket:self.stream.bucketName key:key acl:@"public-read" success:^(S3PutObjectResponse *responseObject) {
-        DDLogInfo(@"Manifest updated");
+        dispatch_async(self.callbackQueue, ^{
+            if (!_manifestReady) {
+                if (self.delegate && [self.delegate respondsToSelector:@selector(uploader:manifestReadyAtURL:)]) {
+                    [self.delegate uploader:self manifestReadyAtURL:[self manifestURL]];
+                }
+                _manifestReady = YES;
+            }
+        });
     } failure:^(NSError *error) {
         DDLogError(@"Error updating manifest: %@", error.description);
     }];
@@ -104,7 +138,7 @@ static NSString * const kUploadStateUploading = @"uploading";
     dispatch_async(_scanningQueue, ^{
         NSError *error = nil;
         NSArray *files = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:_directoryPath error:&error];
-        DDLogInfo(@"Directory changed, fileCount: %lu", (unsigned long)files.count);
+        DDLogVerbose(@"Directory changed, fileCount: %lu", (unsigned long)files.count);
         if (error) {
             DDLogError(@"Error listing directory contents");
         }
@@ -117,7 +151,7 @@ static NSString * const kUploadStateUploading = @"uploading";
 
 - (void) detectNewSegmentsFromFiles:(NSArray*)files {
     if (!_manifestPath) {
-        DDLogWarn(@"Manifest path not yet available");
+        DDLogVerbose(@"Manifest path not yet available");
         return;
     }
     [files enumerateObjectsUsingBlock:^(NSString *fileName, NSUInteger idx, BOOL *stop) {
@@ -131,7 +165,7 @@ static NSString * const kUploadStateUploading = @"uploading";
                 NSUInteger segmentIndex = [self indexForFilePrefix:filePrefix];
                 NSDictionary *segmentInfo = @{kManifestKey: manifestSnapshot,
                                                 kFileNameKey: fileName};
-                DDLogInfo(@"new file detected: %@", fileName);
+                DDLogVerbose(@"new file detected: %@", fileName);
                 [_files setObject:kUploadStateQueued forKey:fileName];
                 [_queuedSegments setObject:segmentInfo forKey:@(segmentIndex)];
                 [self uploadNextSegment];
@@ -162,14 +196,18 @@ static NSString * const kUploadStateUploading = @"uploading";
     return [numbers integerValue];
 }
 
-- (NSURL*) manifestURLWithSSL:(BOOL)withSSL {
-    NSString *key = [self awsKeyForStream:self.stream fileName:[_manifestPath lastPathComponent]];
+- (NSURL*) urlWithFileName:(NSString*)fileName {
+    NSString *key = [self awsKeyForStream:self.stream fileName:fileName];
     NSString *ssl = @"";
-    if (withSSL) {
+    if (self.useSSL) {
         ssl = @"s";
     }
     NSString *urlString = [NSString stringWithFormat:@"http%@://%@.s3.amazonaws.com/%@", ssl, self.stream.bucketName, key];
     return [NSURL URLWithString:urlString];
+}
+
+- (NSURL*) manifestURL {
+    return [self urlWithFileName:[_manifestPath lastPathComponent]];
 }
 
 @end
