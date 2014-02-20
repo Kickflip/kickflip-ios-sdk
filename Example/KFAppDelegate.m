@@ -21,7 +21,7 @@
     // Override point for customization after application launch.
     self.window.backgroundColor = [UIColor whiteColor];
     
-    [Kickflip setupWithAPIKey:KICKFLIP_DEV_API_ID secret:KICKFLIP_DEV_API_SECRET];
+    [Kickflip setupWithAPIKey:KICKFLIP_API_KEY secret:KICKFLIP_API_SECRET];
     
     [DDLog addLogger:[DDTTYLogger sharedInstance]];
     

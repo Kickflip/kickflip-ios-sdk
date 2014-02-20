@@ -73,12 +73,33 @@
     [self startPreview];
 }
 
+
 - (void) willAnimateRotationToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation duration:(NSTimeInterval)duration
 {
     // this is not the most beautiful animation...
     AVCaptureVideoPreviewLayer* preview = self.recorder.previewLayer;
     preview.frame = self.cameraView.bounds;
-    [[preview connection] setVideoOrientation:toInterfaceOrientation];
+    [[preview connection] setVideoOrientation:[self avOrientationForInterfaceOrientation:toInterfaceOrientation]];
+}
+
+- (AVCaptureVideoOrientation) avOrientationForInterfaceOrientation:(UIInterfaceOrientation)orientation {
+    switch (orientation) {
+        case UIInterfaceOrientationPortrait:
+            return AVCaptureVideoOrientationPortrait;
+            break;
+        case UIInterfaceOrientationPortraitUpsideDown:
+            return AVCaptureVideoOrientationPortraitUpsideDown;
+            break;
+        case UIInterfaceOrientationLandscapeLeft:
+            return AVCaptureVideoOrientationLandscapeLeft;
+            break;
+        case UIInterfaceOrientationLandscapeRight:
+            return AVCaptureVideoOrientationLandscapeRight;
+            break;
+        default:
+            return AVCaptureVideoOrientationLandscapeLeft;
+            break;
+    }
 }
 
 - (void) startPreview
@@ -86,7 +107,10 @@
     AVCaptureVideoPreviewLayer* preview = self.recorder.previewLayer;
     [preview removeFromSuperlayer];
     preview.frame = self.cameraView.bounds;
-    [[preview connection] setVideoOrientation:UIInterfaceOrientationPortrait];
+    
+    UIInterfaceOrientation orientation = [UIApplication sharedApplication].statusBarOrientation;
+    
+    [[preview connection] setVideoOrientation:[self avOrientationForInterfaceOrientation:orientation]];
     
     [self.cameraView.layer addSublayer:preview];
 }
@@ -97,8 +121,23 @@
     // Dispose of any resources that can be recreated.
 }
 
-- (void) recorderDidStartRecording:(KFRecorder *)recorder {
+- (void) recorderDidStartRecording:(KFRecorder *)recorder error:(NSError *)error {
     self.recordButton.enabled = YES;
+    if (error) {
+        DDLogError(@"Error starting stream: %@", error.userInfo);
+        NSDictionary *response = [error.userInfo objectForKey:@"response"];
+        NSString *reason = nil;
+        if (response) {
+            reason = [response objectForKey:@"reason"];
+        }
+        NSMutableString *errorMsg = [NSMutableString stringWithFormat:@"Error starting stream: %@.", error.localizedDescription];
+        if (reason) {
+            [errorMsg appendFormat:@" %@", reason];
+        }
+        UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"Stream Start Error" message:errorMsg delegate:nil cancelButtonTitle:nil otherButtonTitles:@"OK", nil];
+        [alertView show];
+        [self.recordButton setTitle:@"Start" forState:UIControlStateNormal];
+    }
 }
 
 - (void) recorder:(KFRecorder *)recorder streamReadyAtURL:(NSURL *)url {

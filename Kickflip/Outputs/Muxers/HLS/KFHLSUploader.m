@@ -28,6 +28,9 @@ static NSString * const kUploadStateUploading = @"uploading";
 @property (nonatomic, strong) NSMutableDictionary *files;
 @property (nonatomic, strong) NSString *manifestPath;
 @property (nonatomic) BOOL manifestReady;
+@property (nonatomic, strong) NSString *finalManifestString;
+@property (nonatomic) BOOL isFinishedRecording;
+@property (nonatomic) BOOL hasUploadedFinalManifest;
 @end
 
 @implementation KFHLSUploader
@@ -36,7 +39,9 @@ static NSString * const kUploadStateUploading = @"uploading";
     if (self = [super init]) {
         self.stream = stream;
         _directoryPath = [directoryPath copy];
-        _directoryWatcher = [KFDirectoryWatcher watchFolderWithPath:_directoryPath delegate:self];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            self.directoryWatcher = [KFDirectoryWatcher watchFolderWithPath:_directoryPath delegate:self];
+        });
         _files = [NSMutableDictionary dictionary];
         _scanningQueue = dispatch_queue_create("KFHLSUploader Scanning Queue", DISPATCH_QUEUE_SERIAL);
         _callbackQueue = dispatch_queue_create("KFHLSUploader Callback Queue", DISPATCH_QUEUE_SERIAL);
@@ -44,10 +49,20 @@ static NSString * const kUploadStateUploading = @"uploading";
         _numbersOffset = 0;
         _nextSegmentIndexToUpload = 0;
         _manifestReady = NO;
+        _isFinishedRecording = NO;
         self.s3Client = [[OWS3Client alloc] initWithAccessKey:self.stream.awsAccessKey secretKey:self.stream.awsSecretKey];
         self.s3Client.useSSL = NO;
+        self.manifestGenerator = [[KFHLSManifestGenerator alloc] initWithTargetDuration:10 playlistType:KFHLSManifestPlaylistTypeVOD];
     }
     return self;
+}
+
+#warning This code is buggy and doesnt finish uploading all segments or the VOD properly
+- (void) finishedRecording {
+    self.isFinishedRecording = YES;
+    if (!self.hasUploadedFinalManifest) {
+        [self updateManifestWithString:nil];
+    }
 }
 
 - (void) setUseSSL:(BOOL)useSSL {
@@ -95,6 +110,7 @@ static NSString * const kUploadStateUploading = @"uploading";
             }
             [_queuedSegments removeObjectForKey:@(_nextSegmentIndexToUpload)];
             NSUInteger queuedSegmentsCount = _queuedSegments.count;
+            [self.manifestGenerator appendFromLiveManifest:manifest];
             [self updateManifestWithString:manifest];
             _nextSegmentIndexToUpload++;
             [self uploadNextSegment];
@@ -119,7 +135,12 @@ static NSString * const kUploadStateUploading = @"uploading";
 }
 
 - (void) updateManifestWithString:(NSString*)manifestString {
+    if (self.isFinishedRecording) {
+        [self.manifestGenerator finalizeManifest];
+        manifestString = [self.manifestGenerator manifestString];
+    }
     NSData *data = [manifestString dataUsingEncoding:NSUTF8StringEncoding];
+    DDLogVerbose(@"New manifest:\n%@", manifestString);
     NSString *key = [self awsKeyForStream:self.stream fileName:[_manifestPath lastPathComponent]];
     [self.s3Client postObjectWithData:data bucket:self.stream.bucketName key:key acl:@"public-read" success:^(S3PutObjectResponse *responseObject) {
         dispatch_async(self.callbackQueue, ^{
@@ -128,6 +149,11 @@ static NSString * const kUploadStateUploading = @"uploading";
                     [self.delegate uploader:self manifestReadyAtURL:[self manifestURL]];
                 }
                 _manifestReady = YES;
+            }
+            if (self.isFinishedRecording) {
+                if (self.delegate && [self.delegate respondsToSelector:@selector(uploaderHasFinished:)]) {
+                    [self.delegate uploaderHasFinished:self];
+                }
             }
         });
     } failure:^(NSError *error) {

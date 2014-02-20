@@ -8,12 +8,15 @@
 
 #import <Foundation/Foundation.h>
 #import "KFDirectoryWatcher.h"
+#import "KFHLSManifestGenerator.h"
 
 @class KFS3Stream, KFHLSUploader;
 
 @protocol KFHLSUploaderDelegate <NSObject>
+@optional
 - (void) uploader:(KFHLSUploader*)uploader didUploadSegmentAtURL:(NSURL*)segmentURL uploadSpeed:(double)uploadSpeed numberOfQueuedSegments:(NSUInteger)numberOfQueuedSegments; //KBps
 - (void) uploader:(KFHLSUploader *)uploader manifestReadyAtURL:(NSURL*)manifestURL;
+- (void) uploaderHasFinished:(KFHLSUploader*)uploader;
 @end
 
 @interface KFHLSUploader : NSObject <KFDirectoryWatcherDelegate>
@@ -24,8 +27,10 @@
 @property (nonatomic) dispatch_queue_t callbackQueue;
 @property (nonatomic, strong) KFS3Stream *stream;
 @property (nonatomic) BOOL useSSL;
+@property (nonatomic, strong) KFHLSManifestGenerator *manifestGenerator;
 
 - (id) initWithDirectoryPath:(NSString*)directoryPath stream:(KFS3Stream*)stream;
+- (void) finishedRecording;
 
 - (NSURL*) manifestURL;
 

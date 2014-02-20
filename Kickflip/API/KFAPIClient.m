@@ -28,12 +28,10 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
 }
 
 - (instancetype) init {
-    NSURL *url = [NSURL URLWithString:KICKFLIP_API_BASE_URL];
+    NSURL *url = [NSURL URLWithString:@"http://api.kickflip.io/"];
     if (self = [super initWithBaseURL:url]) {
         [self registerHTTPOperationClass:[AFJSONRequestOperation class]];
         [self setDefaultHeader:@"Accept" value:@"application/json"];
-        
-        
         
         [self checkOAuthCredentialsWithCallback:nil];
     }
@@ -41,7 +39,7 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
 }
 
 - (void) checkOAuthCredentialsWithCallback:(void (^)(BOOL success, NSError * error))callback {
-    NSURL *url = [NSURL URLWithString:KICKFLIP_API_BASE_URL];
+    NSURL *url = self.baseURL;
     NSString *apiKey = [Kickflip apiKey];
     NSString *apiSecret = [Kickflip apiSecret];
     if (!apiKey || !apiSecret) {

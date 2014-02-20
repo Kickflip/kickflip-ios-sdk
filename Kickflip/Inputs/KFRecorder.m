@@ -162,12 +162,15 @@
 - (void) startRecording {
     [[KFAPIClient sharedClient] startNewStream:^(KFStream *endpointResponse, NSError *error) {
         if (error) {
-            DDLogError(@"Error fetching endpoint: %@", error);
+            if (self.delegate && [self.delegate respondsToSelector:@selector(recorderDidStartRecording:error:)]) {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [self.delegate recorderDidStartRecording:self error:error];
+                });
+            }
             return;
         }
         self.stream = endpointResponse;
         if ([endpointResponse isKindOfClass:[KFS3Stream class]]) {
-            
             KFS3Stream *s3Endpoint = (KFS3Stream*)endpointResponse;
             s3Endpoint.streamState = KFStreamStateStreaming;
             [self setupHLSWriterWithEndpoint:s3Endpoint];
@@ -180,9 +183,9 @@
                 DDLogError(@"Error preparing for writing: %@", error);
             }
             self.isRecording = YES;
-            if (self.delegate && [self.delegate respondsToSelector:@selector(recorderDidStartRecording:)]) {
+            if (self.delegate && [self.delegate respondsToSelector:@selector(recorderDidStartRecording:error:)]) {
                 dispatch_async(dispatch_get_main_queue(), ^{
-                    [self.delegate recorderDidStartRecording:self];
+                    [self.delegate recorderDidStartRecording:self error:nil];
                 });
             }
         }
@@ -199,6 +202,13 @@
         if (error) {
             DDLogError(@"Error stop recording: %@", error);
         }
+        [[KFAPIClient sharedClient] stopStream:self.stream callbackBlock:^(BOOL success, NSError *error) {
+            if (!success) {
+                DDLogError(@"Error stopping stream: %@", error);
+            } else {
+                DDLogVerbose(@"Stream stopped: %@", self.stream.streamID);
+            }
+        }];
         if ([self.stream isKindOfClass:[KFS3Stream class]]) {
             [[KFHLSMonitor sharedMonitor] finishUploadingContentsAtFolderPath:_hlsWriter.directoryPath endpoint:(KFS3Stream*)self.stream];
         }
@@ -211,7 +221,7 @@
 }
 
 - (void) uploader:(KFHLSUploader *)uploader didUploadSegmentAtURL:(NSURL *)segmentURL uploadSpeed:(double)uploadSpeed numberOfQueuedSegments:(NSUInteger)numberOfQueuedSegments {
-    DDLogInfo(@"Uploaded segment %@ @ %f KB/s, numberOfQueuedSegments %d", segmentURL, uploadSpeed, numberOfQueuedSegments);
+    DDLogVerbose(@"Uploaded segment %@ @ %f KB/s, numberOfQueuedSegments %d", segmentURL, uploadSpeed, numberOfQueuedSegments);
     if ([Kickflip useAdaptiveBitrate]) {
         double currentUploadBitrate = uploadSpeed * 8 * 1024; // bps
         double maxBitrate = [Kickflip maxBitrate];

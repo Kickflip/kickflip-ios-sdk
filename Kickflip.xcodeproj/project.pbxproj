@@ -90,6 +90,7 @@
 		D9692C8A18B16A7600579B9B /* KFVideoFrame.m in Sources */ = {isa = PBXBuildFile; fileRef = D9692C8818B16A7600579B9B /* KFVideoFrame.m */; };
 		D9692C8C18B16E2F00579B9B /* KFEncoder.m in Sources */ = {isa = PBXBuildFile; fileRef = D9692C8B18B16E2F00579B9B /* KFEncoder.m */; };
 		D99912CF18984D3F00BFCBA4 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D99912CE18984D3F00BFCBA4 /* Foundation.framework */; };
+		D9AF25F818B5B77400F51B27 /* KFHLSManifestGenerator.m in Sources */ = {isa = PBXBuildFile; fileRef = D9AF25F718B5B77400F51B27 /* KFHLSManifestGenerator.m */; };
 		D9EB7822189B34CE0020B455 /* librtmp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = D9EB7821189B34CE0020B455 /* librtmp.a */; };
 		D9EB782C189B351D0020B455 /* libcrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = D9EB782A189B351D0020B455 /* libcrypto.a */; };
 		D9EB782D189B351D0020B455 /* libssl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = D9EB782B189B351D0020B455 /* libssl.a */; };
@@ -373,6 +374,8 @@
 		D99912DC18984D3F00BFCBA4 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
 		D99912DF18984D3F00BFCBA4 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = Library/Frameworks/UIKit.framework; sourceTree = DEVELOPER_DIR; };
 		D999AB9A18AEF7CF00DE7EA5 /* KFEncoder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = KFEncoder.h; sourceTree = "<group>"; };
+		D9AF25F618B5B77400F51B27 /* KFHLSManifestGenerator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = KFHLSManifestGenerator.h; sourceTree = "<group>"; };
+		D9AF25F718B5B77400F51B27 /* KFHLSManifestGenerator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = KFHLSManifestGenerator.m; sourceTree = "<group>"; };
 		D9E9EDD2189B430900FC89E6 /* amf.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = amf.c; sourceTree = "<group>"; };
 		D9E9EDD3189B430900FC89E6 /* amf.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = amf.h; sourceTree = "<group>"; };
 		D9E9EDD4189B430900FC89E6 /* bytes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = bytes.h; sourceTree = "<group>"; };
@@ -2982,6 +2985,8 @@
 		D945AD671898536D0026F697 /* HLS */ = {
 			isa = PBXGroup;
 			children = (
+				D9AF25F618B5B77400F51B27 /* KFHLSManifestGenerator.h */,
+				D9AF25F718B5B77400F51B27 /* KFHLSManifestGenerator.m */,
 				D945AD681898536D0026F697 /* KFDirectoryWatcher.h */,
 				D945AD691898536D0026F697 /* KFDirectoryWatcher.m */,
 				D945AD6C1898536D0026F697 /* KFHLSWriter.h */,
@@ -6357,6 +6362,7 @@
 				D9692C8C18B16E2F00579B9B /* KFEncoder.m in Sources */,
 				D9692C8A18B16A7600579B9B /* KFVideoFrame.m in Sources */,
 				D9692C7918B1671C00579B9B /* KFFrame.m in Sources */,
+				D9AF25F818B5B77400F51B27 /* KFHLSManifestGenerator.m in Sources */,
 				D945AE52189857D90026F697 /* KFDirectoryWatcher.m in Sources */,
 				D945AE53189857D90026F697 /* KFHLSUploader.m in Sources */,
 				D945AE54189857D90026F697 /* KFHLSWriter.m in Sources */,
