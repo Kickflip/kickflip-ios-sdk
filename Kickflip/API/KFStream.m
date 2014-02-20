@@ -9,7 +9,7 @@
 #import "KFStream.h"
 
 NSString * const KFStreamTypeKey = @"stream_type";
-static NSString * const KFStreamIDKey = @"streamID";
+static NSString * const KFStreamIDKey = @"stream_id";
 
 static NSString * const KFStreamUploadURLKey = @"upload_url";
 static NSString * const KFStreamURLKey = @"stream_url";

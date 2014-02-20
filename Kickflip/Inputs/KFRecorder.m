@@ -234,7 +234,7 @@
             [self.delegate recorder:self streamReadyAtURL:manifestURL];
         });
     }
-    DDLogInfo(@"Manifest ready at URL: %@", manifestURL);
+    DDLogVerbose(@"Manifest ready at URL: %@", manifestURL);
 }
 
 @end

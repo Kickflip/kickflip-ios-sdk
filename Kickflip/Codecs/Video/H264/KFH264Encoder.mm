@@ -18,6 +18,8 @@
 @property (nonatomic, strong) NSMutableData *videoSPSandPPS;
 @property (nonatomic) CMTimeScale timescale;
 @property (nonatomic, strong) NSMutableArray *orphanedFrames;
+@property (nonatomic, strong) NSMutableArray *orphanedSEIFrames;
+@property (nonatomic) CMTime lastPTS;
 @end
 
 @implementation KFH264Encoder
@@ -29,11 +31,13 @@
 - (instancetype) initWithBitrate:(NSUInteger)bitrate width:(int)width height:(int)height {
     if (self = [super initWithBitrate:bitrate]) {
         [self initializeNALUnitStartCode];
+        _lastPTS = kCMTimeInvalid;
         _timescale = 0;
         self.orphanedFrames = [NSMutableArray arrayWithCapacity:2];
+        self.orphanedSEIFrames = [NSMutableArray arrayWithCapacity:2];
         _encoder = [AVEncoder encoderForHeight:height andWidth:width bitrate:bitrate];
         [_encoder encodeWithBlock:^int(NSArray* dataArray, CMTimeValue ptsValue) {
-            [self writeVideoFrames:dataArray ptsValue:ptsValue];
+            [self incomingVideoFrames:dataArray ptsValue:ptsValue];
             return 0;
         } onParams:^int(NSData *data) {
             return 0;
@@ -58,8 +62,8 @@
 }
 
 - (void) encodeSampleBuffer:(CMSampleBufferRef)sampleBuffer {
+    CMTime pts = CMSampleBufferGetPresentationTimeStamp(sampleBuffer);
     if (!_timescale) {
-        CMTime pts = CMSampleBufferGetPresentationTimeStamp(sampleBuffer);
         _timescale = pts.timescale;
     }
     [_encoder encodeFrame:sampleBuffer];
@@ -67,7 +71,9 @@
 
 - (void) generateSPSandPPS {
     NSData* config = _encoder.getConfigData;
-    
+    if (!config) {
+        return;
+    }
     avcCHeader avcC((const BYTE*)[config bytes], [config length]);
     SeqParamSet seqParams;
     seqParams.Parse(avcC.sps());
@@ -87,26 +93,21 @@
         unsigned char* pNal = (unsigned char*)[data bytes];
         int idc = pNal[0] & 0x60;
         int naltype = pNal[0] & 0x1f;
-        DDLogVerbose(@"Orphaned frame info: idc(%d) naltype(%d) size(%lu)", idc, naltype, (unsigned long)data.length);
-        [self.orphanedFrames addObject:data];
+        if (idc == 0 && naltype == 6) { // SEI
+            DDLogVerbose(@"Orphaned SEI frame: idc(%d) naltype(%d) size(%lu)", idc, naltype, (unsigned long)data.length);
+            [self.orphanedSEIFrames addObject:data];
+        } else {
+            DDLogVerbose(@"Orphaned frame: lastPTS:(%lld) idc(%d) naltype(%d) size(%lu)", _lastPTS.value, idc, naltype, (unsigned long)data.length);
+            [self.orphanedFrames addObject:data];
+        }
     }
 }
 
-- (void) writeVideoFrames:(NSArray*)frames ptsValue:(CMTimeValue)ptsValue {
-    CMTime presentationTimeStamp = CMTimeMake(ptsValue, _timescale);
-    //DDLogVerbose(@"# encoderFrames: %d \t pts %lld", frames.count, ptsValue);
-    if (ptsValue == 0) {
-        [self addOrphanedFramesFromArray:frames];
-        return;
-    }
-    if (!_videoSPSandPPS) {
-        [self generateSPSandPPS];
-    }
-    
+- (void) writeVideoFrames:(NSArray*)frames pts:(CMTime)pts {
     NSMutableArray *totalFrames = [NSMutableArray array];
-    if (self.orphanedFrames.count > 0) {
-        [totalFrames addObjectsFromArray:self.orphanedFrames];
-        [self.orphanedFrames removeAllObjects];
+    if (self.orphanedSEIFrames.count > 0) {
+        [totalFrames addObjectsFromArray:self.orphanedSEIFrames];
+        [self.orphanedSEIFrames removeAllObjects];
     }
     [totalFrames addObjectsFromArray:frames];
     
@@ -142,12 +143,39 @@
         [aggregateFrameData appendData:videoData];
     }
     if (self.delegate) {
-        KFVideoFrame *videoFrame = [[KFVideoFrame alloc] initWithData:aggregateFrameData pts:presentationTimeStamp];
+        KFVideoFrame *videoFrame = [[KFVideoFrame alloc] initWithData:aggregateFrameData pts:pts];
         videoFrame.isKeyFrame = hasKeyframe;
         dispatch_async(self.callbackQueue, ^{
             [self.delegate encoder:self encodedFrame:videoFrame];
         });
     }
+}
+
+- (void) incomingVideoFrames:(NSArray*)frames ptsValue:(CMTimeValue)ptsValue {
+    if (ptsValue == 0) {
+        [self addOrphanedFramesFromArray:frames];
+        return;
+    }
+    if (!_videoSPSandPPS) {
+        [self generateSPSandPPS];
+    }
+    CMTime pts = CMTimeMake(ptsValue, _timescale);
+    if (self.orphanedFrames.count > 0) {
+        CMTime ptsDiff = CMTimeSubtract(pts, _lastPTS);
+        NSUInteger orphanedFramesCount = self.orphanedFrames.count;
+        DDLogVerbose(@"lastPTS before first orphaned frame: %lld", _lastPTS.value);
+        for (NSData *frame in self.orphanedFrames) {
+            CMTime fakePTSDiff = CMTimeMultiplyByFloat64(ptsDiff, 1.0/(orphanedFramesCount + 1));
+            CMTime fakePTS = CMTimeAdd(_lastPTS, fakePTSDiff);
+            DDLogVerbose(@"orphan frame fakePTS: %lld", fakePTS.value);
+            [self writeVideoFrames:@[frame] pts:fakePTS];
+        }
+        DDLogVerbose(@"pts after orphaned frame: %lld", pts.value);
+        [self.orphanedFrames removeAllObjects];
+    }
+    
+    [self writeVideoFrames:frames pts:pts];
+    _lastPTS = pts;
 }
 
 
