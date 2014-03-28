@@ -10,7 +10,7 @@ Pod::Spec.new do |s|
   s.platform     = :ios, '7.0'
   s.source       = { :git => "https://github.com/Kickflip/kickflip-ios-sdk.git", :tag => "0.9" }
 
-  s.source_files  = 'Kickflip', 'Kickflip/**/*.{h,m}'
+  s.source_files  = 'Kickflip', 'Kickflip/**/*.{h,m,mm,cpp}'
 
   s.requires_arc = true
 
