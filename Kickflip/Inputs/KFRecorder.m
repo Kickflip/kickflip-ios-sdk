@@ -68,7 +68,7 @@
     
     _aacEncoder = [[KFAACEncoder alloc] initWithBitrate:audioBitrate sampleRate:self.audioSampleRate channels:1];
     _aacEncoder.delegate = self;
-    _aacEncoder.addADTSHeader = YES;
+    //_aacEncoder.addADTSHeader = YES;
 }
 
 - (void) setupAudioCapture {

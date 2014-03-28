@@ -7,7 +7,6 @@
 //
 
 #import "KFAPIClient.h"
-#import "KFSecrets.h"
 #import "AFOAuth2Client.h"
 #import "KFLog.h"
 #import "KFUser.h"
