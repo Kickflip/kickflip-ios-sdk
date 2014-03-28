@@ -58,12 +58,10 @@
 - (void) setupOutputFile {
     NSString *outputPath = [_directoryPath stringByAppendingPathComponent:@"index.m3u8"];
     
-    _outputFile = [[FFOutputFile alloc] initWithPath:@"rtmp://live31.us-va.zencoder.io:1935/live/77ba544cc6b32ce478a47592452a75ff" options:@{kFFmpegOutputFormatKey: @"flv"}];
+    _outputFile = [[FFOutputFile alloc] initWithPath:outputPath options:@{kFFmpegOutputFormatKey: @"hls"}];
     
-    //_outputFile = [[FFOutputFile alloc] initWithPath:outputPath options:@{kFFmpegOutputFormatKey: @"hls"}];
-    
-    //FFBitstreamFilter *bitstreamFilter = [[FFBitstreamFilter alloc] initWithFilterName:@"h264_mp4toannexb"];
-    //[_outputFile addBitstreamFilter:bitstreamFilter];
+    FFBitstreamFilter *bitstreamFilter = [[FFBitstreamFilter alloc] initWithFilterName:@"h264_mp4toannexb"];
+    [_outputFile addBitstreamFilter:bitstreamFilter];
 }
 
 - (void) addVideoStreamWithWidth:(int)width height:(int)height {
