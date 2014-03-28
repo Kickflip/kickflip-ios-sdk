@@ -2,11 +2,11 @@
 
 **note**: This is a pre-release API preview.
 
-The [Kickflip](http://kickflip.io) platform provides a complete video broadcasting solution for your iOS application. You can use our pre-built `KFBroadcastViewController` to stream live video to your Kickflip account starting with one line of code.
+The [Kickflip](http://kickflip.io) platform provides a complete video broadcasting solution for your iOS application. You can use our pre-built `KFBroadcastViewController` to stream live video to your Kickflip account starting with one line of code. Check out our [Kickflip iOS SDK example](https://github.com/Kickflip/kickflip-ios-example).
 
 ## Quickstart
 
-Launch Kickflip's default `KFBroadcastViewController` to instantly stream live video from your application:
+The quickest way to get started will be to fork the [Kickflip iOS SDK example](https://github.com/Kickflip/kickflip-ios-example). Launch Kickflip's default `KFBroadcastViewController` to instantly stream live video from your application:
 
 ```objc
 [Kickflip setupWithAPIKey:@"API_KEY" secret:@"API_SECRET"];
@@ -17,8 +17,17 @@ Launch Kickflip's default `KFBroadcastViewController` to instantly stream live v
 } 
 completion:nil];
 ```
-	
-	
+
+## Cocoapods Setup
+
+You'll need to install [Cocoapods](http://cocoapods.org) first. Because you're so bleeding edge, some of our dependencies aren't in the official Cocoapods repo yet, so you'll have to add our Specs repo.
+
+    $ pod repo add kickflip git@github.com:Kickflip/Specs.git
+    
+Then you can add the following to your `Podfile`:
+
+    pod 'Kickflip', '~> 0.9'
+    
 ## License
 
 Apache 2.0
