@@ -23,20 +23,47 @@
         [_shareButton setTitle:@"Share" forState:UIControlStateNormal];
         self.shareButton.enabled = NO;
         
-        self.recordButton = [UIButton buttonWithType:UIButtonTypeRoundedRect];
-        [self.recordButton setTitle:@"Start" forState:UIControlStateNormal];
+        self.recordButton = [[KFRecordButton alloc] initWithFrame:CGRectZero];
         [self.recordButton addTarget:self action:@selector(recordButtonPressed:) forControlEvents:UIControlEventTouchUpInside];
         self.recorder = [[KFRecorder alloc] init];
         self.recorder.delegate = self;
+        
+
+
+        
     }
     return self;
+}
+
+- (void) setupCancelButton {
+    self.cancelButton = [UIButton buttonWithType:UIButtonTypeRoundedRect];
+    [self.cancelButton setTitle:@"Cancel" forState:UIControlStateNormal];
+    [self.cancelButton addTarget:self action:@selector(cancelButtonPressed:) forControlEvents:UIControlEventTouchUpInside];
+    [self.view addSubview:self.cancelButton];
+}
+
+- (void) setupRotationLabel {
+    self.rotationLabel = [[UILabel alloc] init];
+    self.rotationLabel.text = @"Rotate Device to Landscape";
+    self.rotationLabel.textAlignment = NSTextAlignmentCenter;
+    self.rotationLabel.font = [UIFont boldSystemFontOfSize:17.0f];
+    self.rotationLabel.textColor = [UIColor whiteColor];
+    self.rotationLabel.shadowColor = [UIColor blackColor];
+    self.rotationLabel.shadowOffset = CGSizeMake(0, -1);
+    [self.view addSubview:self.rotationLabel];
+}
+
+- (void) cancelButtonPressed:(id)sender {
+    if (_completionBlock) {
+        _completionBlock(YES, nil);
+    }
+    [self dismissViewControllerAnimated:YES completion:nil];
 }
 
 
 - (void) recordButtonPressed:(id)sender {
     self.recordButton.enabled = NO;
     if (!self.recorder.isRecording) {
-        [self.recordButton setTitle:@"Stop" forState:UIControlStateNormal];
         [self.recorder startRecording];
     } else {
         [self.recorder stopRecording];
@@ -57,10 +84,11 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-    [self.view addSubview:_cameraView];
-    [self.view addSubview:_shareButton];
+    [self.view addSubview:self.cameraView];
+    [self.view addSubview:self.shareButton];
     [self.view addSubview:self.recordButton];
-    
+    [self setupCancelButton];
+    [self setupRotationLabel];
 }
 
 - (void) viewWillAppear:(BOOL)animated {
@@ -69,6 +97,10 @@
     _cameraView.frame = self.view.bounds;
     _shareButton.frame = CGRectMake(50, 100, 200, 30);
     _recordButton.frame = CGRectMake(50, 200, 200, 30);
+    _cancelButton.frame = CGRectMake(50, 300, 200, 30);
+    self.rotationLabel.frame = self.view.bounds;
+    
+    [self checkViewOrientation:animated];
     
     [self startPreview];
 }
@@ -78,8 +110,45 @@
 {
     // this is not the most beautiful animation...
     AVCaptureVideoPreviewLayer* preview = self.recorder.previewLayer;
-    preview.frame = self.cameraView.bounds;
+    [UIView animateWithDuration:duration animations:^{
+        preview.frame = self.cameraView.bounds;
+    } completion:NULL];
     [[preview connection] setVideoOrientation:[self avOrientationForInterfaceOrientation:toInterfaceOrientation]];
+    
+    [self checkViewOrientation:YES];
+}
+
+- (void) checkViewOrientation:(BOOL)animated {
+    NSArray *landscapeControls = @[self.shareButton, self.recordButton, self.cancelButton];
+    CGFloat duration = 0.2f;
+    if (!animated) {
+        duration = 0.0f;
+    }
+    UIInterfaceOrientation orientation = [UIApplication sharedApplication].statusBarOrientation;
+    // Hide controls in Portrait
+    if (orientation == UIInterfaceOrientationPortrait || orientation == UIInterfaceOrientationPortrait) {
+        for (UIControl *control in landscapeControls) {
+            control.enabled = NO;
+        }
+        [[UIApplication sharedApplication] setStatusBarHidden:NO withAnimation:UIStatusBarAnimationFade];
+        [UIView animateWithDuration:0.2 animations:^{
+            self.shareButton.alpha = 0.0f;
+            self.recordButton.alpha = 0.0f;
+            self.cancelButton.alpha = 0.0f;
+            self.rotationLabel.alpha = 1.0f;
+        } completion:NULL];
+    } else {
+        for (UIControl *control in landscapeControls) {
+            control.enabled = YES;
+        }
+        [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationFade];
+        [UIView animateWithDuration:0.2 animations:^{
+            self.shareButton.alpha = 1.0f;
+            self.recordButton.alpha = 1.0f;
+            self.cancelButton.alpha = 1.0f;
+            self.rotationLabel.alpha = 0.0f;
+        } completion:NULL];
+    }
 }
 
 - (AVCaptureVideoOrientation) avOrientationForInterfaceOrientation:(UIInterfaceOrientation)orientation {
@@ -136,7 +205,9 @@
         }
         UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"Stream Start Error" message:errorMsg delegate:nil cancelButtonTitle:nil otherButtonTitles:@"OK", nil];
         [alertView show];
-        [self.recordButton setTitle:@"Start" forState:UIControlStateNormal];
+        self.recordButton.isRecording = NO;
+    } else {
+        self.recordButton.isRecording = YES;
     }
 }
 

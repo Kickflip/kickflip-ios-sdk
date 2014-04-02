@@ -9,6 +9,7 @@
 #import <UIKit/UIKit.h>
 #import "KFRecorder.h"
 #import "Kickflip.h"
+#import "KFRecordButton.h"
 
 @interface KFBroadcastViewController : UIViewController <KFRecorderDelegate>
 
@@ -17,10 +18,13 @@
 
 @property (strong, nonatomic) UIView *cameraView;
 @property (nonatomic, strong) UIButton *shareButton;
-@property (nonatomic, strong) UIButton *recordButton;
+@property (nonatomic, strong) KFRecordButton *recordButton;
 @property (nonatomic, strong) UIImageView *liveBanner;
 
 @property (nonatomic, strong) KFRecorder *recorder;
 @property (nonatomic, strong) NSURL *shareURL;
+
+@property (nonatomic, strong) UILabel *rotationLabel;
+@property (nonatomic, strong) UIButton *cancelButton;
 
 @end

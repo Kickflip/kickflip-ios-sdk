@@ -186,5 +186,60 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
     }];
 }
 
+- (void) requestStreamsForUsername:(NSString*)username user:(KFUser*)user callbackBlock:(void (^)(NSArray *streams, NSError *error))callbackBlock {
+    if (!callbackBlock) {
+        return;
+    }
+    [self checkOAuthCredentialsWithCallback:^(BOOL success, NSError *error) {
+        if (!success) {
+            if (callbackBlock) {
+                callbackBlock(nil, error);
+            }
+            return;
+        }
+        NSMutableDictionary *parameters = [NSMutableDictionary dictionaryWithCapacity:2];
+        if (user.uuid) {
+            parameters[@"uuid"] = user.uuid;
+        }
+        if (username) {
+            parameters[@"username"] = username;
+        }
+        [self postPath:@"/api/search/user" parameters:parameters success:^(AFHTTPRequestOperation *operation, id responseObject) {
+            DDLogInfo(@"response: %@", responseObject);
+        } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+            callbackBlock(nil, error);
+        }];
+    }];
+}
+
+- (void) requestStreamsForLocation:(CLLocation*)location radius:(CLLocationDistance)radius user:(KFUser*)user callbackBlock:(void (^)(NSArray *streams, NSError *error))callbackBlock {
+    if (!callbackBlock) {
+        return;
+    }
+    [self checkOAuthCredentialsWithCallback:^(BOOL success, NSError *error) {
+        if (!success) {
+            if (callbackBlock) {
+                callbackBlock(nil, error);
+            }
+            return;
+        }
+        NSMutableDictionary *parameters = [NSMutableDictionary dictionaryWithCapacity:4];
+        if (user.uuid) {
+            parameters[@"uuid"] = user.uuid;
+        }
+        if (location) {
+            parameters[@"lat"] = @(location.coordinate.latitude);
+            parameters[@"lon"] = @(location.coordinate.longitude);
+        }
+        if (radius > 0) {
+            parameters[@"radius"] = @(radius);
+        }
+        [self postPath:@"/api/search/location" parameters:parameters success:^(AFHTTPRequestOperation *operation, id responseObject) {
+            DDLogInfo(@"response: %@", responseObject);
+        } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+            callbackBlock(nil, error);
+        }];
+    }];
+}
 
 @end
