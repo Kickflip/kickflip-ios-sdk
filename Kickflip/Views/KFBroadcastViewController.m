@@ -44,7 +44,7 @@
 
 - (void) setupRotationLabel {
     self.rotationLabel = [[UILabel alloc] init];
-    self.rotationLabel.text = @"Rotate Device to Landscape";
+    self.rotationLabel.text = @"Rotate Device to Record";
     self.rotationLabel.textAlignment = NSTextAlignmentCenter;
     self.rotationLabel.font = [UIFont boldSystemFontOfSize:17.0f];
     self.rotationLabel.textColor = [UIColor whiteColor];
@@ -89,6 +89,11 @@
     [self.view addSubview:self.recordButton];
     [self setupCancelButton];
     [self setupRotationLabel];
+}
+
+- (void) viewWillDisappear:(BOOL)animated {
+    [super viewWillDisappear:animated];
+    [[UIApplication sharedApplication] setStatusBarHidden:NO withAnimation:UIStatusBarAnimationFade];
 }
 
 - (void) viewWillAppear:(BOOL)animated {

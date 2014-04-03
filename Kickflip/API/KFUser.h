@@ -8,14 +8,21 @@
 
 #import <Foundation/Foundation.h>
 
-@interface KFUser : NSObject
+extern const struct KFUserAttributes {
+	__unsafe_unretained NSString *username;
+	__unsafe_unretained NSString *uuid;
+	__unsafe_unretained NSString *appName;
+} KFUserAttributes;
+
+@interface KFUser : NSObject <NSSecureCoding>
 
 @property (readonly, nonatomic, strong) NSString *username;
 @property (readonly, nonatomic, strong) NSString *uuid;
 @property (readonly, nonatomic, strong) NSString *appName;
 
 + (instancetype) activeUser;
-+ (instancetype) activeUserWithDictionary:(NSDictionary*)dictionary;
-+ (void) deactivateUser;
++ (void) setActiveUser:(KFUser*)user;
+
+- (instancetype) initWithJSONDictionary:(NSDictionary*)dictionary;
 
 @end

@@ -74,6 +74,26 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
 }
 
 - (void) requestNewUserWithUsername:(NSString*)username callbackBlock:(void (^)(KFUser *newUser, NSError *error))callbackBlock {
+    NSDictionary *parameters = nil;
+    if (username) {
+        parameters = @{@"username": username};
+    }
+    [self betterPostPath:@"/api/new/user/" parameters:parameters callbackBlock:^(NSDictionary *responseDictionary, NSError *error) {
+        if (error) {
+            if (callbackBlock) {
+                callbackBlock(nil, error);
+            }
+            return;
+        }
+        KFUser *user = [[KFUser alloc] initWithJSONDictionary:responseDictionary];
+        [KFUser setActiveUser:user];
+        if (callbackBlock) {
+            callbackBlock(user, nil);
+        }
+    }];
+}
+
+- (void) betterPostPath:(NSString*)path parameters:(NSDictionary*)parameters callbackBlock:(void (^)(NSDictionary *responseDictionary, NSError *error))callbackBlock {
     [self checkOAuthCredentialsWithCallback:^(BOOL success, NSError *error) {
         if (!success) {
             if (callbackBlock) {
@@ -81,108 +101,66 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
             }
             return;
         }
-        [self postPath:@"/api/new/user/" parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
+        [self postPath:path parameters:parameters success:^(AFHTTPRequestOperation *operation, id responseObject) {
             if (responseObject && [responseObject isKindOfClass:[NSDictionary class]]) {
                 NSDictionary *responseDictionary = (NSDictionary*)responseObject;
-                KFUser *activeUser = [KFUser activeUserWithDictionary:responseDictionary];
-                if (!callbackBlock) {
+                NSNumber *successValue = [responseDictionary objectForKey:@"success"];
+                if (successValue && ![successValue boolValue]) {
+                    if (callbackBlock) {
+                        callbackBlock(nil, [NSError errorWithDomain:kKFAPIClientErrorDomain code:105 userInfo:responseDictionary]);
+                    }
                     return;
                 }
-                if (!activeUser) {
-                    callbackBlock(nil, [NSError errorWithDomain:kKFAPIClientErrorDomain code:100 userInfo:@{NSLocalizedDescriptionKey: @"User response error, no user", @"operation": operation, @"response": responseDictionary}]);
+                if (callbackBlock) {
+                    callbackBlock(responseDictionary, nil);
                     return;
                 }
-                callbackBlock(activeUser, nil);
             } else {
                 if (callbackBlock) {
-                    callbackBlock(nil, [NSError errorWithDomain:kKFAPIClientErrorDomain code:101 userInfo:@{NSLocalizedDescriptionKey: @"User response error, bad server response", @"operation": operation}]);
+                    NSError *error = [NSError errorWithDomain:kKFAPIClientErrorDomain code:103 userInfo:@{NSLocalizedDescriptionKey: @"Bad request", @"response": responseObject}];
+                    callbackBlock(NO, error);
                 }
             }
-            
         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-            if (error && callbackBlock) {
-                callbackBlock(nil, error);
+            if (callbackBlock) {
+                callbackBlock(NO, error);
             }
         }];
     }];
 }
 
 - (void) stopStream:(KFStream *)stream callbackBlock:(void (^)(BOOL, NSError *))callbackBlock {
-    [self postPath:@"/api/stream/stop" parameters:@{@"uuid": stream.user.uuid} success:^(AFHTTPRequestOperation *operation, id responseObject) {
-        if (responseObject && [responseObject isKindOfClass:[NSDictionary class]]) {
-            NSDictionary *responseDictionary = (NSDictionary*)responseObject;
-            if (![[responseDictionary objectForKey:@"success"] boolValue]) {
-            }
-        } else {
-            if (callbackBlock) {
-                NSError *error = [NSError errorWithDomain:kKFAPIClientErrorDomain code:103 userInfo:@{NSLocalizedDescriptionKey: @"Bad request", @"response": responseObject}];
-                callbackBlock(NO, error);
-            }
+    [self betterPostPath:@"/api/stream/stop" parameters:@{@"uuid": stream.user.uuid, @"stream_id": stream.streamID} callbackBlock:^(NSDictionary *responseDictionary, NSError *error) {
+        if (!callbackBlock) {
+            return;
         }
-    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-        if (callbackBlock) {
+        if (error) {
             callbackBlock(NO, error);
-        }
-    }];
-}
-
-- (void) requestNewEndpointWithUser:(KFUser*)user callback:(void (^)(KFStream *endpoint, NSError *error))endpointCallback {
-    [self postPath:@"/api/stream/start" parameters:@{@"uuid": user.uuid} success:^(AFHTTPRequestOperation *operation, id responseObject) {
-        if (responseObject && [responseObject isKindOfClass:[NSDictionary class]]) {
-            NSDictionary *responseDictionary = (NSDictionary*)responseObject;
-            if (![[responseDictionary objectForKey:@"success"] boolValue]) {
-                if (endpointCallback) {
-                    NSError *error = [NSError errorWithDomain:kKFAPIClientErrorDomain code:103 userInfo:@{NSLocalizedDescriptionKey: @"Bad request", @"response": responseObject}];
-                    endpointCallback(nil, error);
-                }
-                return;
-            }
-            KFStream *endpoint = nil;
-            NSString *streamType = responseDictionary[KFStreamTypeKey];
-            if ([streamType isEqualToString:KFS3StreamType]) {
-                endpoint = [[KFS3Stream alloc] initWithUser:user parameters:responseDictionary];
-            }
-            
-            if (endpoint) {
-                endpointCallback(endpoint, nil);
-            } else {
-                endpointCallback(nil, [NSError errorWithDomain:kKFAPIClientErrorDomain code:104 userInfo:@{NSLocalizedDescriptionKey: @"Error parsing response", @"response": responseDictionary}]);
-            }
         } else {
-            if (endpointCallback) {
-                NSError *error = [NSError errorWithDomain:kKFAPIClientErrorDomain code:103 userInfo:@{NSLocalizedDescriptionKey: @"Bad request", @"response": responseObject}];
-                endpointCallback(nil, error);
-            }
-        }
-    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-        if (endpointCallback) {
-            endpointCallback(nil, error);
+            callbackBlock(YES, nil);
         }
     }];
 }
 
 - (void) startNewStream:(void (^)(KFStream *, NSError *))endpointCallback {
-    [self checkOAuthCredentialsWithCallback:^(BOOL success, NSError *error) {
-        if (!success) {
-            if (endpointCallback) {
-                endpointCallback(nil, error);
-            }
-            return;
+    KFUser *activeUser = [KFUser activeUser];
+    if (!activeUser) {
+        if (endpointCallback) {
+            endpointCallback(nil, [NSError errorWithDomain:kKFAPIClientErrorDomain code:123 userInfo:@{NSLocalizedDescriptionKey: @"Need an active user first"}]);
         }
-        KFUser *activeUser = [KFUser activeUser];
-        if (activeUser) {
-            [self requestNewEndpointWithUser:activeUser callback:endpointCallback];
-            return;
+    }
+    [self betterPostPath:@"/api/stream/start" parameters:@{@"uuid": activeUser.uuid} callbackBlock:^(NSDictionary *responseDictionary, NSError *error) {
+        KFStream *endpoint = nil;
+        NSString *streamType = responseDictionary[KFStreamTypeKey];
+        if ([streamType isEqualToString:KFS3StreamType]) {
+            endpoint = [[KFS3Stream alloc] initWithUser:activeUser parameters:responseDictionary];
         }
-        [self requestNewUserWithUsername:nil callbackBlock:^(KFUser *newUser, NSError *error) {
-            if (error) {
-                if (endpointCallback) {
-                    endpointCallback(nil, error);
-                }
-                return;
-            }
-            [self requestNewEndpointWithUser:newUser callback:endpointCallback];
-        }];
+        
+        if (endpoint) {
+            endpointCallback(endpoint, nil);
+        } else {
+            endpointCallback(nil, [NSError errorWithDomain:kKFAPIClientErrorDomain code:104 userInfo:@{NSLocalizedDescriptionKey: @"Error parsing response", @"response": responseDictionary}]);
+        }
     }];
 }
 
@@ -190,25 +168,20 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
     if (!callbackBlock) {
         return;
     }
-    [self checkOAuthCredentialsWithCallback:^(BOOL success, NSError *error) {
-        if (!success) {
-            if (callbackBlock) {
-                callbackBlock(nil, error);
-            }
+    NSMutableDictionary *parameters = [NSMutableDictionary dictionaryWithCapacity:2];
+    if (user.uuid) {
+        parameters[@"uuid"] = user.uuid;
+    }
+    if (username) {
+        parameters[@"username"] = username;
+    }
+    
+    [self betterPostPath:@"/api/search/user" parameters:parameters callbackBlock:^(NSDictionary *responseDictionary, NSError *error) {
+        if (error) {
+            callbackBlock(nil, error);
             return;
         }
-        NSMutableDictionary *parameters = [NSMutableDictionary dictionaryWithCapacity:2];
-        if (user.uuid) {
-            parameters[@"uuid"] = user.uuid;
-        }
-        if (username) {
-            parameters[@"username"] = username;
-        }
-        [self postPath:@"/api/search/user" parameters:parameters success:^(AFHTTPRequestOperation *operation, id responseObject) {
-            DDLogInfo(@"response: %@", responseObject);
-        } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-            callbackBlock(nil, error);
-        }];
+        DDLogInfo(@"Streams: %@", responseDictionary);
     }];
 }
 
