@@ -27,12 +27,37 @@
         self.stopImage = [image imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
         
         self.tintColor = [UIColor redColor];
-        self.outerImageView = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"KFRecordButtonBorder"]];
-        [self addSubview:self.outerImageView];
-        self.frame = CGRectMake(0, 0, 66, 66);
-        self.outerImageView.frame = self.frame;
+        
+        self.translatesAutoresizingMaskIntoConstraints = NO;
+        
+        [self setupOuterImage];
     }
     return self;
+}
+
+- (void) setupOuterImage {
+    self.outerImageView = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"KFRecordButtonBorder"]];
+    self.outerImageView.translatesAutoresizingMaskIntoConstraints = NO;
+    [self addSubview:self.outerImageView];
+}
+
+- (void) updateConstraints {
+    UIView *superview = self;
+    NSDictionary *variables = NSDictionaryOfVariableBindings(_outerImageView, superview);
+    NSArray *constraints =
+    [NSLayoutConstraint constraintsWithVisualFormat:@"V:[superview]-(<=1)-[_outerImageView]"
+                                            options: NSLayoutFormatAlignAllCenterX
+                                            metrics:nil
+                                              views:variables];
+    [self addConstraints:constraints];
+    
+    constraints =
+    [NSLayoutConstraint constraintsWithVisualFormat:@"H:[superview]-(<=1)-[_outerImageView]"
+                                            options: NSLayoutFormatAlignAllCenterY
+                                            metrics:nil
+                                              views:variables];
+    [self addConstraints:constraints];
+    [super updateConstraints];
 }
 
 - (void) setIsRecording:(BOOL)isRecording {
@@ -46,9 +71,8 @@
     }
 }
 
-- (void) setFrame:(CGRect)frame {
-    CGRect newFrame = CGRectMake(frame.origin.x, frame.origin.y, 66, 66);
-    [super setFrame:newFrame];
+- (CGSize) intrinsicContentSize {
+    return CGSizeMake(66, 66);
 }
 
 @end

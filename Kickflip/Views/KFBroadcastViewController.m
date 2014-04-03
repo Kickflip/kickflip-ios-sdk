@@ -11,35 +11,66 @@
 #import "KFAPIClient.h"
 #import "KFUser.h"
 #import "KFLog.h"
+#import "UIView+AutoLayout.h"
 
 @implementation KFBroadcastViewController
 
 - (id) init {
     if (self = [super init]) {
-        _cameraView = [[UIView alloc] init];
-        _cameraView.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleBottomMargin;
-        _shareButton = [UIButton buttonWithType:UIButtonTypeRoundedRect];
-        [_shareButton addTarget:self action:@selector(shareButtonPressed:) forControlEvents:UIControlEventTouchUpInside];
-        [_shareButton setTitle:@"Share" forState:UIControlStateNormal];
-        self.shareButton.enabled = NO;
+
         
-        self.recordButton = [[KFRecordButton alloc] initWithFrame:CGRectZero];
-        [self.recordButton addTarget:self action:@selector(recordButtonPressed:) forControlEvents:UIControlEventTouchUpInside];
+
         self.recorder = [[KFRecorder alloc] init];
         self.recorder.delegate = self;
         
 
 
-        
+        //self.view.translatesAutoresizingMaskIntoConstraints = NO;
     }
     return self;
 }
 
+- (void) setupCameraView {
+    _cameraView = [[UIView alloc] init];
+    _cameraView.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleBottomMargin;
+    [self.view addSubview:_cameraView];
+}
+
+- (void) setupShareButton {
+    _shareButton = [UIButton buttonWithType:UIButtonTypeRoundedRect];
+    [_shareButton addTarget:self action:@selector(shareButtonPressed:) forControlEvents:UIControlEventTouchUpInside];
+    [_shareButton setTitle:@"Share" forState:UIControlStateNormal];
+    self.shareButton.enabled = NO;
+    self.shareButton.translatesAutoresizingMaskIntoConstraints = NO;
+    [self.view addSubview:self.shareButton];
+    NSLayoutConstraint *constraint = [self.shareButton autoPinEdgeToSuperviewEdge:ALEdgeTop withInset:10.0f];
+    [self.view addConstraint:constraint];
+    constraint = [self.shareButton autoPinEdgeToSuperviewEdge:ALEdgeLeft withInset:10.0f];
+    [self.view addConstraint:constraint];
+}
+
+- (void) setupRecordButton {
+    self.recordButton = [[KFRecordButton alloc] initWithFrame:CGRectZero];
+    [self.view addSubview:self.recordButton];
+    [self.recordButton addTarget:self action:@selector(recordButtonPressed:) forControlEvents:UIControlEventTouchUpInside];
+    
+    NSLayoutConstraint *constraint = [self.recordButton autoPinEdgeToSuperviewEdge:ALEdgeRight withInset:10.0f];
+    [self.view addConstraint:constraint];
+    constraint = [self.recordButton autoAlignAxisToSuperviewAxis:ALAxisHorizontal];
+    [self.view addConstraint:constraint];
+}
+
 - (void) setupCancelButton {
     self.cancelButton = [UIButton buttonWithType:UIButtonTypeRoundedRect];
+    self.cancelButton.translatesAutoresizingMaskIntoConstraints = NO;
     [self.cancelButton setTitle:@"Cancel" forState:UIControlStateNormal];
     [self.cancelButton addTarget:self action:@selector(cancelButtonPressed:) forControlEvents:UIControlEventTouchUpInside];
     [self.view addSubview:self.cancelButton];
+    
+    NSLayoutConstraint *constraint = [self.cancelButton autoPinEdgeToSuperviewEdge:ALEdgeBottom withInset:10.0f];
+    [self.view addConstraint:constraint];
+    constraint = [self.cancelButton autoPinEdgeToSuperviewEdge:ALEdgeLeft withInset:10.0f];
+    [self.view addConstraint:constraint];
 }
 
 - (void) setupRotationLabel {
@@ -50,7 +81,10 @@
     self.rotationLabel.textColor = [UIColor whiteColor];
     self.rotationLabel.shadowColor = [UIColor blackColor];
     self.rotationLabel.shadowOffset = CGSizeMake(0, -1);
+    self.rotationLabel.translatesAutoresizingMaskIntoConstraints = NO;
     [self.view addSubview:self.rotationLabel];
+    NSArray *constraints = [self.rotationLabel autoCenterInSuperview];
+    [self.view addConstraints:constraints];
 }
 
 - (void) cancelButtonPressed:(id)sender {
@@ -84,9 +118,9 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-    [self.view addSubview:self.cameraView];
-    [self.view addSubview:self.shareButton];
-    [self.view addSubview:self.recordButton];
+    [self setupCameraView];
+    [self setupShareButton];
+    [self setupRecordButton];
     [self setupCancelButton];
     [self setupRotationLabel];
 }
@@ -98,12 +132,9 @@
 
 - (void) viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
+    [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationFade];
     
     _cameraView.frame = self.view.bounds;
-    _shareButton.frame = CGRectMake(50, 100, 200, 30);
-    _recordButton.frame = CGRectMake(50, 200, 200, 30);
-    _cancelButton.frame = CGRectMake(50, 300, 200, 30);
-    self.rotationLabel.frame = self.view.bounds;
     
     [self checkViewOrientation:animated];
     
@@ -124,7 +155,7 @@
 }
 
 - (void) checkViewOrientation:(BOOL)animated {
-    NSArray *landscapeControls = @[self.shareButton, self.recordButton, self.cancelButton];
+    NSArray *landscapeControls = @[self.recordButton, self.cancelButton];
     CGFloat duration = 0.2f;
     if (!animated) {
         duration = 0.0f;
@@ -135,7 +166,6 @@
         for (UIControl *control in landscapeControls) {
             control.enabled = NO;
         }
-        [[UIApplication sharedApplication] setStatusBarHidden:NO withAnimation:UIStatusBarAnimationFade];
         [UIView animateWithDuration:0.2 animations:^{
             self.shareButton.alpha = 0.0f;
             self.recordButton.alpha = 0.0f;
@@ -146,7 +176,6 @@
         for (UIControl *control in landscapeControls) {
             control.enabled = YES;
         }
-        [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationFade];
         [UIView animateWithDuration:0.2 animations:^{
             self.shareButton.alpha = 1.0f;
             self.recordButton.alpha = 1.0f;
