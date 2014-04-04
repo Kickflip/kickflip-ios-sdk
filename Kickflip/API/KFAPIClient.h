@@ -18,23 +18,30 @@
 - (void) startNewStream:(void (^)(KFStream *newStream, NSError *error))endpointCallback;
 - (void) stopStream:(KFStream*)stream callbackBlock:(void (^)(BOOL success, NSError *error))callbackBlock;
 
-
-/**
- * Fetches the currently active user or requests a new one if one is not found.
- */
-- (void) fetchActiveUser:(void (^)(KFUser* activeUser, NSError* error))callbackBlock;
-
 /**
  * Requests a new user.
  */
 - (void) requestNewActiveUserWithUsername:(NSString*)username callbackBlock:(void (^)(KFUser *activeUser, NSError *error))callbackBlock;
 
 /**
- * Returns the active user or fetches a new one.
+ * Returns all the streams created by a particular username
  */
 - (void) requestStreamsForUsername:(NSString*)username callbackBlock:(void (^)(NSArray *streams, NSError *error))callbackBlock;
 
+/**
+ * Returns all the streams created near a certain location
+ */
 - (void) requestStreamsForLocation:(CLLocation*)location radius:(CLLocationDistance)radius callbackBlock:(void (^)(NSArray *streams, NSError *error))callbackBlock;
 
+/**
+ * Returns all the streams with metadata containing keyword
+ * @param keyword (Optional) If this parameter is omitted it will return all streams
+ */
+- (void) requestStreamsByKeyword:(NSString*)keyword callbackBlock:(void (^)(NSArray *streams, NSError *error))callbackBlock;
+
+/**
+ * Returns all the streams associated with this application.
+ */
+- (void) requestAllStreams:(void (^)(NSArray *streams, NSError *error))callbackBlock;
 
 @end

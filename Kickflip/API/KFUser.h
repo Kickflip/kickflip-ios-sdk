@@ -7,6 +7,8 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "MTLModel+NSCoding.h"
+#import "MTLJSONAdapter.h"
 
 extern const struct KFUserAttributes {
 	__unsafe_unretained NSString *username;
@@ -14,7 +16,7 @@ extern const struct KFUserAttributes {
 	__unsafe_unretained NSString *appName;
 } KFUserAttributes;
 
-@interface KFUser : NSObject <NSSecureCoding>
+@interface KFUser : MTLModel <MTLJSONSerializing>
 
 @property (readonly, nonatomic, strong) NSString *username;
 @property (readonly, nonatomic, strong) NSString *uuid;
@@ -22,7 +24,5 @@ extern const struct KFUserAttributes {
 
 + (instancetype) activeUser;
 + (void) setActiveUser:(KFUser*)user;
-
-- (instancetype) initWithJSONDictionary:(NSDictionary*)dictionary;
 
 @end

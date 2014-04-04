@@ -25,13 +25,12 @@ static NSString * const KFUserActiveUserKey = @"KFUserActiveUserKey";
 
 @implementation KFUser
 
-- (instancetype) initWithJSONDictionary:(NSDictionary*)dictionary {
-    if (self = [super init]) {
-        self.username = dictionary[@"name"];
-        self.uuid = dictionary[@"uuid"];
-        self.appName = dictionary[@"app"];
-    }
-    return self;
++ (NSDictionary *)JSONKeyPathsByPropertyKey {
+    return @{
+             KFUserAttributes.username: @"name",
+             KFUserAttributes.uuid: @"uuid",
+             KFUserAttributes.appName: @"app"
+             };
 }
 
 + (instancetype) activeUser {
@@ -57,25 +56,6 @@ static NSString * const KFUserActiveUserKey = @"KFUserActiveUserKey";
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
     [defaults removeObjectForKey:KFUserActiveUserKey];
     [defaults synchronize];
-}
-
-- (void)encodeWithCoder:(NSCoder *)aCoder {
-    [aCoder encodeObject:self.username forKey:KFUserAttributes.username];
-    [aCoder encodeObject:self.uuid forKey:KFUserAttributes.uuid];
-    [aCoder encodeObject:self.appName forKey:KFUserAttributes.appName];
-}
-
-- (id)initWithCoder:(NSCoder *)aDecoder {
-    if (self = [super init]) {
-        self.username = [aDecoder decodeObjectOfClass:[NSString class] forKey:KFUserAttributes.username];
-        self.uuid = [aDecoder decodeObjectOfClass:[NSString class] forKey:KFUserAttributes.uuid];
-        self.appName = [aDecoder decodeObjectOfClass:[NSString class] forKey:KFUserAttributes.appName];
-    }
-    return self;
-}
-
-+ (BOOL) supportsSecureCoding {
-    return YES;
 }
 
 @end

@@ -78,28 +78,69 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
     if (username) {
         parameters = @{@"username": username};
     }
-    [self betterPostPath:@"/api/new/user/" parameters:parameters callbackBlock:^(NSDictionary *responseDictionary, NSError *error) {
-        if (error) {
+    [self checkOAuthCredentialsWithCallback:^(BOOL success, NSError *error) {
+        if (!success) {
             if (callbackBlock) {
                 callbackBlock(nil, error);
             }
             return;
         }
-        KFUser *user = [[KFUser alloc] initWithJSONDictionary:responseDictionary];
-        [KFUser setActiveUser:user];
+        [self parsePostPath:@"/api/new/user/" parameters:parameters callbackBlock:^(NSDictionary *responseDictionary, NSError *error) {
+            if (error) {
+                if (callbackBlock) {
+                    callbackBlock(nil, error);
+                }
+                return;
+            }
+            error = nil;
+            
+            KFUser *user = [MTLJSONAdapter modelOfClass:[KFUser class] fromJSONDictionary:responseDictionary error:&error];
+            if (error) {
+                if (callbackBlock) {
+                    callbackBlock(nil, error);
+                }
+                return;
+            }
+            [KFUser setActiveUser:user];
+            if (callbackBlock) {
+                callbackBlock(user, nil);
+            }
+        }];
+    }];
+}
+
+- (void) parsePostPath:(NSString*)path parameters:(NSDictionary*)parameters callbackBlock:(void (^)(NSDictionary *responseDictionary, NSError *error))callbackBlock {
+    [self postPath:path parameters:parameters success:^(AFHTTPRequestOperation *operation, id responseObject) {
+        if (responseObject && [responseObject isKindOfClass:[NSDictionary class]]) {
+            NSDictionary *responseDictionary = (NSDictionary*)responseObject;
+            NSNumber *successValue = [responseDictionary objectForKey:@"success"];
+            if (successValue && ![successValue boolValue]) {
+                if (callbackBlock) {
+                    callbackBlock(nil, [NSError errorWithDomain:kKFAPIClientErrorDomain code:105 userInfo:responseDictionary]);
+                }
+                return;
+            }
+            if (callbackBlock) {
+                callbackBlock(responseDictionary, nil);
+                return;
+            }
+        } else {
+            if (callbackBlock) {
+                NSError *error = [NSError errorWithDomain:kKFAPIClientErrorDomain code:103 userInfo:@{NSLocalizedDescriptionKey: @"Bad request", @"response": responseObject}];
+                callbackBlock(NO, error);
+            }
+        }
+    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         if (callbackBlock) {
-            callbackBlock(user, nil);
+            callbackBlock(NO, error);
         }
     }];
 }
 
-- (void) fetchActiveUser:(void (^)(KFUser* activeUser, NSError* error))callbackBlock {
-    KFUser *user = [KFUser activeUser];
-    if (user) {
-        callbackBlock(user, nil);
-        return;
-    }
-    [self requestNewActiveUserWithUsername:nil callbackBlock:callbackBlock];
+- (void) parsePostPath:(NSString*)path activeUser:(KFUser*)activeUser parameters:(NSDictionary*)parameters callbackBlock:(void (^)(NSDictionary *responseDictionary, NSError *error))callbackBlock {
+    NSMutableDictionary *fullParameters = [NSMutableDictionary dictionaryWithDictionary:parameters];
+    [fullParameters setObject:activeUser.uuid forKey:KFUserAttributes.uuid];
+    [self parsePostPath:path parameters:fullParameters callbackBlock:callbackBlock];
 }
 
 - (void) betterPostPath:(NSString*)path parameters:(NSDictionary*)parameters callbackBlock:(void (^)(NSDictionary *responseDictionary, NSError *error))callbackBlock {
@@ -110,39 +151,17 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
             }
             return;
         }
-        [self fetchActiveUser:^(KFUser *activeUser, NSError *error) {
-            if (error) {
-                callbackBlock(nil, error);
-                return;
-            }
-            NSMutableDictionary *fullParameters = [NSMutableDictionary dictionaryWithDictionary:parameters];
-            [fullParameters setObject:activeUser.uuid forKey:KFUserAttributes.uuid];
-            [self postPath:path parameters:fullParameters success:^(AFHTTPRequestOperation *operation, id responseObject) {
-                if (responseObject && [responseObject isKindOfClass:[NSDictionary class]]) {
-                    NSDictionary *responseDictionary = (NSDictionary*)responseObject;
-                    NSNumber *successValue = [responseDictionary objectForKey:@"success"];
-                    if (successValue && ![successValue boolValue]) {
-                        if (callbackBlock) {
-                            callbackBlock(nil, [NSError errorWithDomain:kKFAPIClientErrorDomain code:105 userInfo:responseDictionary]);
-                        }
-                        return;
-                    }
-                    if (callbackBlock) {
-                        callbackBlock(responseDictionary, nil);
-                        return;
-                    }
-                } else {
-                    if (callbackBlock) {
-                        NSError *error = [NSError errorWithDomain:kKFAPIClientErrorDomain code:103 userInfo:@{NSLocalizedDescriptionKey: @"Bad request", @"response": responseObject}];
-                        callbackBlock(NO, error);
-                    }
+        KFUser *activeUser = [KFUser activeUser];
+        if (!activeUser) {
+            [self requestNewActiveUserWithUsername:nil callbackBlock:^(KFUser *activeUser, NSError *error) {
+                if (!activeUser) {
+                    callbackBlock(nil, error);
                 }
-            } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-                if (callbackBlock) {
-                    callbackBlock(NO, error);
-                }
+                [self parsePostPath:path activeUser:activeUser parameters:parameters callbackBlock:callbackBlock];
             }];
-        }];
+            return;
+        }
+        [self parsePostPath:path activeUser:activeUser parameters:parameters callbackBlock:callbackBlock];
     }];
 }
 
@@ -213,6 +232,28 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
         }
         DDLogInfo(@"Fetched streams by location %@", responseDictionary);
     }];
+}
+
+/**
+ * Returns all the streams with metadata containing keyword
+ */
+- (void) requestStreamsByKeyword:(NSString*)keyword callbackBlock:(void (^)(NSArray *streams, NSError *error))callbackBlock {
+    NSAssert(callbackBlock != nil, @"callbackBlock cannot be nil!");
+    NSDictionary *parameters = nil;
+    if (keyword) {
+        parameters = @{@"keyword": keyword};
+    }
+    [self betterPostPath:@"/api/search" parameters:parameters callbackBlock:^(NSDictionary *responseDictionary, NSError *error) {
+        if (error) {
+            callbackBlock(nil, error);
+            return;
+        }
+        DDLogInfo(@"Streams: %@", responseDictionary);
+    }];
+}
+
+- (void) requestAllStreams:(void (^)(NSArray *, NSError *))callbackBlock {
+    [self requestStreamsByKeyword:nil callbackBlock:callbackBlock];
 }
 
 @end

@@ -53,7 +53,7 @@ static Kickflip *_kickflip = nil;
     kickflip.apiSecret = secret;
     KFUser *activeUser = [KFUser activeUser];
     if (!activeUser) {
-        [[KFAPIClient sharedClient] fetchActiveUser:^(KFUser *newUser, NSError *error) {
+        [[KFAPIClient sharedClient] requestNewActiveUserWithUsername:nil callbackBlock:^(KFUser *newUser, NSError *error) {
             if (error) {
                 DDLogError(@"Error pre-fetching new user: %@", error);
             } else {
