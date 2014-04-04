@@ -10,6 +10,7 @@
 
 @interface KFDateUtils : NSObject
 
-+ (NSDateFormatter *)dateFormatter;
++ (NSDateFormatter*)utcDateFormatter;
++ (NSDateFormatter*)localizedDateFormatter;
 
 @end

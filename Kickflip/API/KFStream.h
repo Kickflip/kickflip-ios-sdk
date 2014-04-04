@@ -37,7 +37,7 @@ extern const struct KFStreamAttributes {
 @interface KFStream : MTLModel <MTLJSONSerializing>
 
 @property (nonatomic, strong, readonly) NSString *streamType;
-@property (nonatomic, strong, readonly) NSString *streamID;
+@property (nonatomic, strong) NSString *streamID;
 @property (nonatomic, strong, readonly) NSURL *uploadURL;
 @property (nonatomic, strong, readonly) NSURL *streamURL;
 @property (nonatomic, strong, readonly) NSURL *kickflipURL;

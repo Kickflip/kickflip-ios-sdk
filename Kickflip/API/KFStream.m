@@ -20,9 +20,8 @@ const struct KFStreamAttributes KFStreamAttributes = {
     .finishDate = @"finishDate"
 };
 
-NSString * const KFStreamTypeKey = @"type";
+NSString * const KFStreamTypeKey = @"stream_type";
 static NSString * const KFStreamIDKey = @"stream_id";
-
 static NSString * const KFStreamUploadURLKey = @"upload_url";
 static NSString * const KFStreamURLKey = @"stream_url";
 static NSString * const KFStreamKickflipURLKey = @"kickflip_url";
@@ -55,17 +54,17 @@ static NSString * const KFStreamStateKey = @"KFStreamStateKey";
 
 + (NSValueTransformer *)startDateJSONTransformer {
     return [MTLValueTransformer reversibleTransformerWithForwardBlock:^(NSString *str) {
-        return [[KFDateUtils dateFormatter] dateFromString:str];
+        return [[KFDateUtils utcDateFormatter] dateFromString:str];
     } reverseBlock:^(NSDate *date) {
-        return [[KFDateUtils dateFormatter] stringFromDate:date];
+        return [[KFDateUtils utcDateFormatter] stringFromDate:date];
     }];
 }
 
 + (NSValueTransformer *)finishDateJSONTransformer {
     return [MTLValueTransformer reversibleTransformerWithForwardBlock:^(NSString *str) {
-        return [[KFDateUtils dateFormatter] dateFromString:str];
+        return [[KFDateUtils utcDateFormatter] dateFromString:str];
     } reverseBlock:^(NSDate *date) {
-        return [[KFDateUtils dateFormatter] stringFromDate:date];
+        return [[KFDateUtils utcDateFormatter] stringFromDate:date];
     }];
 }
 

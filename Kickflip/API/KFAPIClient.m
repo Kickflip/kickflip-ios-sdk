@@ -41,10 +41,8 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
     NSURL *url = self.baseURL;
     NSString *apiKey = [Kickflip apiKey];
     NSString *apiSecret = [Kickflip apiSecret];
-    if (!apiKey || !apiSecret) {
-        callback(NO, [NSError errorWithDomain:kKFAPIClientErrorDomain code:99 userInfo:@{NSLocalizedDescriptionKey: @"Missing API key and secret.", NSLocalizedRecoverySuggestionErrorKey: @"Call [Kickflip setupWithAPIKey:secret:] with your credentials obtained from kickflip.io"}]);
-        return;
-    }
+    NSAssert(apiKey != nil && apiSecret != nil, @"Missing API key and secret. Call [Kickflip setupWithAPIKey:secret:] with your credentials obtained from kickflip.io");
+
     AFOAuth2Client *oauthClient = [AFOAuth2Client clientWithBaseURL:url clientID:apiKey secret:apiSecret];
     
     AFOAuthCredential *credential = [AFOAuthCredential retrieveCredentialWithIdentifier:oauthClient.serviceProviderIdentifier];
@@ -273,7 +271,6 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
                 callbackBlock(nil, error);
                 return;
             }
-            DDLogInfo(@"Serialized %@ into %@", object, model);
             [array addObject:model];
         }
         callbackBlock(array, nil);
