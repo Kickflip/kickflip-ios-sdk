@@ -18,12 +18,23 @@
 - (void) startNewStream:(void (^)(KFStream *newStream, NSError *error))endpointCallback;
 - (void) stopStream:(KFStream*)stream callbackBlock:(void (^)(BOOL success, NSError *error))callbackBlock;
 
-- (void) requestNewUserWithUsername:(NSString*)username callbackBlock:(void (^)(KFUser *newUser, NSError *error))callbackBlock;
 
-// Server error
-- (void) requestStreamsForUsername:(NSString*)username user:(KFUser*)user callbackBlock:(void (^)(NSArray *streams, NSError *error))callbackBlock;
+/**
+ * Fetches the currently active user or requests a new one if one is not found.
+ */
+- (void) fetchActiveUser:(void (^)(KFUser* activeUser, NSError* error))callbackBlock;
 
-- (void) requestStreamsForLocation:(CLLocation*)location radius:(CLLocationDistance)radius user:(KFUser*)user callbackBlock:(void (^)(NSArray *streams, NSError *error))callbackBlock;
+/**
+ * Requests a new user.
+ */
+- (void) requestNewActiveUserWithUsername:(NSString*)username callbackBlock:(void (^)(KFUser *activeUser, NSError *error))callbackBlock;
+
+/**
+ * Returns the active user or fetches a new one.
+ */
+- (void) requestStreamsForUsername:(NSString*)username callbackBlock:(void (^)(NSArray *streams, NSError *error))callbackBlock;
+
+- (void) requestStreamsForLocation:(CLLocation*)location radius:(CLLocationDistance)radius callbackBlock:(void (^)(NSArray *streams, NSError *error))callbackBlock;
 
 
 @end
