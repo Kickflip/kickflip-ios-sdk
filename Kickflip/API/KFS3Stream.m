@@ -9,6 +9,12 @@
 #import "KFS3Stream.h"
 #import "KFUser.h"
 
+const struct KFS3StreamAttributes KFS3StreamAttributes = {
+    .bucketName = @"bucketName",
+	.awsAccessKey = @"awsAccessKey",
+	.awsSecretKey = @"awsSecretKey",
+};
+
 NSString * const KFS3StreamType = @"HLS";
 static NSString * const KFS3StreamBucketNameKey = @"bucket_name";
 static NSString * const KFS3StreamAWSAccessKey = @"aws_access_key";
@@ -19,28 +25,12 @@ static NSString * const KFS3StreamAWSSecretKey = @"aws_secret_key";
 
 @implementation KFS3Stream
 
-- (instancetype) initWithUser:(KFUser *)user parameters:(NSDictionary *)parameters {
-    if (self = [super initWithUser:user parameters:parameters]) {
-        self.bucketName = parameters[KFS3StreamBucketNameKey];
-        self.awsAccessKey = parameters[KFS3StreamAWSAccessKey];
-        self.awsSecretKey = parameters[KFS3StreamAWSSecretKey];
-    }
-    return self;
++ (NSDictionary*) JSONKeyPathsByPropertyKey {
+    NSMutableDictionary *dictionary = [NSMutableDictionary dictionaryWithDictionary:[super JSONKeyPathsByPropertyKey]];
+    dictionary[KFS3StreamAttributes.bucketName] = KFS3StreamBucketNameKey;
+    dictionary[KFS3StreamAttributes.awsAccessKey] = KFS3StreamAWSAccessKey;
+    dictionary[KFS3StreamAttributes.awsSecretKey] = KFS3StreamAWSSecretKey;
+    return dictionary;
 }
-
-- (NSDictionary*) dictionaryRepresentation {
-    NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithDictionary:[super dictionaryRepresentation]];
-    if (self.bucketName) {
-        [dict setObject:self.bucketName forKey:KFS3StreamBucketNameKey];
-    }
-    if (self.awsAccessKey) {
-        [dict setObject:self.awsAccessKey forKey:KFS3StreamAWSAccessKey];
-    }
-    if (self.awsSecretKey) {
-        [dict setObject:self.awsSecretKey forKey:KFS3StreamAWSSecretKey];
-    }
-    return dict;
-}
-
 
 @end

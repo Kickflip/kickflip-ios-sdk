@@ -131,7 +131,7 @@ static NSString * const kUploadStateUploading = @"uploading";
 }
 
 - (NSString*) awsKeyForStream:(KFStream*)stream fileName:(NSString*)fileName {
-    return [NSString stringWithFormat:@"%@/%@/%@", stream.user.username, stream.streamID, fileName];
+    return [NSString stringWithFormat:@"%@/%@/%@", stream.username, stream.streamID, fileName];
 }
 
 - (void) updateManifestWithString:(NSString*)manifestString {

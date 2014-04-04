@@ -7,6 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "Mantle.h"
 
 @class KFUser;
 
@@ -21,19 +22,29 @@ typedef NS_ENUM(NSUInteger, KFStreamState) {
 
 extern NSString * const KFStreamTypeKey;
 
-@interface KFStream : NSObject
+extern const struct KFStreamAttributes {
+    __unsafe_unretained NSString *streamType;
+	__unsafe_unretained NSString *streamID;
+	__unsafe_unretained NSString *uploadURL;
+    __unsafe_unretained NSString *streamURL;
+    __unsafe_unretained NSString *kickflipURL;
+	__unsafe_unretained NSString *chatURL;
+    __unsafe_unretained NSString *username;
+    __unsafe_unretained NSString *startDate;
+    __unsafe_unretained NSString *finishDate;
+} KFStreamAttributes;
 
-@property (nonatomic, strong) KFUser *user;
-@property (nonatomic, strong) NSString *streamType;
-@property (nonatomic, strong) NSString *streamID;
-@property (nonatomic, strong) NSURL *uploadURL;
-@property (nonatomic, strong) NSURL *streamURL;
-@property (nonatomic, strong) NSURL *kickflipURL;
-@property (nonatomic, strong) NSURL *chatURL;
+@interface KFStream : MTLModel <MTLJSONSerializing>
+
+@property (nonatomic, strong, readonly) NSString *streamType;
+@property (nonatomic, strong, readonly) NSString *streamID;
+@property (nonatomic, strong, readonly) NSURL *uploadURL;
+@property (nonatomic, strong, readonly) NSURL *streamURL;
+@property (nonatomic, strong, readonly) NSURL *kickflipURL;
 @property (nonatomic) KFStreamState streamState;
+@property (nonatomic, strong) NSString *username;
+@property (nonatomic, strong, readonly) NSDate *startDate;
+@property (nonatomic, strong, readonly) NSDate *finishDate;
 
-- (instancetype) initWithUser:(KFUser*)user parameters:(NSDictionary*)parameters;
-
-- (NSDictionary*) dictionaryRepresentation;
 
 @end

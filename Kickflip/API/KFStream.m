@@ -7,60 +7,66 @@
 //
 
 #import "KFStream.h"
+#import "KFDateUtils.h"
 
-NSString * const KFStreamTypeKey = @"stream_type";
+const struct KFStreamAttributes KFStreamAttributes = {
+    .streamType = @"streamType",
+	.streamID = @"streamID",
+	.uploadURL = @"uploadURL",
+    .streamURL = @"streamURL",
+    .kickflipURL = @"kickflipURL",
+    .username = @"username",
+    .startDate = @"startDate",
+    .finishDate = @"finishDate"
+};
+
+NSString * const KFStreamTypeKey = @"type";
 static NSString * const KFStreamIDKey = @"stream_id";
 
 static NSString * const KFStreamUploadURLKey = @"upload_url";
 static NSString * const KFStreamURLKey = @"stream_url";
 static NSString * const KFStreamKickflipURLKey = @"kickflip_url";
-static NSString * const KFStreamChatURLKey = @"chat_url";
 static NSString * const KFStreamStateKey = @"KFStreamStateKey";
 
 @implementation KFStream
 
-- (instancetype) initWithUser:(KFUser *)user parameters:(NSDictionary *)parameters {
-    if (self = [super init]) {
-        self.user = user;
-        [self parseParameters:parameters];
-    }
-    return self;
++ (NSDictionary*) JSONKeyPathsByPropertyKey {
+    return @{KFStreamAttributes.streamType: KFStreamTypeKey,
+             KFStreamAttributes.streamID: KFStreamIDKey,
+             KFStreamAttributes.uploadURL: KFStreamUploadURLKey,
+             KFStreamAttributes.streamURL: KFStreamURLKey,
+             KFStreamAttributes.kickflipURL: KFStreamKickflipURLKey,
+             KFStreamAttributes.username: @"user_username",
+             KFStreamAttributes.startDate: @"time_started",
+             KFStreamAttributes.finishDate: @"time_finished"};
 }
 
-- (void) parseParameters:(NSDictionary*)parameters {
-    self.streamType = parameters[KFStreamTypeKey];
-    self.streamID = parameters[KFStreamIDKey];
-    self.uploadURL = [NSURL URLWithString:parameters[KFStreamUploadURLKey]];
-    self.streamURL = [NSURL URLWithString:parameters[KFStreamURLKey]];
-    self.kickflipURL = [NSURL URLWithString:parameters[KFStreamKickflipURLKey]];
-    self.chatURL = [NSURL URLWithString:parameters[KFStreamChatURLKey]];
-    NSNumber *streamStateNumber = parameters[KFStreamStateKey];
-    self.streamState = streamStateNumber.intValue;
++ (NSValueTransformer *)uploadURLJSONTransformer {
+    return [NSValueTransformer valueTransformerForName:MTLURLValueTransformerName];
 }
 
-- (NSDictionary*) dictionaryRepresentation {
-    NSMutableDictionary *dict = [NSMutableDictionary dictionary];
-    if (self.streamType) {
-        [dict setObject:self.streamType forKey:KFStreamTypeKey];
-    }
-    if (self.streamID) {
-        [dict setObject:self.streamID forKey:KFStreamIDKey];
-    }
-    if (self.streamURL) {
-        [dict setObject:self.streamURL forKey:KFStreamURLKey];
-    }
-    if (self.kickflipURL) {
-        [dict setObject:self.kickflipURL forKey:KFStreamKickflipURLKey];
-    }
-    if (self.chatURL) {
-        [dict setObject:self.chatURL forKey:KFStreamChatURLKey];
-    }
-    [dict setObject:@(self.streamState) forKey:KFStreamStateKey];
-    return dict;
++ (NSValueTransformer *)kickflipURLJSONTransformer {
+    return [NSValueTransformer valueTransformerForName:MTLURLValueTransformerName];
 }
 
-- (NSString*) description {
-    return [self dictionaryRepresentation].description;
++ (NSValueTransformer *)streamURLJSONTransformer {
+    return [NSValueTransformer valueTransformerForName:MTLURLValueTransformerName];
+}
+
++ (NSValueTransformer *)startDateJSONTransformer {
+    return [MTLValueTransformer reversibleTransformerWithForwardBlock:^(NSString *str) {
+        return [[KFDateUtils dateFormatter] dateFromString:str];
+    } reverseBlock:^(NSDate *date) {
+        return [[KFDateUtils dateFormatter] stringFromDate:date];
+    }];
+}
+
++ (NSValueTransformer *)finishDateJSONTransformer {
+    return [MTLValueTransformer reversibleTransformerWithForwardBlock:^(NSString *str) {
+        return [[KFDateUtils dateFormatter] dateFromString:str];
+    } reverseBlock:^(NSDate *date) {
+        return [[KFDateUtils dateFormatter] stringFromDate:date];
+    }];
 }
 
 @end

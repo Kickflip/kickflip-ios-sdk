@@ -7,8 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "MTLModel+NSCoding.h"
-#import "MTLJSONAdapter.h"
+#import "Mantle.h"
 
 extern const struct KFUserAttributes {
 	__unsafe_unretained NSString *username;

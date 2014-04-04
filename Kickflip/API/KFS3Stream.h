@@ -8,9 +8,13 @@
 
 #import "KFStream.h"
 
-extern NSString * const KFS3StreamType;
+extern const struct KFS3StreamAttributes {
+    __unsafe_unretained NSString *bucketName;
+	__unsafe_unretained NSString *awsAccessKey;
+	__unsafe_unretained NSString *awsSecretKey;
+} KFS3StreamAttributes;
 
-@class KFUser;
+extern NSString * const KFS3StreamType;
 
 @interface KFS3Stream : KFStream
 

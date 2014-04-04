@@ -182,13 +182,19 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
 - (void) startNewStream:(void (^)(KFStream *, NSError *))endpointCallback {
     NSAssert(endpointCallback != nil, @"endpointCallback should not be nil!");
     [self betterPostPath:@"/api/stream/start" parameters:nil callbackBlock:^(NSDictionary *responseDictionary, NSError *error) {
+        if (error) {
+            endpointCallback(nil, error);
+            return;
+        }
         KFStream *endpoint = nil;
         NSString *streamType = responseDictionary[KFStreamTypeKey];
         if ([streamType isEqualToString:KFS3StreamType]) {
             KFUser *activeUser = [KFUser activeUser];
-            endpoint = [[KFS3Stream alloc] initWithUser:activeUser parameters:responseDictionary];
+            endpoint = [MTLJSONAdapter modelOfClass:[KFS3Stream class] fromJSONDictionary:responseDictionary error:&error];
+            endpoint.username = activeUser.username;
         }
-        if (!endpointCallback) {
+        if (error) {
+            endpointCallback(nil, error);
             return;
         }
         if (endpoint) {
@@ -211,7 +217,8 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
             callbackBlock(nil, error);
             return;
         }
-        DDLogInfo(@"Streams: %@", responseDictionary);
+        NSArray *streamDictionaries = [responseDictionary objectForKey:@"streams"];
+        [self serializeObjects:streamDictionaries class:[KFStream class] callbackBlock:callbackBlock];
     }];
 }
 
@@ -230,7 +237,8 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
             callbackBlock(nil, error);
             return;
         }
-        DDLogInfo(@"Fetched streams by location %@", responseDictionary);
+        NSArray *streamDictionaries = [responseDictionary objectForKey:@"streams"];
+        [self serializeObjects:streamDictionaries class:[KFStream class] callbackBlock:callbackBlock];
     }];
 }
 
@@ -248,8 +256,28 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
             callbackBlock(nil, error);
             return;
         }
-        DDLogInfo(@"Streams: %@", responseDictionary);
+        NSArray *streamDictionaries = [responseDictionary objectForKey:@"streams"];
+        [self serializeObjects:streamDictionaries class:[KFStream class] callbackBlock:callbackBlock];
     }];
+}
+
+- (void) serializeObjects:(NSArray*)objects class:(Class)class callbackBlock:(void (^)(NSArray *objects, NSError *error))callbackBlock {
+    NSAssert(objects != nil, @"objects shouldnt be nil");
+    NSAssert(callbackBlock != nil, @"callbackBlock shouldnt be nil");
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        NSMutableArray *array = [NSMutableArray arrayWithCapacity:objects.count];
+        for (NSDictionary *object in objects) {
+            NSError *error = nil;
+            id model = [MTLJSONAdapter modelOfClass:class fromJSONDictionary:object error:&error];
+            if (error) {
+                callbackBlock(nil, error);
+                return;
+            }
+            DDLogInfo(@"Serialized %@ into %@", object, model);
+            [array addObject:model];
+        }
+        callbackBlock(array, nil);
+    });
 }
 
 - (void) requestAllStreams:(void (^)(NSArray *, NSError *))callbackBlock {
