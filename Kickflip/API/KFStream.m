@@ -9,17 +9,6 @@
 #import "KFStream.h"
 #import "KFDateUtils.h"
 
-const struct KFStreamAttributes KFStreamAttributes = {
-    .streamType = @"streamType",
-	.streamID = @"streamID",
-	.uploadURL = @"uploadURL",
-    .streamURL = @"streamURL",
-    .kickflipURL = @"kickflipURL",
-    .username = @"username",
-    .startDate = @"startDate",
-    .finishDate = @"finishDate"
-};
-
 NSString * const KFStreamTypeKey = @"stream_type";
 static NSString * const KFStreamIDKey = @"stream_id";
 static NSString * const KFStreamUploadURLKey = @"upload_url";
@@ -30,17 +19,25 @@ static NSString * const KFStreamStateKey = @"KFStreamStateKey";
 @implementation KFStream
 
 + (NSDictionary*) JSONKeyPathsByPropertyKey {
-    return @{KFStreamAttributes.streamType: KFStreamTypeKey,
-             KFStreamAttributes.streamID: KFStreamIDKey,
-             KFStreamAttributes.uploadURL: KFStreamUploadURLKey,
-             KFStreamAttributes.streamURL: KFStreamURLKey,
-             KFStreamAttributes.kickflipURL: KFStreamKickflipURLKey,
-             KFStreamAttributes.username: @"user_username",
-             KFStreamAttributes.startDate: @"time_started",
-             KFStreamAttributes.finishDate: @"time_finished"};
+    return @{NSStringFromSelector(@selector(streamType)): KFStreamTypeKey,
+             NSStringFromSelector(@selector(streamID)): KFStreamIDKey,
+             NSStringFromSelector(@selector(uploadURL)): KFStreamUploadURLKey,
+             NSStringFromSelector(@selector(streamURL)): KFStreamURLKey,
+             NSStringFromSelector(@selector(kickflipURL)): KFStreamKickflipURLKey,
+             NSStringFromSelector(@selector(username)): @"user_username",
+             NSStringFromSelector(@selector(startDate)): @"time_started",
+             NSStringFromSelector(@selector(finishDate)): @"time_finished",
+             NSStringFromSelector(@selector(thumbnailURL)): @"thumbnail_url",
+             NSStringFromSelector(@selector(city)): @"city",
+             NSStringFromSelector(@selector(state)): @"state",
+             NSStringFromSelector(@selector(country)): @"country"};
 }
 
 + (NSValueTransformer *)uploadURLJSONTransformer {
+    return [NSValueTransformer valueTransformerForName:MTLURLValueTransformerName];
+}
+
++ (NSValueTransformer *)thumbnailURLJSONTransformer {
     return [NSValueTransformer valueTransformerForName:MTLURLValueTransformerName];
 }
 

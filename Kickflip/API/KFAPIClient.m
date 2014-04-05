@@ -45,7 +45,7 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
 
     AFOAuth2Client *oauthClient = [AFOAuth2Client clientWithBaseURL:url clientID:apiKey secret:apiSecret];
     
-    AFOAuthCredential *credential = [AFOAuthCredential retrieveCredentialWithIdentifier:oauthClient.serviceProviderIdentifier];
+    AFOAuthCredential *credential = [AFOAuthCredential retrieveCredentialWithIdentifier:apiKey];
     if (credential && !credential.isExpired) {
         [self setAuthorizationHeaderWithCredential:credential];
         if (callback) {
@@ -55,7 +55,7 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
     }
 
     [oauthClient authenticateUsingOAuthWithPath:@"/o/token/" parameters:@{@"grant_type": kAFOAuthClientCredentialsGrantType} success:^(AFOAuthCredential *credential) {
-        [AFOAuthCredential storeCredential:credential withIdentifier:oauthClient.serviceProviderIdentifier];
+        [AFOAuthCredential storeCredential:credential withIdentifier:apiKey];
         [self setAuthorizationHeaderWithCredential:credential];
         if (callback) {
             callback(YES, nil);

@@ -157,8 +157,6 @@
     _previewLayer.videoGravity = AVLayerVideoGravityResizeAspectFill;
 }
 
-
-
 - (void) startRecording {
     [[KFAPIClient sharedClient] startNewStream:^(KFStream *endpointResponse, NSError *error) {
         if (error) {

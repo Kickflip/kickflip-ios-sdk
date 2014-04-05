@@ -7,6 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import <CoreLocation/CoreLocation.h>
 #import "Mantle.h"
 
 @class KFUser;
@@ -22,29 +23,28 @@ typedef NS_ENUM(NSUInteger, KFStreamState) {
 
 extern NSString * const KFStreamTypeKey;
 
-extern const struct KFStreamAttributes {
-    __unsafe_unretained NSString *streamType;
-	__unsafe_unretained NSString *streamID;
-	__unsafe_unretained NSString *uploadURL;
-    __unsafe_unretained NSString *streamURL;
-    __unsafe_unretained NSString *kickflipURL;
-	__unsafe_unretained NSString *chatURL;
-    __unsafe_unretained NSString *username;
-    __unsafe_unretained NSString *startDate;
-    __unsafe_unretained NSString *finishDate;
-} KFStreamAttributes;
-
 @interface KFStream : MTLModel <MTLJSONSerializing>
 
+// Mutable Properties
+@property (nonatomic) KFStreamState streamState;
+@property (nonatomic, strong) NSString *username;
+
+@property (nonatomic, strong, readonly) NSString *streamID;
 @property (nonatomic, strong, readonly) NSString *streamType;
-@property (nonatomic, strong) NSString *streamID;
 @property (nonatomic, strong, readonly) NSURL *uploadURL;
 @property (nonatomic, strong, readonly) NSURL *streamURL;
 @property (nonatomic, strong, readonly) NSURL *kickflipURL;
-@property (nonatomic) KFStreamState streamState;
-@property (nonatomic, strong) NSString *username;
 @property (nonatomic, strong, readonly) NSDate *startDate;
 @property (nonatomic, strong, readonly) NSDate *finishDate;
+
+@property (nonatomic, strong, readonly) NSURL *thumbnailURL;
+
+// Location information
+@property (nonatomic, strong, readonly) NSString *city;
+@property (nonatomic, strong, readonly) NSString *country;
+@property (nonatomic, strong, readonly) NSString *state;
+//@property (nonatomic, readonly) CLLocationCoordinate2D startCoordinate;
+//@property (nonatomic, readonly) CLLocationCoordinate2D endCoordinate;
 
 
 @end
