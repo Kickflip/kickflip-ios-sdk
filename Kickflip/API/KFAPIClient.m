@@ -281,4 +281,18 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
     [self requestStreamsByKeyword:nil callbackBlock:callbackBlock];
 }
 
+- (void) updateMetadataForStream:(KFStream *)stream callbackBlock:(void (^)(KFStream* updatedStream, NSError *))callbackBlock {
+    NSDictionary *parameters = [MTLJSONAdapter JSONDictionaryFromModel:stream];
+    [self betterPostPath:@"/api/stream/info" parameters:parameters callbackBlock:^(NSDictionary *responseDictionary, NSError *error) {
+        if (!callbackBlock) {
+            return;
+        }
+        if (error) {
+            callbackBlock(nil, error);
+            return;
+        }
+        DDLogInfo(@"Updated the stream: %@", responseDictionary);
+    }];
+}
+
 @end

@@ -16,6 +16,7 @@
 @optional
 - (void) uploader:(KFHLSUploader*)uploader didUploadSegmentAtURL:(NSURL*)segmentURL uploadSpeed:(double)uploadSpeed numberOfQueuedSegments:(NSUInteger)numberOfQueuedSegments; //KBps
 - (void) uploader:(KFHLSUploader *)uploader manifestReadyAtURL:(NSURL*)manifestURL;
+- (void) uploader:(KFHLSUploader *)uploader thumbnailReadyAtURL:(NSURL*)manifestURL;
 - (void) uploaderHasFinished:(KFHLSUploader*)uploader;
 @end
 

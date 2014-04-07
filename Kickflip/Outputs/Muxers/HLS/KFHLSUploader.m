@@ -11,6 +11,7 @@
 #import "OWS3Client.h"
 #import "KFUser.h"
 #import "KFLog.h"
+#import "KFAPIClient.h"
 
 static NSString * const kManifestKey =  @"manifest";
 static NSString * const kFileNameKey = @"fileName";
@@ -18,6 +19,7 @@ static NSString * const kFileNameKey = @"fileName";
 static NSString * const kUploadStateQueued = @"queued";
 static NSString * const kUploadStateFinished = @"finished";
 static NSString * const kUploadStateUploading = @"uploading";
+static NSString * const kUploadStateFailed = @"failed";
 
 @interface KFHLSUploader()
 @property (nonatomic) NSUInteger numbersOffset;
@@ -25,7 +27,7 @@ static NSString * const kUploadStateUploading = @"uploading";
 @property (nonatomic) NSUInteger nextSegmentIndexToUpload;
 @property (nonatomic, strong) OWS3Client *s3Client;
 @property (nonatomic, strong) KFDirectoryWatcher *directoryWatcher;
-@property (nonatomic, strong) NSMutableDictionary *files;
+@property (atomic, strong) NSMutableDictionary *files;
 @property (nonatomic, strong) NSString *manifestPath;
 @property (nonatomic) BOOL manifestReady;
 @property (nonatomic, strong) NSString *finalManifestString;
@@ -192,13 +194,45 @@ static NSString * const kUploadStateUploading = @"uploading";
                 NSUInteger segmentIndex = [self indexForFilePrefix:filePrefix];
                 NSDictionary *segmentInfo = @{kManifestKey: manifestSnapshot,
                                                 kFileNameKey: fileName};
-                DDLogVerbose(@"new file detected: %@", fileName);
+                DDLogVerbose(@"new ts file detected: %@", fileName);
                 [_files setObject:kUploadStateQueued forKey:fileName];
                 [_queuedSegments setObject:segmentInfo forKey:@(segmentIndex)];
                 [self uploadNextSegment];
             }
+        } else if ([fileExtension isEqualToString:@"jpg"]) {
+            [self uploadThumbnail:fileName];
         }
     }];
+}
+
+- (void) uploadThumbnail:(NSString*)fileName {
+    NSString *uploadState = [_files objectForKey:fileName];
+    NSString *filePath = [_directoryPath stringByAppendingPathComponent:fileName];
+    NSString *key = [self awsKeyForStream:self.stream fileName:fileName];
+
+    if (!uploadState || [uploadState isEqualToString:kUploadStateFailed]) {
+        [self.files setObject:kUploadStateUploading forKey:fileName];
+        [self.s3Client postObjectWithFile:filePath bucket:self.stream.bucketName key:key acl:@"public-read" success:^(S3PutObjectResponse *responseObject) {
+            [self.files setObject:kUploadStateFinished forKey:fileName];
+            if (self.delegate && [self.delegate respondsToSelector:@selector(uploader:thumbnailReadyAtURL:)]) {
+                NSURL *url = [self urlWithFileName:fileName];
+                dispatch_async(self.callbackQueue, ^{
+                    [self.delegate uploader:self thumbnailReadyAtURL:url];
+                });
+            }
+            self.stream.thumbnailURL = [self urlWithFileName:fileName];
+            [[KFAPIClient sharedClient] updateMetadataForStream:self.stream callbackBlock:^(KFStream *updatedStream, NSError *error) {
+                if (error) {
+                    DDLogError(@"Error updating stream thumbnail: %@", error);
+                } else {
+                    DDLogInfo(@"Updated stream thumbnail: %@", updatedStream.thumbnailURL);
+                }
+            }];
+        } failure:^(NSError *error) {
+            DDLogError(@"Error uploading thumbnail: %@", error);
+            [self.files setObject:kUploadStateFailed forKey:fileName];
+        }];
+    }
 }
 
 - (void) initializeManifestPathFromFiles:(NSArray*)files {

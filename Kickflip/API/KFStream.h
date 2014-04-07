@@ -37,7 +37,7 @@ extern NSString * const KFStreamTypeKey;
 @property (nonatomic, strong, readonly) NSDate *startDate;
 @property (nonatomic, strong, readonly) NSDate *finishDate;
 
-@property (nonatomic, strong, readonly) NSURL *thumbnailURL;
+@property (nonatomic, strong) NSURL *thumbnailURL;
 
 // Location information
 @property (nonatomic, strong, readonly) NSString *city;

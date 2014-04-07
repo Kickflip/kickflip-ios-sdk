@@ -18,6 +18,9 @@
 - (void) startNewStream:(void (^)(KFStream *newStream, NSError *error))endpointCallback;
 - (void) stopStream:(KFStream*)stream callbackBlock:(void (^)(BOOL success, NSError *error))callbackBlock;
 
+
+- (void) updateMetadataForStream:(KFStream*)stream callbackBlock:(void (^)(KFStream* updatedStream, NSError *error))callbackBlock;
+
 /**
  * Requests a new user.
  */
