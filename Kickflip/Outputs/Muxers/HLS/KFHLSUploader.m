@@ -15,6 +15,8 @@
 
 static NSString * const kManifestKey =  @"manifest";
 static NSString * const kFileNameKey = @"fileName";
+static NSString * const kVODManifestFileName = @"vod.m3u8";
+
 
 static NSString * const kUploadStateQueued = @"queued";
 static NSString * const kUploadStateFinished = @"finished";
@@ -63,7 +65,12 @@ static NSString * const kUploadStateFailed = @"failed";
 - (void) finishedRecording {
     self.isFinishedRecording = YES;
     if (!self.hasUploadedFinalManifest) {
-        [self updateManifestWithString:nil];
+        NSString *manifestSnapshot = [self manifestSnapshot];
+        DDLogInfo(@"final manifest snapshot: %@", manifestSnapshot);
+        [self.manifestGenerator appendFromLiveManifest:manifestSnapshot];
+        [self.manifestGenerator finalizeManifest];
+        NSString *manifestString = [self.manifestGenerator manifestString];
+        [self updateManifestWithString:manifestString manifestName:kVODManifestFileName];
     }
 }
 
@@ -75,7 +82,7 @@ static NSString * const kUploadStateFailed = @"failed";
 - (void) uploadNextSegment {
     DDLogVerbose(@"nextSegmentIndexToUpload: %d, segmentCount: %d, queuedSegments: %d", _nextSegmentIndexToUpload, self.files.count, self.queuedSegments.count);
     if (_nextSegmentIndexToUpload >= self.files.count - 1) {
-        DDLogVerbose(@"Cannot upload file currently being recorded at index: %d", _nextSegmentIndexToUpload);
+        DDLogInfo(@"Cannot upload file currently being recorded at index: %d", _nextSegmentIndexToUpload);
         return;
     }
     NSDictionary *segmentInfo = [_queuedSegments objectForKey:@(_nextSegmentIndexToUpload)];
@@ -112,8 +119,7 @@ static NSString * const kUploadStateFailed = @"failed";
             }
             [_queuedSegments removeObjectForKey:@(_nextSegmentIndexToUpload)];
             NSUInteger queuedSegmentsCount = _queuedSegments.count;
-            [self.manifestGenerator appendFromLiveManifest:manifest];
-            [self updateManifestWithString:manifest];
+            [self updateManifestWithString:manifest manifestName:@"index.m3u8"];
             _nextSegmentIndexToUpload++;
             [self uploadNextSegment];
             if (self.delegate && [self.delegate respondsToSelector:@selector(uploader:didUploadSegmentAtURL:uploadSpeed:numberOfQueuedSegments:)]) {
@@ -136,23 +142,23 @@ static NSString * const kUploadStateFailed = @"failed";
     return [NSString stringWithFormat:@"%@/%@/%@", stream.username, stream.streamID, fileName];
 }
 
-- (void) updateManifestWithString:(NSString*)manifestString {
-    if (self.isFinishedRecording) {
-        [self.manifestGenerator finalizeManifest];
-        manifestString = [self.manifestGenerator manifestString];
-    }
+- (void) updateManifestWithString:(NSString*)manifestString manifestName:(NSString*)manifestName {
     NSData *data = [manifestString dataUsingEncoding:NSUTF8StringEncoding];
     DDLogVerbose(@"New manifest:\n%@", manifestString);
-    NSString *key = [self awsKeyForStream:self.stream fileName:[_manifestPath lastPathComponent]];
+    NSString *key = [self awsKeyForStream:self.stream fileName:manifestName];
     [self.s3Client postObjectWithData:data bucket:self.stream.bucketName key:key acl:@"public-read" success:^(S3PutObjectResponse *responseObject) {
         dispatch_async(self.callbackQueue, ^{
             if (!_manifestReady) {
-                if (self.delegate && [self.delegate respondsToSelector:@selector(uploader:manifestReadyAtURL:)]) {
-                    [self.delegate uploader:self manifestReadyAtURL:[self manifestURL]];
+                if (self.delegate && [self.delegate respondsToSelector:@selector(uploader:liveManifestReadyAtURL:)]) {
+                    [self.delegate uploader:self liveManifestReadyAtURL:[self manifestURL]];
                 }
                 _manifestReady = YES;
             }
-            if (self.isFinishedRecording) {
+            if (self.isFinishedRecording && _queuedSegments.count == 0) {
+                self.hasUploadedFinalManifest = YES;
+                if (self.delegate && [self.delegate respondsToSelector:@selector(uploader:vodManifestReadyAtURL:)]) {
+                    [self.delegate uploader:self vodManifestReadyAtURL:[self manifestURL]];
+                }
                 if (self.delegate && [self.delegate respondsToSelector:@selector(uploaderHasFinished:)]) {
                     [self.delegate uploaderHasFinished:self];
                 }
@@ -191,6 +197,7 @@ static NSString * const kUploadStateFailed = @"failed";
             NSString *uploadState = [_files objectForKey:fileName];
             if (!uploadState) {
                 NSString *manifestSnapshot = [self manifestSnapshot];
+                [self.manifestGenerator appendFromLiveManifest:manifestSnapshot];
                 NSUInteger segmentIndex = [self indexForFilePrefix:filePrefix];
                 NSDictionary *segmentInfo = @{kManifestKey: manifestSnapshot,
                                                 kFileNameKey: fileName};
@@ -268,7 +275,13 @@ static NSString * const kUploadStateFailed = @"failed";
 }
 
 - (NSURL*) manifestURL {
-    return [self urlWithFileName:[_manifestPath lastPathComponent]];
+    NSString *manifestName = nil;
+    if (self.isFinishedRecording) {
+        manifestName = kVODManifestFileName;
+    } else {
+        manifestName = [_manifestPath lastPathComponent];
+    }
+    return [self urlWithFileName:manifestName];
 }
 
 @end

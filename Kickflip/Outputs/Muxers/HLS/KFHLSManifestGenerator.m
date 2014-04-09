@@ -70,13 +70,23 @@
 }
 
 - (void) appendFromLiveManifest:(NSString *)liveManifest {
-    NSArray *lines = [liveManifest componentsSeparatedByString:@"\n"];
+    NSArray *rawLines = [liveManifest componentsSeparatedByString:@"\n"];
+    NSMutableArray *lines = [NSMutableArray arrayWithCapacity:rawLines.count];
+    for (NSString *line in rawLines) {
+        if (!line.length) {
+            continue;
+        }
+        if ([line isEqualToString:@"#EXT-X-ENDLIST"]) {
+            continue;
+        }
+        [lines addObject:line];
+    }
     if (lines.count < 6) {
         return;
     }
-    NSString *extInf = lines[lines.count-3];
+    NSString *extInf = lines[lines.count-2];
     NSString *extInfNumberString = [self stripToNumbers:extInf];
-    NSString *segmentName = lines[lines.count-2];
+    NSString *segmentName = lines[lines.count-1];
     NSString *segmentNumberString = [self stripToNumbers:segmentName];
     float duration = [extInfNumberString floatValue];
     NSInteger sequence = [segmentNumberString integerValue];
