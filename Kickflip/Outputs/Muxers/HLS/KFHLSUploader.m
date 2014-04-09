@@ -80,12 +80,23 @@ static NSString * const kUploadStateFailed = @"failed";
 }
 
 - (void) uploadNextSegment {
-    DDLogVerbose(@"nextSegmentIndexToUpload: %d, segmentCount: %d, queuedSegments: %d", _nextSegmentIndexToUpload, self.files.count, self.queuedSegments.count);
-    if (_nextSegmentIndexToUpload >= self.files.count - 1) {
-        DDLogInfo(@"Cannot upload file currently being recorded at index: %d", _nextSegmentIndexToUpload);
+    NSArray *contents = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:self.directoryPath error:nil];
+    NSUInteger tsFileCount = 0;
+    for (NSString *fileName in contents) {
+        if ([[fileName pathExtension] isEqualToString:@"ts"]) {
+            tsFileCount++;
+        }
+    }
+
+    
+    NSDictionary *segmentInfo = [_queuedSegments objectForKey:@(_nextSegmentIndexToUpload)];
+    
+    // Skip uploading files that are currently being written
+    if (tsFileCount == 1 && !self.isFinishedRecording) {
+        DDLogInfo(@"Skipping upload of ts file currently being recorded: %@ %@", segmentInfo, contents);
         return;
     }
-    NSDictionary *segmentInfo = [_queuedSegments objectForKey:@(_nextSegmentIndexToUpload)];
+    
     NSString *manifest = [segmentInfo objectForKey:kManifestKey];
     NSString *fileName = [segmentInfo objectForKey:kFileNameKey];
     NSString *fileUploadState = [_files objectForKey:fileName];
@@ -104,6 +115,7 @@ static NSString * const kUploadStateFailed = @"failed";
         DDLogError(@"Error getting stats of path %@: %@", filePath, error);
     }
     uint64_t fileSize = [fileStats fileSize];
+    
     
     [self.s3Client postObjectWithFile:filePath bucket:self.stream.bucketName key:key acl:@"public-read" success:^(S3PutObjectResponse *responseObject) {
         dispatch_async(_scanningQueue, ^{
