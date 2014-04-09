@@ -17,15 +17,8 @@
 
 - (id) init {
     if (self = [super init]) {
-
-        
-
         self.recorder = [[KFRecorder alloc] init];
         self.recorder.delegate = self;
-        
-
-
-        //self.view.translatesAutoresizingMaskIntoConstraints = NO;
     }
     return self;
 }
@@ -83,8 +76,16 @@
     self.rotationLabel.shadowOffset = CGSizeMake(0, -1);
     self.rotationLabel.translatesAutoresizingMaskIntoConstraints = NO;
     [self.view addSubview:self.rotationLabel];
-    NSArray *constraints = [self.rotationLabel autoCenterInSuperview];
-    [self.view addConstraints:constraints];
+    [self.rotationLabel autoPinEdge:ALEdgeTop toEdge:ALEdgeBottom ofView:self.rotationImageView withOffset:10.0f];
+    [self.rotationLabel autoAlignAxisToSuperviewAxis:ALAxisVertical];
+}
+
+- (void) setupRotationImageView {
+    self.rotationImageView = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"KFDeviceRotation"]];
+    self.rotationImageView.translatesAutoresizingMaskIntoConstraints = NO;
+    self.rotationImageView.transform = CGAffineTransformMakeRotation(90./180.*M_PI);
+    [self.view addSubview:self.rotationImageView];
+    [self.rotationImageView autoCenterInSuperview];
 }
 
 - (void) cancelButtonPressed:(id)sender {
@@ -97,6 +98,10 @@
 
 - (void) recordButtonPressed:(id)sender {
     self.recordButton.enabled = NO;
+    self.cancelButton.enabled = NO;
+    [UIView animateWithDuration:0.2 animations:^{
+        self.cancelButton.alpha = 0.0f;
+    }];
     if (!self.recorder.isRecording) {
         [self.recorder startRecording];
     } else {
@@ -118,10 +123,12 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+    self.view.backgroundColor = [UIColor blackColor];
     [self setupCameraView];
     [self setupShareButton];
     [self setupRecordButton];
     [self setupCancelButton];
+    [self setupRotationImageView];
     [self setupRotationLabel];
 }
 
@@ -155,7 +162,6 @@
 }
 
 - (void) checkViewOrientation:(BOOL)animated {
-    NSArray *landscapeControls = @[self.recordButton, self.cancelButton];
     CGFloat duration = 0.2f;
     if (!animated) {
         duration = 0.0f;
@@ -163,24 +169,20 @@
     UIInterfaceOrientation orientation = [UIApplication sharedApplication].statusBarOrientation;
     // Hide controls in Portrait
     if (orientation == UIInterfaceOrientationPortrait || orientation == UIInterfaceOrientationPortrait) {
-        for (UIControl *control in landscapeControls) {
-            control.enabled = NO;
-        }
+        self.recordButton.enabled = NO;
         [UIView animateWithDuration:0.2 animations:^{
             self.shareButton.alpha = 0.0f;
             self.recordButton.alpha = 0.0f;
-            self.cancelButton.alpha = 0.0f;
             self.rotationLabel.alpha = 1.0f;
+            self.rotationImageView.alpha = 1.0f;
         } completion:NULL];
     } else {
-        for (UIControl *control in landscapeControls) {
-            control.enabled = YES;
-        }
+        self.recordButton.enabled = YES;
         [UIView animateWithDuration:0.2 animations:^{
             self.shareButton.alpha = 1.0f;
             self.recordButton.alpha = 1.0f;
-            self.cancelButton.alpha = 1.0f;
             self.rotationLabel.alpha = 0.0f;
+            self.rotationImageView.alpha = 0.0f;
         } completion:NULL];
     }
 }

@@ -16,15 +16,16 @@
 @property (nonatomic, copy) KFBroadcastReadyBlock readyBlock;
 @property (nonatomic, copy) KFBroadcastCompletionBlock completionBlock;
 
-@property (strong, nonatomic) IBOutlet UIView *cameraView;
-@property (nonatomic, strong) IBOutlet UIButton *shareButton;
-@property (nonatomic, strong) IBOutlet KFRecordButton *recordButton;
-@property (nonatomic, strong) IBOutlet UIImageView *liveBanner;
+@property (strong, nonatomic) UIView *cameraView;
+@property (nonatomic, strong) UIButton *shareButton;
+@property (nonatomic, strong) KFRecordButton *recordButton;
+@property (nonatomic, strong) UIImageView *liveBanner;
 
 @property (nonatomic, strong) KFRecorder *recorder;
 @property (nonatomic, strong) NSURL *shareURL;
 
-@property (nonatomic, strong) IBOutlet UILabel *rotationLabel;
-@property (nonatomic, strong) IBOutlet UIButton *cancelButton;
+@property (nonatomic, strong) UILabel *rotationLabel;
+@property (nonatomic, strong) UIImageView *rotationImageView;
+@property (nonatomic, strong) UIButton *cancelButton;
 
 @end
