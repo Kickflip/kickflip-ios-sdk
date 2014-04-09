@@ -27,7 +27,7 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
 }
 
 - (instancetype) init {
-    NSURL *url = [NSURL URLWithString:@"http://api.kickflip.io/"];
+    NSURL *url = [NSURL URLWithString:@"https://kickflip.io/"];
     if (self = [super initWithBaseURL:url]) {
         [self registerHTTPOperationClass:[AFJSONRequestOperation class]];
         [self setDefaultHeader:@"Accept" value:@"application/json"];
@@ -83,7 +83,7 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
             }
             return;
         }
-        [self parsePostPath:@"/api/new/user/" parameters:parameters callbackBlock:^(NSDictionary *responseDictionary, NSError *error) {
+        [self parsePostPath:@"/api/user/new" parameters:parameters callbackBlock:^(NSDictionary *responseDictionary, NSError *error) {
             if (error) {
                 if (callbackBlock) {
                     callbackBlock(nil, error);
@@ -137,6 +137,12 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
 
 - (void) parsePostPath:(NSString*)path activeUser:(KFUser*)activeUser parameters:(NSDictionary*)parameters callbackBlock:(void (^)(NSDictionary *responseDictionary, NSError *error))callbackBlock {
     NSMutableDictionary *fullParameters = [NSMutableDictionary dictionaryWithDictionary:parameters];
+    if (!activeUser) {
+        if (callbackBlock) {
+            callbackBlock(nil, [NSError errorWithDomain:kKFAPIClientErrorDomain code:105 userInfo:@{NSLocalizedDescriptionKey: @"Fetch an active user first"}]);
+        }
+        return;
+    }
     [fullParameters setObject:activeUser.uuid forKey:KFUserAttributes.uuid];
     [self parsePostPath:path parameters:fullParameters callbackBlock:callbackBlock];
 }

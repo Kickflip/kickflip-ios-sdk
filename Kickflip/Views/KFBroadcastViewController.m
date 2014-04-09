@@ -70,7 +70,7 @@
     self.rotationLabel = [[UILabel alloc] init];
     self.rotationLabel.text = @"Rotate Device to Record";
     self.rotationLabel.textAlignment = NSTextAlignmentCenter;
-    self.rotationLabel.font = [UIFont boldSystemFontOfSize:17.0f];
+    self.rotationLabel.font = [UIFont fontWithName:@"HelveticaNeue-Light" size:17.0f];
     self.rotationLabel.textColor = [UIColor whiteColor];
     self.rotationLabel.shadowColor = [UIColor blackColor];
     self.rotationLabel.shadowOffset = CGSizeMake(0, -1);

@@ -23,4 +23,6 @@ Pod::Spec.new do |s|
   s.dependency 'FFmpegWrapper', '~> 1.0'
   s.dependency 'UIView+AutoLayout', '~> 1.3'
   s.dependency 'Mantle', '~> 1.4'
+  s.dependency 'SDWebImage', '~> 3.6'
+  s.dependency 'FormatterKit/TimeIntervalFormatter', '~> 1.4'
 end
