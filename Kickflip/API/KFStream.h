@@ -25,8 +25,6 @@ extern NSString * const KFStreamTypeKey;
 
 @interface KFStream : MTLModel <MTLJSONSerializing>
 
-// Mutable Properties
-@property (nonatomic) KFStreamState streamState;
 @property (nonatomic, strong) NSString *username;
 
 @property (nonatomic, strong, readonly) NSString *streamID;
@@ -40,11 +38,15 @@ extern NSString * const KFStreamTypeKey;
 @property (nonatomic, strong) NSURL *thumbnailURL;
 
 // Location information
-@property (nonatomic, strong, readonly) NSString *city;
-@property (nonatomic, strong, readonly) NSString *country;
-@property (nonatomic, strong, readonly) NSString *state;
-//@property (nonatomic, readonly) CLLocationCoordinate2D startCoordinate;
-//@property (nonatomic, readonly) CLLocationCoordinate2D endCoordinate;
+@property (nonatomic, strong) NSString *city;
+@property (nonatomic, strong) NSString *country;
+@property (nonatomic, strong) NSString *state;
 
+@property (nonatomic, strong) CLLocation *startLocation;
+@property (nonatomic, strong) CLLocation *endLocation;
+
+@property (nonatomic) KFStreamState streamState;
+
+- (BOOL) isLive;
 
 @end

@@ -11,6 +11,7 @@
 #import "KFAACEncoder.h"
 #import "KFH264Encoder.h"
 #import "KFHLSUploader.h"
+#import <CoreLocation/CoreLocation.h>
 
 @class KFRecorder, KFHLSWriter, KFStream;
 
@@ -20,7 +21,7 @@
 - (void) recorder:(KFRecorder*)recorder streamReadyAtURL:(NSURL*)url;
 @end
 
-@interface KFRecorder : NSObject <AVCaptureVideoDataOutputSampleBufferDelegate, AVCaptureAudioDataOutputSampleBufferDelegate, KFEncoderDelegate, KFHLSUploaderDelegate>
+@interface KFRecorder : NSObject <AVCaptureVideoDataOutputSampleBufferDelegate, AVCaptureAudioDataOutputSampleBufferDelegate, KFEncoderDelegate, KFHLSUploaderDelegate, CLLocationManagerDelegate>
 
 @property (nonatomic, strong) AVCaptureSession* session;
 @property (nonatomic, strong) AVCaptureVideoPreviewLayer* previewLayer;
@@ -30,6 +31,7 @@
 @property (nonatomic, strong) dispatch_queue_t audioQueue;
 @property (nonatomic, strong) AVCaptureConnection* audioConnection;
 @property (nonatomic, strong) AVCaptureConnection* videoConnection;
+@property (nonatomic, strong) CLLocation *lastLocation;
 
 @property (nonatomic, strong) KFAACEncoder *aacEncoder;
 @property (nonatomic, strong) KFH264Encoder *h264Encoder;

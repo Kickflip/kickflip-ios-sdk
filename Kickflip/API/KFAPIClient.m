@@ -27,7 +27,7 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
 }
 
 - (instancetype) init {
-    NSURL *url = [NSURL URLWithString:@"https://kickflip.io/"];
+    NSURL *url = [NSURL URLWithString:@"https://www.kickflip.io/"];
     if (self = [super initWithBaseURL:url]) {
         [self registerHTTPOperationClass:[AFJSONRequestOperation class]];
         [self setDefaultHeader:@"Accept" value:@"application/json"];
@@ -289,6 +289,10 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
 
 - (void) updateMetadataForStream:(KFStream *)stream callbackBlock:(void (^)(KFStream* updatedStream, NSError *))callbackBlock {
     NSDictionary *parameters = [MTLJSONAdapter JSONDictionaryFromModel:stream];
+    /*
+    NSString *jsonString = [[NSString alloc] initWithData:[NSJSONSerialization dataWithJSONObject:parameters options:NSJSONWritingPrettyPrinted error:nil] encoding:NSUTF8StringEncoding];
+    DDLogInfo(@"updateMetadata outgoing jsonString: %@", jsonString);
+    */
     [self betterPostPath:@"/api/stream/info" parameters:parameters callbackBlock:^(NSDictionary *responseDictionary, NSError *error) {
         if (!callbackBlock) {
             return;
@@ -297,7 +301,12 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
             callbackBlock(nil, error);
             return;
         }
-        DDLogInfo(@"Updated the stream: %@", responseDictionary);
+        KFStream *updatedStream = [MTLJSONAdapter modelOfClass:[KFStream class] fromJSONDictionary:responseDictionary error:&error];
+        if (error) {
+            callbackBlock(nil, error);
+            return;
+        }
+        callbackBlock(updatedStream, nil);
     }];
 }
 

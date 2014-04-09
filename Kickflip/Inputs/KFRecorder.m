@@ -24,6 +24,7 @@
 @property (nonatomic) double minBitrate;
 @property (nonatomic) BOOL hasScreenshot;
 @property (nonatomic) dispatch_queue_t thumbnail_queue;
+@property (nonatomic, strong) CLLocationManager *locationManager;
 @end
 
 @implementation KFRecorder
@@ -241,6 +242,9 @@
 }
 
 - (void) startRecording {
+    self.locationManager = [[CLLocationManager alloc] init];
+    self.locationManager.delegate = self;
+    [self.locationManager startUpdatingLocation];
     [[KFAPIClient sharedClient] startNewStream:^(KFStream *endpointResponse, NSError *error) {
         if (error) {
             if (self.delegate && [self.delegate respondsToSelector:@selector(recorderDidStartRecording:error:)]) {
@@ -251,6 +255,7 @@
             return;
         }
         self.stream = endpointResponse;
+        [self setStreamStartLocation];
         if ([endpointResponse isKindOfClass:[KFS3Stream class]]) {
             KFS3Stream *s3Endpoint = (KFS3Stream*)endpointResponse;
             s3Endpoint.streamState = KFStreamStateStreaming;
@@ -274,8 +279,51 @@
     
 }
 
+- (void) reverseGeocodeStream:(KFStream*)stream {
+    CLLocation *location = nil;
+    CLLocation *endLocation = stream.endLocation;
+    CLLocation *startLocation = stream.startLocation;
+    if (startLocation) {
+        location = startLocation;
+    }
+    if (endLocation) {
+        location = endLocation;
+    }
+    if (!location) {
+        return;
+    }
+    CLGeocoder *geocoder = [[CLGeocoder alloc] init];
+    [geocoder reverseGeocodeLocation:location completionHandler:^(NSArray *placemarks, NSError *error) {
+        if (error) {
+            DDLogError(@"Error geocoding stream: %@", error);
+            return;
+        }
+        if (placemarks.count == 0) {
+            return;
+        }
+        CLPlacemark *placemark = [placemarks firstObject];
+        stream.city = placemark.locality;
+        stream.state = placemark.administrativeArea;
+        stream.country = placemark.country;
+        [[KFAPIClient sharedClient] updateMetadataForStream:stream callbackBlock:^(KFStream *updatedStream, NSError *error) {
+            if (error) {
+                DDLogError(@"Error updating stream geocoder info: %@", error);
+            }
+        }];
+    }];
+}
+
 - (void) stopRecording {
+    [self.locationManager stopUpdatingLocation];
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        if (self.lastLocation) {
+            self.stream.endLocation = self.lastLocation;
+            [[KFAPIClient sharedClient] updateMetadataForStream:self.stream callbackBlock:^(KFStream *updatedStream, NSError *error) {
+                if (error) {
+                    DDLogError(@"Error updating stream endLocation: %@", error);
+                }
+            }];
+        }
         [_session stopRunning];
         self.isRecording = NO;
         NSError *error = nil;
@@ -326,6 +374,26 @@
         });
     }
     DDLogVerbose(@"Manifest ready at URL: %@", manifestURL);
+}
+
+- (void) locationManager:(CLLocationManager *)manager didUpdateLocations:(NSArray *)locations {
+    self.lastLocation = [locations lastObject];
+    [self setStreamStartLocation];
+}
+
+- (void) setStreamStartLocation {
+    if (!self.lastLocation) {
+        return;
+    }
+    if (self.stream && !self.stream.startLocation) {
+        self.stream.startLocation = self.lastLocation;
+        [[KFAPIClient sharedClient] updateMetadataForStream:self.stream callbackBlock:^(KFStream *updatedStream, NSError *error) {
+            if (error) {
+                DDLogError(@"Error updating stream startLocation: %@", error);
+            }
+        }];
+        [self reverseGeocodeStream:self.stream];
+    }
 }
 
 @end
