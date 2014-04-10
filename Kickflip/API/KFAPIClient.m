@@ -293,7 +293,7 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
     NSString *jsonString = [[NSString alloc] initWithData:[NSJSONSerialization dataWithJSONObject:parameters options:NSJSONWritingPrettyPrinted error:nil] encoding:NSUTF8StringEncoding];
     DDLogInfo(@"updateMetadata outgoing jsonString: %@", jsonString);
     */
-    [self betterPostPath:@"/api/stream/info" parameters:parameters callbackBlock:^(NSDictionary *responseDictionary, NSError *error) {
+    [self betterPostPath:@"/api/stream/change" parameters:parameters callbackBlock:^(NSDictionary *responseDictionary, NSError *error) {
         if (!callbackBlock) {
             return;
         }

@@ -28,10 +28,28 @@ static NSString * const KFStreamTableViewCellIdentifier = @"KFStreamTableViewCel
         [self setupLocationLabel];
         [self setupDurationLabel];
         [self setupActionButton];
+        [self setupLiveBannerView];
+        [self setupLoadingActivityIndicatorView];
     }
     return self;
 }
-                          
+
+- (void) setupLiveBannerView {
+    self.liveBannerView = [[KFLiveBannerView alloc] init];
+    self.liveBannerView.translatesAutoresizingMaskIntoConstraints = NO;
+    [self.contentView addSubview:self.liveBannerView];
+    [self.liveBannerView autoPinEdge:ALEdgeLeft toEdge:ALEdgeLeft ofView:self.thumbnailImageView];
+    [self.liveBannerView autoPinEdge:ALEdgeTop toEdge:ALEdgeTop ofView:self.thumbnailImageView withOffset:20.0f];
+}
+
+- (void) setupLoadingActivityIndicatorView {
+    self.loadingIndicatorView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
+    self.loadingIndicatorView.translatesAutoresizingMaskIntoConstraints = NO;
+    [self.contentView addSubview:self.loadingIndicatorView];
+    [self.loadingIndicatorView autoAlignAxis:ALAxisHorizontal toSameAxisOfView:self.thumbnailImageView];
+    [self.loadingIndicatorView autoAlignAxis:ALAxisVertical toSameAxisOfView:self.thumbnailImageView];
+}
+
 - (void) setupDateLabel {
     self.dateLabel = [[UILabel alloc] init];
     self.dateLabel.translatesAutoresizingMaskIntoConstraints = NO;
@@ -111,15 +129,24 @@ static NSString * const KFStreamTableViewCellIdentifier = @"KFStreamTableViewCel
     self.durationLabel.text = [KFDateUtils timeIntervalStringFromDate:stream.startDate toDate:stream.finishDate];
     __weak KFStreamTableViewCell *weakSelf = self;
 
+    [self.loadingIndicatorView startAnimating];
+    self.thumbnailImageView.alpha = 0.0f;
+    self.loadingIndicatorView.alpha = 1.0f;
+    
+    if (stream.isLive) {
+        self.liveBannerView.alpha = 1.0f;
+    } else {
+        self.liveBannerView.alpha = 0.0f;
+    }
+
     [self.thumbnailImageView setImageWithURL:stream.thumbnailURL completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType) {
         weakSelf.thumbnailImageView.image = image;
-        if (cacheType == SDImageCacheTypeNone) { // animate when loading from web
-            [UIView animateWithDuration:0.2 animations:^{
-                weakSelf.thumbnailImageView.alpha = 1.0f;
-            }];
-        } else { // cached from disk
+        [UIView animateWithDuration:0.2 animations:^{
             weakSelf.thumbnailImageView.alpha = 1.0f;
-        }
+            weakSelf.loadingIndicatorView.alpha = 0.0f;
+        } completion:^(BOOL finished) {
+            [weakSelf.loadingIndicatorView stopAnimating];
+        }];
     }];
 }
 
@@ -127,7 +154,6 @@ static NSString * const KFStreamTableViewCellIdentifier = @"KFStreamTableViewCel
     [super prepareForReuse];
     [self.thumbnailImageView cancelCurrentImageLoad];
     self.thumbnailImageView.image = nil;
-    self.thumbnailImageView.alpha = 0.0f;
     self.actionBlock = nil;
 }
 

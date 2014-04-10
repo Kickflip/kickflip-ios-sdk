@@ -7,6 +7,7 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "KFLiveBannerView.h"
 @class KFStream;
 
 typedef void(^KFStreamTableViewCellActionBlock)(void);
@@ -19,6 +20,8 @@ typedef void(^KFStreamTableViewCellActionBlock)(void);
 @property (nonatomic, strong) UILabel *durationLabel;
 @property (nonatomic, strong) UIButton *actionButton;
 @property (nonatomic, copy) KFStreamTableViewCellActionBlock actionBlock;
+@property (nonatomic, strong) UIActivityIndicatorView *loadingIndicatorView;
+@property (nonatomic, strong) KFLiveBannerView *liveBannerView;
 
 - (void) setStream:(KFStream*)stream;
 

@@ -113,6 +113,9 @@ static NSString * const KFStreamStateKey = @"KFStreamStateKey";
     if (self.startDate && !self.finishDate) {
         return YES;
     }
+    if ([self.startDate isEqualToDate:self.finishDate]) {
+        return YES;
+    }
     return NO;
 }
 
