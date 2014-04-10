@@ -23,7 +23,6 @@
 @interface KFRecorder()
 @property (nonatomic) double minBitrate;
 @property (nonatomic) BOOL hasScreenshot;
-@property (nonatomic) dispatch_queue_t thumbnail_queue;
 @property (nonatomic, strong) CLLocationManager *locationManager;
 @end
 
@@ -34,7 +33,6 @@
         _minBitrate = 300 * 1000;
         [self setupSession];
         [self setupEncoders];
-        self.thumbnail_queue = dispatch_queue_create("thumbnail queue", 0);
     }
     return self;
 }
@@ -117,7 +115,7 @@
     _videoQueue = dispatch_queue_create("Video Capture Queue", DISPATCH_QUEUE_SERIAL);
     _videoOutput = [[AVCaptureVideoDataOutput alloc] init];
     [_videoOutput setSampleBufferDelegate:self queue:_videoQueue];
-    NSDictionary *captureSettings = @{(NSString*)kCVPixelBufferPixelFormatTypeKey: @(kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange)};
+    NSDictionary *captureSettings = @{(NSString*)kCVPixelBufferPixelFormatTypeKey: @(kCVPixelFormatType_32BGRA)};
     _videoOutput.videoSettings = captureSettings;
     _videoOutput.alwaysDiscardsLateVideoFrames = YES;
     if ([_session canAddOutput:_videoOutput]) {
@@ -144,18 +142,14 @@
     }
     // pass frame to encoders
     if (connection == _videoConnection) {
+        if (!_hasScreenshot) {
+            UIImage *image = [self imageFromSampleBuffer:sampleBuffer];
+            NSString *path = [self.hlsWriter.directoryPath stringByAppendingPathComponent:@"thumb.jpg"];
+            NSData *imageData = UIImageJPEGRepresentation(image, 0.7);
+            [imageData writeToFile:path atomically:NO];
+            _hasScreenshot = YES;
+        }
         [_h264Encoder encodeSampleBuffer:sampleBuffer];
-        CFRetain(sampleBuffer);
-        dispatch_async(_thumbnail_queue, ^{
-            if (!_hasScreenshot) {
-                UIImage *image = [self imageFromSampleBuffer:sampleBuffer];
-                NSString *path = [self.hlsWriter.directoryPath stringByAppendingPathComponent:@"thumb.jpg"];
-                NSData *imageData = UIImageJPEGRepresentation(image, 0.9);
-                [imageData writeToFile:path atomically:NO];
-                _hasScreenshot = YES;
-            }
-            CFRelease(sampleBuffer);
-        });
     } else if (connection == _audioConnection) {
         [_aacEncoder encodeSampleBuffer:sampleBuffer];
     }
@@ -164,70 +158,43 @@
 // Create a UIImage from sample buffer data
 - (UIImage *) imageFromSampleBuffer:(CMSampleBufferRef) sampleBuffer
 {
+    // Get a CMSampleBuffer's Core Video image buffer for the media data
     CVImageBufferRef imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer);
+    // Lock the base address of the pixel buffer
+    CVPixelBufferLockBaseAddress(imageBuffer, 0);
     
-    //Lock the imagebuffer
-    CVPixelBufferLockBaseAddress(imageBuffer,0);
+    // Get the number of bytes per row for the pixel buffer
+    void *baseAddress = CVPixelBufferGetBaseAddress(imageBuffer);
     
-    // Get information about the image
-    uint8_t *baseAddress = (uint8_t *)CVPixelBufferGetBaseAddress(imageBuffer);
-    
-    //    size_t bytesPerRow = CVPixelBufferGetBytesPerRow(imageBuffer);
+    // Get the number of bytes per row for the pixel buffer
+    size_t bytesPerRow = CVPixelBufferGetBytesPerRow(imageBuffer);
+    // Get the pixel buffer width and height
     size_t width = CVPixelBufferGetWidth(imageBuffer);
     size_t height = CVPixelBufferGetHeight(imageBuffer);
-    size_t bytesPerRow = CVPixelBufferGetBytesPerRow(imageBuffer);
-    
-    CVPlanarPixelBufferInfo_YCbCrBiPlanar *bufferInfo = (CVPlanarPixelBufferInfo_YCbCrBiPlanar *)baseAddress;
-    
-    // This just moved the pointer past the offset
-    baseAddress = (uint8_t *)CVPixelBufferGetBaseAddressOfPlane(imageBuffer, 0);
-    
-    // convert the image
-    return [self makeUIImage:baseAddress bufferInfo:bufferInfo width:width height:height bytesPerRow:bytesPerRow];
-}
-
-// http://stackoverflow.com/questions/13201084/how-to-convert-a-kcvpixelformattype-420ypcbcr8biplanarfullrange-buffer-to-uiimag?rq=1
-- (UIImage *)makeUIImage:(uint8_t *)inBaseAddress bufferInfo:(CVPlanarPixelBufferInfo_YCbCrBiPlanar *)inBufferInfo width:(size_t)inWidth height:(size_t)inHeight bytesPerRow:(size_t)inBytesPerRow {
-    
-    NSUInteger yPitch = EndianU32_BtoN(inBufferInfo->componentInfoY.rowBytes);
-    
-    uint8_t *rgbBuffer = (uint8_t *)malloc(inWidth * inHeight * 4);
-    uint8_t *yBuffer = (uint8_t *)inBaseAddress;
-    uint8_t val;
-    int bytesPerPixel = 4;
-    
-    // for each byte in the input buffer, fill in the output buffer with four bytes
-    // the first byte is the Alpha channel, then the next three contain the same
-    // value of the input buffer
-    for(int y = 0; y < inHeight*inWidth; y++)
-    {
-        val = yBuffer[y];
-        // Alpha channel
-        rgbBuffer[(y*bytesPerPixel)] = 0xff;
-        
-        // next three bytes same as input
-        rgbBuffer[(y*bytesPerPixel)+1] = rgbBuffer[(y*bytesPerPixel)+2] =  rgbBuffer[y*bytesPerPixel+3] = val;
-    }
     
     // Create a device-dependent RGB color space
     CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
     
-    CGContextRef context = CGBitmapContextCreate(rgbBuffer, yPitch, inHeight, 8,
-                                                 yPitch*bytesPerPixel, colorSpace, kCGBitmapByteOrder32Little | kCGImageAlphaPremultipliedLast);
-    
+    // Create a bitmap graphics context with the sample buffer data
+    CGContextRef context = CGBitmapContextCreate(baseAddress, width, height, 8,
+                                                 bytesPerRow, colorSpace, kCGBitmapByteOrder32Little | kCGImageAlphaPremultipliedFirst);
+    // Create a Quartz image from the pixel data in the bitmap graphics context
     CGImageRef quartzImage = CGBitmapContextCreateImage(context);
+    // Unlock the pixel buffer
+    CVPixelBufferUnlockBaseAddress(imageBuffer,0);
     
+    // Free up the context and color space
     CGContextRelease(context);
     CGColorSpaceRelease(colorSpace);
     
+    // Create an image object from the Quartz image
     UIImage *image = [UIImage imageWithCGImage:quartzImage];
     
+    // Release the Quartz image
     CGImageRelease(quartzImage);
-    free(rgbBuffer);
-    return  image;
+    
+    return (image);
 }
-
-
 
 - (void) setupSession {
     _session = [[AVCaptureSession alloc] init];
