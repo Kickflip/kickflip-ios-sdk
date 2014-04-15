@@ -1,7 +1,5 @@
 # Kickflip SDK for iOS
 
-**note**: This is a pre-release API preview.
-
 The [Kickflip](http://kickflip.io) platform provides a complete video broadcasting solution for your iOS application. You can use our pre-built `KFBroadcastViewController` to stream live video to your Kickflip account starting with one line of code. Check out our [Kickflip iOS SDK example](https://github.com/Kickflip/kickflip-ios-example).
 
 ## Quickstart
@@ -20,13 +18,20 @@ completion:nil];
 
 ## Cocoapods Setup
 
-You'll need to install [Cocoapods](http://cocoapods.org) first. Because you're so bleeding edge, some of our dependencies aren't in the official Cocoapods repo yet, so you'll have to add our Specs repo.
-
-    $ pod repo add kickflip git@github.com:Kickflip/Specs.git
+You'll need to install [Cocoapods](http://cocoapods.org) first. We haven't submitted the SDK to Cocoapods yet, but it is available right now as a custom podspec so you can track development in the master branch.
     
-Then you can add the following to your `Podfile`:
+Add the following to your `Podfile`:
 
-    pod 'Kickflip', '~> 0.9'
+    pod 'Kickflip', :git => 'https://github.com/Kickflip/kickflip-ios-sdk.git'
+    
+## Screenshots
+
+[![kickflip app screenshot](https://i.imgur.com/QPtggd9m.jpg)](https://i.imgur.com/QPtggd9.png)
+[![kickflip live broadcast screenshot](https://i.imgur.com/VHB6iQQm.jpg)](https://i.imgur.com/VHB6iQQ.png)
+[![kickflip live consumption screenshot](https://i.imgur.com/IZbiyhRm.jpg)](https://i.imgur.com/IZbiyhR.png)
+
+[Screenshots Gallery](http://imgur.com/a/IwuZ7)
+
     
 ## License
 
