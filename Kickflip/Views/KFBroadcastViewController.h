@@ -11,6 +11,13 @@
 #import "Kickflip.h"
 #import "KFRecordButton.h"
 
+/**
+ *  This is the main broadcast user interface that presents a start/stop button
+ *  and provides the user with the ability to share a link to the stream
+ *  when it has buffered enough segments.
+ *
+ *  You can also use the Kickflip class to show this view from any UIViewController.
+ */
 @interface KFBroadcastViewController : UIViewController <KFRecorderDelegate>
 
 @property (nonatomic, copy) KFBroadcastReadyBlock readyBlock;

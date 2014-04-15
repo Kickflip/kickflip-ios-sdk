@@ -9,19 +9,39 @@
 #import <Foundation/Foundation.h>
 #import "Mantle.h"
 
-extern const struct KFUserAttributes {
-	__unsafe_unretained NSString *username;
-	__unsafe_unretained NSString *uuid;
-	__unsafe_unretained NSString *appName;
-} KFUserAttributes;
-
+/**
+ *  Native user model based on Kickflip API responses
+ */
 @interface KFUser : MTLModel <MTLJSONSerializing>
 
+/**
+ *  Username returned by the server
+ */
 @property (readonly, nonatomic, strong) NSString *username;
+
+/**
+ *  Unique identifier (UUID) returned by the server. This is used as an
+ *  authentication token for the API.
+ */
 @property (readonly, nonatomic, strong) NSString *uuid;
+
+/**
+ *  Kickflip.io app name
+ */
 @property (readonly, nonatomic, strong) NSString *appName;
 
+/**
+ *  Active KFUser for communication with API, stored in `NSUserDefaults`.
+ *
+ *  @return active user, or nil if not availible
+ */
 + (instancetype) activeUser;
+
+/**
+ *  Store the active user to `NSUserDefaults`
+ *
+ *  @param user if this parameter is nil, it will remove the active user.
+ */
 + (void) setActiveUser:(KFUser*)user;
 
 @end

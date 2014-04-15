@@ -12,6 +12,9 @@
 
 typedef void(^KFStreamTableViewCellActionBlock)(void);
 
+/**
+ *  KFStreamTableViewCell is a convenient view for displaying a KFStream in a UITableView
+ */
 @interface KFStreamTableViewCell : UITableViewCell
 
 @property (nonatomic, strong) UIImageView *thumbnailImageView;

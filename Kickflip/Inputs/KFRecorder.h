@@ -21,6 +21,9 @@
 - (void) recorder:(KFRecorder*)recorder streamReadyAtURL:(NSURL*)url;
 @end
 
+/**
+ *  KFRecorder manages the majority of the AV pipeline
+ */
 @interface KFRecorder : NSObject <AVCaptureVideoDataOutputSampleBufferDelegate, AVCaptureAudioDataOutputSampleBufferDelegate, KFEncoderDelegate, KFHLSUploaderDelegate, CLLocationManagerDelegate>
 
 @property (nonatomic, strong) AVCaptureSession* session;

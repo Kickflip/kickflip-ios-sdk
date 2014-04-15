@@ -9,12 +9,6 @@
 #import "KFUser.h"
 #import "KFLog.h"
 
-const struct KFUserAttributes KFUserAttributes = {
-	.username = @"username",
-	.uuid = @"uuid",
-	.appName = @"appName",
-};
-
 static NSString * const KFUserActiveUserKey = @"KFUserActiveUserKey";
 
 @interface KFUser()
@@ -27,9 +21,9 @@ static NSString * const KFUserActiveUserKey = @"KFUserActiveUserKey";
 
 + (NSDictionary *)JSONKeyPathsByPropertyKey {
     return @{
-             KFUserAttributes.username: @"name",
-             KFUserAttributes.uuid: @"uuid",
-             KFUserAttributes.appName: @"app"
+             NSStringFromSelector(@selector(username)): @"name",
+             NSStringFromSelector(@selector(uuid)): @"uuid",
+             NSStringFromSelector(@selector(appName)): @"app"
              };
 }
 
@@ -45,6 +39,9 @@ static NSString * const KFUserActiveUserKey = @"KFUserActiveUserKey";
 
 + (void) setActiveUser:(KFUser*)user {
     [self deactivateUser];
+    if (!user) {
+        return;
+    }
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
     NSData *encodedObject = [NSKeyedArchiver archivedDataWithRootObject:user];
     [defaults setObject:encodedObject forKey:KFUserActiveUserKey];

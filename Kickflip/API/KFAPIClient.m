@@ -143,7 +143,7 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
         }
         return;
     }
-    [fullParameters setObject:activeUser.uuid forKey:KFUserAttributes.uuid];
+    [fullParameters setObject:activeUser.uuid forKey:@"uuid"];
     [self parsePostPath:path parameters:fullParameters callbackBlock:callbackBlock];
 }
 
