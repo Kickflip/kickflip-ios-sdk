@@ -33,6 +33,7 @@
     _shareButton = [UIButton buttonWithType:UIButtonTypeRoundedRect];
     [_shareButton addTarget:self action:@selector(shareButtonPressed:) forControlEvents:UIControlEventTouchUpInside];
     [_shareButton setTitle:@"Share" forState:UIControlStateNormal];
+    [_shareButton setTitle:@"Buffering..." forState:UIControlStateDisabled];
     self.shareButton.enabled = NO;
     self.shareButton.translatesAutoresizingMaskIntoConstraints = NO;
     [self.view addSubview:self.shareButton];
@@ -68,7 +69,7 @@
 
 - (void) setupRotationLabel {
     self.rotationLabel = [[UILabel alloc] init];
-    self.rotationLabel.text = @"Rotate Device to Record";
+    self.rotationLabel.text = @"Rotate Device to Begin";
     self.rotationLabel.textAlignment = NSTextAlignmentCenter;
     self.rotationLabel.font = [UIFont fontWithName:@"HelveticaNeue-Light" size:17.0f];
     self.rotationLabel.textColor = [UIColor whiteColor];
@@ -250,7 +251,7 @@
 - (void) recorder:(KFRecorder *)recorder streamReadyAtURL:(NSURL *)url {
     self.shareButton.enabled = YES;
     if (_readyBlock) {
-        _readyBlock(url);
+        _readyBlock(recorder.stream);
     }
 }
 

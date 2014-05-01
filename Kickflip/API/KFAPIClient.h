@@ -36,16 +36,66 @@
  */
 - (void) requestNewActiveUserWithUsername:(NSString*)username callbackBlock:(void (^)(KFUser *activeUser, NSError *error))callbackBlock;
 
+/**
+ *  Requests new active user.
+ *
+ *  @param username      (optional) desired username
+ *  @param password User's password
+ *  @param email User's email address
+ *  @param displayName Name shown instead of username
+ *  @param extraInfo Any additional context-specific information you'd like to store for your user.
+ *  @param callbackBlock called when the request completes with either an active user or an error
+ */
+- (void) requestNewActiveUserWithUsername:(NSString*)username password:(NSString*)password email:(NSString*)email  displayName:(NSString*)displayName extraInfo:(NSDictionary*)extraInfo callbackBlock:(void (^)(KFUser *activeUser, NSError *error))callbackBlock;
+
+/**
+ *  Updates existing user metadata.
+ *
+ *  @param user Existing Kickflip user
+ *  @param email User's email address
+ *  @param newPassword (optional) For changing the user's current password
+ *  @param displayName Name shown instead of username
+ *  @param extraInfo Any additional context-specific information you'd like to store for your user.
+ *  @param callbackBlock called when the request completes with either an active user or an error
+ */
+- (void) updateMetadataForUser:(KFUser*)user newPassword:(NSString*)newPassword email:(NSString*)email displayName:(NSString*)displayName extraInfo:(NSDictionary*)extraInfo callbackBlock:(void (^)(KFUser *updatedUser, NSError *error))callbackBlock;
+
+/**
+ *  Logs in an existing user.
+ *
+ *  @param user Existing Kickflip user
+ *  @param password User's password
+ *  @param callbackBlock called when the request completes with either an active user or an error
+ */
+- (void) loginExistingUserWithUsername:(NSString*)username password:(NSString*)password callbackBlock:(void (^)(KFUser *existingUser, NSError *error))callbackBlock;
+
+/**
+ *  Fetches public data for an existing username.
+ *
+ *  @param username Existing user's username
+ *  @param callbackBlock Serialized existing user or error
+ *
+ */
+- (void) requestUserWithUserName:(NSString*)username callbackBlock:(void (^)(KFUser *existingUser, NSError *error))callbackBlock;
+
 ///-------------------------------
 /// @name Stream Lifecycle
 ///-------------------------------
 
 /**
- *  Starts a new stream to be fed to KFRecorder
+ *  Starts a new public stream to be fed to KFRecorder
  *
  *  @param endpointCallback Called when request completes for new stream or error
  */
 - (void) startNewStream:(void (^)(KFStream *newStream, NSError *error))endpointCallback;
+
+/**
+ *  Starts a new private stream to be fed to KFRecorder
+ *
+ *  @param endpointCallback Called when request completes for new stream or error
+ */
+- (void) startNewPrivateStream:(void (^)(KFStream *newStream, NSError *error))endpointCallback;
+
 /**
  *  Marks the stream as stopped on the server
  *
@@ -53,8 +103,10 @@
  *  @param callbackBlock (optional) whether or not this was successful
  */
 - (void) stopStream:(KFStream*)stream callbackBlock:(void (^)(BOOL success, NSError *error))callbackBlock;
+
 /**
- *  Posts to /api/stream/change the changes in your KFStream
+ *  Posts to /api/stream/change the changes in your KFStream. This will return a new
+ *  stream object, leaving the original object unchanged.
  *
  *  @param stream        stream to be updated
  *  @param callbackBlock (optional) serialized KFStream response or error
@@ -77,6 +129,7 @@
  *  Returns all the streams created near a certain location
  *
  *  @param location      Center point of search
+ 
  *  @param radius        (optional)
  *  @param callbackBlock Array of KFStreams matching query or error
  */

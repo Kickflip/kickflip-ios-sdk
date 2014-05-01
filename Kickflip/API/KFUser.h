@@ -31,6 +31,11 @@
 @property (readonly, nonatomic, strong) NSString *appName;
 
 /**
+ *  Password for user's account.
+ */
+@property (nonatomic, strong) NSString *password;
+
+/**
  *  Active KFUser for communication with API, stored in `NSUserDefaults`.
  *
  *  @return active user, or nil if not availible

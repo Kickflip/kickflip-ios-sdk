@@ -8,8 +8,12 @@
 
 #import "KFUser.h"
 #import "KFLog.h"
+#import "SSKeychain.h"
 
 static NSString * const KFUserActiveUserKey = @"KFUserActiveUserKey";
+static NSString * const KFUserPasswordKey = @"KFUserPasswordKey";
+static NSString * const KFKeychainService = @"io.kickflip.Kickflip";
+
 
 @interface KFUser()
 @property (readwrite, nonatomic, strong) NSString *username;
@@ -53,6 +57,18 @@ static NSString * const KFUserActiveUserKey = @"KFUserActiveUserKey";
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
     [defaults removeObjectForKey:KFUserActiveUserKey];
     [defaults synchronize];
+}
+
+- (NSString*) password {
+    return [SSKeychain passwordForService:KFKeychainService account:KFUserPasswordKey];
+}
+
+- (void) setPassword:(NSString *)password {
+    if (password.length == 0) {
+        [SSKeychain deletePasswordForService:KFKeychainService account:KFUserPasswordKey];
+        return;
+    }
+    [SSKeychain setPassword:password forService:KFKeychainService account:KFUserPasswordKey];
 }
 
 @end

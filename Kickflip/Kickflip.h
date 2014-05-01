@@ -8,6 +8,7 @@
 
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
+#import "KFStream.h"
 
 /**
  *  Block executed when stream is ready.
@@ -15,7 +16,7 @@
  *  @param streamURL URL to the streamable m3u8
  *  @see presentBroadcasterFromViewController:ready:completion:
  */
-typedef void (^KFBroadcastReadyBlock)(NSURL *streamURL);
+typedef void (^KFBroadcastReadyBlock)(KFStream *stream);
 
 /**
  *  Block executed when completed live broadcast

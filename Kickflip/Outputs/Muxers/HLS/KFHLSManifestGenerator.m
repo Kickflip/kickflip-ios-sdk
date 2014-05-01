@@ -17,7 +17,7 @@
 @implementation KFHLSManifestGenerator
 
 - (NSMutableString*) header {
-    NSMutableString *header = [NSMutableString stringWithFormat:@"#EXTM3U\n#EXT-X-VERSION:%d\n#EXT-X-TARGETDURATION:%g\n", self.version, self.targetDuration];
+    NSMutableString *header = [NSMutableString stringWithFormat:@"#EXTM3U\n#EXT-X-VERSION:%lu\n#EXT-X-TARGETDURATION:%g\n", (unsigned long)self.version, self.targetDuration];
     NSString *type = nil;
     if (self.playlistType == KFHLSManifestPlaylistTypeVOD) {
         type = @"VOD";
@@ -27,7 +27,7 @@
     if (type) {
         [header appendFormat:@"#EXT-X-PLAYLIST-TYPE:%@\n", type];
     }
-    [header appendFormat:@"#EXT-X-MEDIA-SEQUENCE:%d\n", self.mediaSequence];
+    [header appendFormat:@"#EXT-X-MEDIA-SEQUENCE:%ld\n", (long)self.mediaSequence];
     return header;
 }
 
