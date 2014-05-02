@@ -7,10 +7,8 @@
 //
 
 #import "Kickflip.h"
-#import "KFBroadcastViewController.h"
-#import "KFAPIClient.h"
-#import "KFUser.h"
 #import "KFLog.h"
+#import "KFBroadcastViewController.h"
 
 @interface Kickflip()
 @property (nonatomic, copy) NSString *apiKey;

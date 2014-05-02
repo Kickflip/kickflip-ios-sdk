@@ -71,10 +71,37 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
     [self setDefaultHeader:@"Authorization" value:[NSString stringWithFormat:@"Bearer %@", credential.accessToken]];
 }
 
-- (void) requestNewActiveUserWithUsername:(NSString*)username callbackBlock:(void (^)(KFUser *activeUser, NSError *error))callbackBlock {
-    NSDictionary *parameters = nil;
+- (NSString*) serializeExtraUserInfo:(NSDictionary*)extraInfo {
+    if (!extraInfo) {
+        return nil;
+    }
+    if ([NSJSONSerialization isValidJSONObject:extraInfo]) {
+        NSData *data = [NSJSONSerialization dataWithJSONObject:extraInfo options:NSJSONWritingPrettyPrinted error:nil];
+        NSString *extraInfo = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+        return extraInfo;
+    }
+    return nil;
+}
+
+- (void) requestNewActiveUserWithUsername:(NSString *)username password:(NSString *)password email:(NSString *)email displayName:(NSString *)displayName extraInfo:(NSDictionary *)extraInfo callbackBlock:(void (^)(KFUser *, NSError *))callbackBlock {
+    NSMutableDictionary *parameters = [NSMutableDictionary dictionaryWithCapacity:5];
     if (username) {
-        parameters = @{@"username": username};
+        [parameters setObject:username forKey:@"username"];
+    }
+    if (password) {
+        [parameters setObject:password forKey:@"password"];
+    }
+    if (email) {
+        [parameters setObject:email forKey:@"email"];
+    }
+    if (displayName) {
+        [parameters setObject:displayName forKey:@"display_name"];
+    }
+    if (extraInfo) {
+        NSString *extraInfoString = [self serializeExtraUserInfo:extraInfo];
+        if (extraInfo) {
+            [parameters setObject:extraInfoString forKey:@"extra_info"];
+        }
     }
     [self checkOAuthCredentialsWithCallback:^(BOOL success, NSError *error) {
         if (!success) {
@@ -105,6 +132,129 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
             }
         }];
     }];
+}
+
+- (void) requestUserInfoForUsername:(NSString*)username callbackBlock:(void (^)(KFUser *existingUser, NSError *error))callbackBlock {
+    [self checkOAuthCredentialsWithCallback:^(BOOL success, NSError *error) {
+        if (!success) {
+            if (callbackBlock) {
+                callbackBlock(nil, error);
+            }
+            return;
+        }
+        [self parsePostPath:@"/api/user/info" parameters:@{@"username": username} callbackBlock:^(NSDictionary *responseDictionary, NSError *error) {
+            if (error) {
+                if (callbackBlock) {
+                    callbackBlock(nil, error);
+                }
+                return;
+            }
+            error = nil;
+            
+            KFUser *user = [MTLJSONAdapter modelOfClass:[KFUser class] fromJSONDictionary:responseDictionary error:&error];
+            if (error) {
+                if (callbackBlock) {
+                    callbackBlock(nil, error);
+                }
+                return;
+            }
+            if (callbackBlock) {
+                callbackBlock(user, nil);
+            }
+        }];
+    }];
+}
+
+- (void) updateMetadataForUser:(KFUser *)user newPassword:(NSString *)newPassword email:(NSString *)email displayName:(NSString *)displayName extraInfo:(NSDictionary *)extraInfo callbackBlock:(void (^)(KFUser *, NSError *))callbackBlock {
+
+    NSMutableDictionary *parameters = [NSMutableDictionary dictionaryWithCapacity:5];
+    [parameters setObject:user.username forKey:@"username"];
+    [parameters setObject:user.password forKey:@"password"];
+    if (newPassword) {
+        [parameters setObject:newPassword forKey:@"new_password"];
+    }
+    if (email) {
+        [parameters setObject:email forKey:@"email"];
+    }
+    if (displayName) {
+        [parameters setObject:displayName forKey:@"display_name"];
+    }
+    if (extraInfo) {
+        NSString *extraInfoString = [self serializeExtraUserInfo:extraInfo];
+        if (extraInfo) {
+            [parameters setObject:extraInfoString forKey:@"extra_info"];
+        }
+    }
+    [self checkOAuthCredentialsWithCallback:^(BOOL success, NSError *error) {
+        if (!success) {
+            if (callbackBlock) {
+                callbackBlock(nil, error);
+            }
+            return;
+        }
+        [self parsePostPath:@"/api/user/change" parameters:parameters callbackBlock:^(NSDictionary *responseDictionary, NSError *error) {
+            if (error) {
+                if (callbackBlock) {
+                    callbackBlock(nil, error);
+                }
+                return;
+            }
+            error = nil;
+            
+            KFUser *user = [MTLJSONAdapter modelOfClass:[KFUser class] fromJSONDictionary:responseDictionary error:&error];
+            if (error) {
+                if (callbackBlock) {
+                    callbackBlock(nil, error);
+                }
+                return;
+            }
+            [KFUser setActiveUser:user];
+            if (callbackBlock) {
+                callbackBlock(user, nil);
+            }
+        }];
+    }];
+}
+
+- (void) loginExistingUserWithUsername:(NSString *)username password:(NSString *)password callbackBlock:(void (^)(KFUser *, NSError *))callbackBlock {
+    NSMutableDictionary *parameters = [NSMutableDictionary dictionaryWithCapacity:2];
+    [parameters setObject:username forKey:@"username"];
+    [parameters setObject:password forKey:@"password"];
+    [self checkOAuthCredentialsWithCallback:^(BOOL success, NSError *error) {
+        if (!success) {
+            if (callbackBlock) {
+                callbackBlock(nil, error);
+            }
+            return;
+        }
+        [self parsePostPath:@"/api/user/uuid" parameters:parameters callbackBlock:^(NSDictionary *responseDictionary, NSError *error) {
+            if (error) {
+                if (callbackBlock) {
+                    callbackBlock(nil, error);
+                }
+                return;
+            }
+            error = nil;
+            
+            KFUser *user = [MTLJSONAdapter modelOfClass:[KFUser class] fromJSONDictionary:responseDictionary error:&error];
+            if (error) {
+                if (callbackBlock) {
+                    callbackBlock(nil, error);
+                }
+                return;
+            }
+            user.password = password;
+            [KFUser setActiveUser:user];
+            if (callbackBlock) {
+                callbackBlock(user, nil);
+            }
+        }];
+    }];
+
+}
+
+- (void) requestNewActiveUserWithUsername:(NSString*)username callbackBlock:(void (^)(KFUser *activeUser, NSError *error))callbackBlock {
+    [self requestNewActiveUserWithUsername:username password:nil email:nil displayName:nil extraInfo:nil callbackBlock:callbackBlock];
 }
 
 - (void) parsePostPath:(NSString*)path parameters:(NSDictionary*)parameters callbackBlock:(void (^)(NSDictionary *responseDictionary, NSError *error))callbackBlock {
@@ -183,7 +333,7 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
     }];
 }
 
-- (void) startNewStream:(void (^)(KFStream *, NSError *))endpointCallback {
+- (void) startStreamWithParameters:(NSDictionary*)parameters callbackBlock:(void (^)(KFStream *, NSError *))endpointCallback {
     NSAssert(endpointCallback != nil, @"endpointCallback should not be nil!");
     [self betterPostPath:@"/api/stream/start" parameters:nil callbackBlock:^(NSDictionary *responseDictionary, NSError *error) {
         if (error) {
@@ -207,6 +357,14 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
             endpointCallback(nil, [NSError errorWithDomain:kKFAPIClientErrorDomain code:104 userInfo:@{NSLocalizedDescriptionKey: @"Error parsing response", @"response": responseDictionary}]);
         }
     }];
+}
+
+- (void) startNewStream:(void (^)(KFStream *, NSError *))endpointCallback {
+    [self startStreamWithParameters:nil callbackBlock:endpointCallback];
+}
+
+- (void) startNewPrivateStream:(void (^)(KFStream *, NSError *))endpointCallback {
+    [self startStreamWithParameters:@{@"private": @YES} callbackBlock:endpointCallback];
 }
 
 - (void) requestStreamsForUsername:(NSString*)username callbackBlock:(void (^)(NSArray *streams, NSError *error))callbackBlock {

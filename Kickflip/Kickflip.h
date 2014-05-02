@@ -8,6 +8,8 @@
 
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
+#import "KFAPIClient.h"
+#import "KFUser.h"
 #import "KFStream.h"
 
 /**

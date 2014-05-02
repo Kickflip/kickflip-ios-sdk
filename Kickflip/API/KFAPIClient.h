@@ -76,7 +76,7 @@
  *  @param callbackBlock Serialized existing user or error
  *
  */
-- (void) requestUserWithUserName:(NSString*)username callbackBlock:(void (^)(KFUser *existingUser, NSError *error))callbackBlock;
+- (void) requestUserInfoForUsername:(NSString*)username callbackBlock:(void (^)(KFUser *existingUser, NSError *error))callbackBlock;
 
 ///-------------------------------
 /// @name Stream Lifecycle

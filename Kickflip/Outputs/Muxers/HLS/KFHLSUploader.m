@@ -61,7 +61,6 @@ static NSString * const kUploadStateFailed = @"failed";
     return self;
 }
 
-#warning This code is buggy and doesnt finish uploading all segments or the VOD properly
 - (void) finishedRecording {
     self.isFinishedRecording = YES;
     if (!self.hasUploadedFinalManifest) {
