@@ -7,13 +7,23 @@ The [Kickflip](http://kickflip.io) platform provides a complete video broadcasti
 The quickest way to get started will be to fork the [Kickflip iOS SDK example](https://github.com/Kickflip/kickflip-ios-example). Launch Kickflip's default `KFBroadcastViewController` to instantly stream live video from your application:
 
 ```objc
+#import "Kickflip.h"
+// Call setup as soon as possible so your users can start streaming right away
 [Kickflip setupWithAPIKey:@"API_KEY" secret:@"API_SECRET"];
-[Kickflip presentBroadcasterFromViewController:self ready:^(NSURL *streamURL, NSError *error){ 
-    if (streamURL) {
-    	NSLog(@"Stream is ready to view at URL: %@", streamURL);
-    }
-} 
-completion:nil];
+...
+- (void) broadcastButtonPressed:(id)sender {
+	[Kickflip presentBroadcasterFromViewController:self ready:^(KFStream *stream) {
+        if (stream.streamURL) {
+            NSLog(@"Stream is ready at URL: %@", stream.streamURL);
+        }
+    } completion:^(BOOL success, NSError* error){
+        if (!success) {
+            NSLog(@"Error setting up stream: %@", error);
+        } else {
+            NSLog(@"Done broadcasting");
+        }
+    }];
+}
 ```
 
 ## Cocoapods Setup
