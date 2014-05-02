@@ -35,6 +35,7 @@
     [_shareButton setTitle:@"Share" forState:UIControlStateNormal];
     [_shareButton setTitle:@"Buffering..." forState:UIControlStateDisabled];
     self.shareButton.enabled = NO;
+    self.shareButton.alpha = 0.0f;
     self.shareButton.translatesAutoresizingMaskIntoConstraints = NO;
     [self.view addSubview:self.shareButton];
     NSLayoutConstraint *constraint = [self.shareButton autoPinEdgeToSuperviewEdge:ALEdgeTop withInset:10.0f];
@@ -180,7 +181,9 @@
     } else {
         self.recordButton.enabled = YES;
         [UIView animateWithDuration:0.2 animations:^{
-            self.shareButton.alpha = 1.0f;
+            if (self.recorder.isRecording) {
+                self.shareButton.alpha = 1.0f;
+            }
             self.recordButton.alpha = 1.0f;
             self.rotationLabel.alpha = 0.0f;
             self.rotationImageView.alpha = 0.0f;
@@ -245,6 +248,7 @@
         self.recordButton.isRecording = NO;
     } else {
         self.recordButton.isRecording = YES;
+        self.shareButton.alpha = 1.0f;
     }
 }
 
