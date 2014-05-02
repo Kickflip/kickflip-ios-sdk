@@ -165,8 +165,8 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
     }];
 }
 
-- (void) updateMetadataForUser:(KFUser *)user newPassword:(NSString *)newPassword email:(NSString *)email displayName:(NSString *)displayName extraInfo:(NSDictionary *)extraInfo callbackBlock:(void (^)(KFUser *, NSError *))callbackBlock {
-
+- (void) updateMetadataForActiveUserWithNewPassword:(NSString*)newPassword email:(NSString*)email displayName:(NSString*)displayName extraInfo:(NSDictionary*)extraInfo callbackBlock:(void (^)(KFUser *updatedUser, NSError *error))callbackBlock {
+    KFUser *user = [KFUser activeUser];
     NSMutableDictionary *parameters = [NSMutableDictionary dictionaryWithCapacity:5];
     [parameters setObject:user.username forKey:@"username"];
     [parameters setObject:user.password forKey:@"password"];
@@ -367,24 +367,37 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
     [self startStreamWithParameters:@{@"private": @YES} callbackBlock:endpointCallback];
 }
 
-- (void) requestStreamsForUsername:(NSString*)username callbackBlock:(void (^)(NSArray *streams, NSError *error))callbackBlock {
+- (void) requestStreamsForUsername:(NSString*)username pageNumber:(NSUInteger)pageNumber itemsPerPage:(NSUInteger)itemsPerPage callbackBlock:(void (^)(NSArray *streams, KFPaginationInfo *paginationInfo, NSError *error))callbackBlock {
     NSAssert(callbackBlock != nil, @"callbackBlock cannot be nil!");
     NSAssert(username != nil, @"Username should not be nil!");
-    NSDictionary *parameters = nil;
+    NSMutableDictionary *parameters = [NSMutableDictionary dictionary];
     if (username) {
-        parameters = @{@"username": username};
+        [parameters setObject:username forKey:@"username"];
     }
+    [self setPaginationForParameters:parameters pageNumber:pageNumber itemsPerPage:itemsPerPage];
+
     [self betterPostPath:@"/api/search/user" parameters:parameters callbackBlock:^(NSDictionary *responseDictionary, NSError *error) {
         if (error) {
-            callbackBlock(nil, error);
+            callbackBlock(nil, nil, error);
             return;
         }
         NSArray *streamDictionaries = [responseDictionary objectForKey:@"streams"];
-        [self serializeObjects:streamDictionaries class:[KFStream class] callbackBlock:callbackBlock];
+        KFPaginationInfo *paginationInfo = [self paginationInfoFromResponseDictionary:responseDictionary error:&error];
+        if (error) {
+            callbackBlock(nil, nil, error);
+            return;
+        }
+        [self serializeObjects:streamDictionaries class:[KFStream class] callbackBlock:^(NSArray *objects, NSError *error) {
+            if (error) {
+                callbackBlock(nil, nil, error);
+            } else {
+                callbackBlock(objects, paginationInfo, nil);
+            }
+        }];
     }];
 }
 
-- (void) requestStreamsForLocation:(CLLocation*)location radius:(CLLocationDistance)radius callbackBlock:(void (^)(NSArray *streams, NSError *error))callbackBlock {
+- (void) requestStreamsForLocation:(CLLocation*)location radius:(CLLocationDistance)radius pageNumber:(NSUInteger)pageNumber itemsPerPage:(NSUInteger)itemsPerPage callbackBlock:(void (^)(NSArray *streams, KFPaginationInfo *paginationInfo, NSError *error))callbackBlock {
     NSAssert(callbackBlock != nil, @"callbackBlock cannot be nil!");
     NSMutableDictionary *parameters = [NSMutableDictionary dictionaryWithCapacity:4];
     if (location) {
@@ -394,32 +407,71 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
     if (radius > 0) {
         parameters[@"radius"] = @(radius);
     }
+    [self setPaginationForParameters:parameters pageNumber:pageNumber itemsPerPage:itemsPerPage];
+
     [self betterPostPath:@"/api/search/location" parameters:parameters callbackBlock:^(NSDictionary *responseDictionary, NSError *error) {
         if (error) {
-            callbackBlock(nil, error);
+            callbackBlock(nil, nil, error);
+            return;
+        }
+        KFPaginationInfo *paginationInfo = [self paginationInfoFromResponseDictionary:responseDictionary error:&error];
+        if (error) {
+            callbackBlock(nil, nil, error);
             return;
         }
         NSArray *streamDictionaries = [responseDictionary objectForKey:@"streams"];
-        [self serializeObjects:streamDictionaries class:[KFStream class] callbackBlock:callbackBlock];
+        [self serializeObjects:streamDictionaries class:[KFStream class] callbackBlock:^(NSArray *objects, NSError *error) {
+            if (error) {
+                callbackBlock(nil, nil, error);
+            } else {
+                callbackBlock(objects, paginationInfo, nil);
+            }
+        }];
     }];
+}
+
+
+- (KFPaginationInfo*) paginationInfoFromResponseDictionary:(NSDictionary*)dictionary error:(NSError**)error {
+    KFPaginationInfo *paginationInfo = [MTLJSONAdapter modelOfClass:[KFPaginationInfo class] fromJSONDictionary:dictionary error:error];
+    return paginationInfo;
+}
+
+
+- (void) setPaginationForParameters:(NSMutableDictionary*)parameters pageNumber:(NSUInteger)pageNumber itemsPerPage:(NSUInteger)itemsPerPage {
+    NSAssert(pageNumber != 0, @"The first page starts at 1, not 0!");
+    [parameters setObject:@(pageNumber) forKey:@"page"];
+    [parameters setObject:@(itemsPerPage) forKey:@"results_per_page"];
 }
 
 /**
  * Returns all the streams with metadata containing keyword
  */
-- (void) requestStreamsByKeyword:(NSString*)keyword callbackBlock:(void (^)(NSArray *streams, NSError *error))callbackBlock {
+- (void) requestStreamsByKeyword:(NSString*)keyword pageNumber:(NSUInteger)pageNumber itemsPerPage:(NSUInteger)itemsPerPage callbackBlock:(void (^)(NSArray *streams, KFPaginationInfo *paginationInfo, NSError *error))callbackBlock {
     NSAssert(callbackBlock != nil, @"callbackBlock cannot be nil!");
-    NSDictionary *parameters = nil;
+    NSMutableDictionary *parameters = [NSMutableDictionary dictionary];
     if (keyword) {
-        parameters = @{@"keyword": keyword};
+        [parameters setObject:keyword forKey:@"keyword"];
     }
+    [self setPaginationForParameters:parameters pageNumber:pageNumber itemsPerPage:itemsPerPage];
+    
     [self betterPostPath:@"/api/search" parameters:parameters callbackBlock:^(NSDictionary *responseDictionary, NSError *error) {
         if (error) {
-            callbackBlock(nil, error);
+            callbackBlock(nil, nil, error);
+            return;
+        }
+        KFPaginationInfo *paginationInfo = [self paginationInfoFromResponseDictionary:responseDictionary error:&error];
+        if (error) {
+            callbackBlock(nil, nil, error);
             return;
         }
         NSArray *streamDictionaries = [responseDictionary objectForKey:@"streams"];
-        [self serializeObjects:streamDictionaries class:[KFStream class] callbackBlock:callbackBlock];
+        [self serializeObjects:streamDictionaries class:[KFStream class] callbackBlock:^(NSArray *objects, NSError *error) {
+            if (error) {
+                callbackBlock(nil, nil, error);
+            } else {
+                callbackBlock(objects, paginationInfo, nil);
+            }
+        }];
     }];
 }
 
@@ -441,8 +493,8 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
     });
 }
 
-- (void) requestAllStreams:(void (^)(NSArray *, NSError *))callbackBlock {
-    [self requestStreamsByKeyword:nil callbackBlock:callbackBlock];
+- (void) requestAllStreamsWithPageNumber:(NSUInteger)pageNumber itemsPerPage:(NSUInteger)itemsPerPage callbackBlock:(void (^)(NSArray *streams, KFPaginationInfo *paginationInfo, NSError *error))callbackBlock {
+    [self requestStreamsByKeyword:nil pageNumber:pageNumber itemsPerPage:itemsPerPage  callbackBlock:callbackBlock];
 }
 
 - (void) updateMetadataForStream:(KFStream *)stream callbackBlock:(void (^)(KFStream* updatedStream, NSError *))callbackBlock {

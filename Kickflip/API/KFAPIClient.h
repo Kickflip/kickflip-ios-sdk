@@ -10,9 +10,10 @@
 #import "KFStream.h"
 #import "AFNetworking.h"
 #import <CoreLocation/CoreLocation.h>
+#import "KFPaginationInfo.h"
 
 /**
- *  Use KFAPIClient to interact with the kickflip.io API
+ *  Use KFAPIClient to interact with the kickflip.io API.
  */
 @interface KFAPIClient : AFHTTPClient
 
@@ -29,7 +30,7 @@
 ///-------------------------------
 
 /**
- *  Requests new active user.
+ *  Requests new active KFUser.
  *
  *  @param username      (optional) desired username
  *  @param callbackBlock called when the request completes with either an active user or an error
@@ -37,7 +38,7 @@
 - (void) requestNewActiveUserWithUsername:(NSString*)username callbackBlock:(void (^)(KFUser *activeUser, NSError *error))callbackBlock;
 
 /**
- *  Requests new active user.
+ *  Requests new active KFUser.
  *
  *  @param username      (optional) desired username
  *  @param password User's password
@@ -49,25 +50,25 @@
 - (void) requestNewActiveUserWithUsername:(NSString*)username password:(NSString*)password email:(NSString*)email  displayName:(NSString*)displayName extraInfo:(NSDictionary*)extraInfo callbackBlock:(void (^)(KFUser *activeUser, NSError *error))callbackBlock;
 
 /**
+ *  Logs in an existing user. This fetches the credentials required for streaming
+ *  and makes it the current active KFUser.
+ *
+ *  @param username Existing Kickflip username
+ *  @param password User's password
+ *  @param callbackBlock called when the request completes with either an active user or an error
+ */
+- (void) loginExistingUserWithUsername:(NSString*)username password:(NSString*)password callbackBlock:(void (^)(KFUser *activeUser, NSError *error))callbackBlock;
+
+/**
  *  Updates existing user metadata.
  *
- *  @param user Existing Kickflip user
  *  @param email User's email address
  *  @param newPassword (optional) For changing the user's current password
  *  @param displayName Name shown instead of username
  *  @param extraInfo Any additional context-specific information you'd like to store for your user.
  *  @param callbackBlock called when the request completes with either an active user or an error
  */
-- (void) updateMetadataForUser:(KFUser*)user newPassword:(NSString*)newPassword email:(NSString*)email displayName:(NSString*)displayName extraInfo:(NSDictionary*)extraInfo callbackBlock:(void (^)(KFUser *updatedUser, NSError *error))callbackBlock;
-
-/**
- *  Logs in an existing user.
- *
- *  @param user Existing Kickflip user
- *  @param password User's password
- *  @param callbackBlock called when the request completes with either an active user or an error
- */
-- (void) loginExistingUserWithUsername:(NSString*)username password:(NSString*)password callbackBlock:(void (^)(KFUser *existingUser, NSError *error))callbackBlock;
+- (void) updateMetadataForActiveUserWithNewPassword:(NSString*)newPassword email:(NSString*)email displayName:(NSString*)displayName extraInfo:(NSDictionary*)extraInfo callbackBlock:(void (^)(KFUser *updatedUser, NSError *error))callbackBlock;
 
 /**
  *  Fetches public data for an existing username.
@@ -121,33 +122,44 @@
  *  Requests all streams created by a particular user
  *
  *  @param username      username to filter by
- *  @param callbackBlock Returns array of KFStreams or error
+ *  @param pageNumber    desired page offset for paginating results. The first page starts at 1, not 0.
+ *  @param itemsPerPage  desired number of items per page (max 200), default 25.
+ *  @param callbackBlock Returns array of KFStream and a KFPaginationInfo for pagination information, or an error.
+ *  @see KFPaginationInfo
  */
-- (void) requestStreamsForUsername:(NSString*)username callbackBlock:(void (^)(NSArray *streams, NSError *error))callbackBlock;
+- (void) requestStreamsForUsername:(NSString*)username pageNumber:(NSUInteger)pageNumber itemsPerPage:(NSUInteger)itemsPerPage callbackBlock:(void (^)(NSArray *streams, KFPaginationInfo *paginationInfo, NSError *error))callbackBlock;
 
 /**
  *  Returns all the streams created near a certain location
  *
  *  @param location      Center point of search
- 
  *  @param radius        (optional)
- *  @param callbackBlock Array of KFStreams matching query or error
+ *  @param pageNumber    desired page offset for paginating results. The first page starts at 1, not 0.
+ *  @param itemsPerPage  desired number of items per page (max 200), default 25.
+ *  @param callbackBlock Returns array of KFStream and a KFPaginationInfo for pagination information, or an error.
+ *  @see KFPaginationInfo
  */
-- (void) requestStreamsForLocation:(CLLocation*)location radius:(CLLocationDistance)radius callbackBlock:(void (^)(NSArray *streams, NSError *error))callbackBlock;
+- (void) requestStreamsForLocation:(CLLocation*)location radius:(CLLocationDistance)radius pageNumber:(NSUInteger)pageNumber itemsPerPage:(NSUInteger)itemsPerPage callbackBlock:(void (^)(NSArray *streams, KFPaginationInfo *paginationInfo, NSError *error))callbackBlock;
 
 /**
  *  Returns all the streams with metadata containing keyword
  *
  *  @param keyword (Optional) If this parameter is omitted it will return all streams
- *  @param callbackBlock Array of KFStreams matching query or error
+ *  @param pageNumber    desired page offset for paginating results. The first page starts at 1, not 0.
+ *  @param itemsPerPage  desired number of items per page (max 200), default 25.
+ *  @param callbackBlock Returns array of KFStream and a KFPaginationInfo for pagination information, or an error.
+ *  @see KFPaginationInfo
  */
-- (void) requestStreamsByKeyword:(NSString*)keyword callbackBlock:(void (^)(NSArray *streams, NSError *error))callbackBlock;
+- (void) requestStreamsByKeyword:(NSString*)keyword pageNumber:(NSUInteger)pageNumber itemsPerPage:(NSUInteger)itemsPerPage callbackBlock:(void (^)(NSArray *streams, KFPaginationInfo *paginationInfo, NSError *error))callbackBlock;
 
 /**
  *  Returns all the streams associated with this application.
  *
- *  @param callbackBlock Array of KFStreams or error
+ *  @param pageNumber    desired page offset for paginating results. The first page starts at 1, not 0.
+ *  @param itemsPerPage  desired number of items per page (max 200), default 25.
+ *  @param callbackBlock Returns array of KFStream and a KFPaginationInfo for pagination information, or an error.
+ *  @see KFPaginationInfo
  */
-- (void) requestAllStreams:(void (^)(NSArray *streams, NSError *error))callbackBlock;
+- (void) requestAllStreamsWithPageNumber:(NSUInteger)pageNumber itemsPerPage:(NSUInteger)itemsPerPage callbackBlock:(void (^)(NSArray *streams, KFPaginationInfo *paginationInfo, NSError *error))callbackBlock;
 
 @end
