@@ -27,7 +27,7 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
 }
 
 - (instancetype) init {
-    NSURL *url = [NSURL URLWithString:@"https://kickflip.io/"];
+    NSURL *url = [NSURL URLWithString:@"https://kickflip.io/api/1.0"];
     if (self = [super initWithBaseURL:url]) {
         [self registerHTTPOperationClass:[AFJSONRequestOperation class]];
         [self setDefaultHeader:@"Accept" value:@"application/json"];
@@ -110,7 +110,7 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
             }
             return;
         }
-        [self parsePostPath:@"/api/user/new" parameters:parameters callbackBlock:^(NSDictionary *responseDictionary, NSError *error) {
+        [self parsePostPath:@"user/new" parameters:parameters callbackBlock:^(NSDictionary *responseDictionary, NSError *error) {
             if (error) {
                 if (callbackBlock) {
                     callbackBlock(nil, error);
@@ -142,7 +142,7 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
             }
             return;
         }
-        [self parsePostPath:@"/api/user/info" parameters:@{@"username": username} callbackBlock:^(NSDictionary *responseDictionary, NSError *error) {
+        [self parsePostPath:@"user/info" parameters:@{@"username": username} callbackBlock:^(NSDictionary *responseDictionary, NSError *error) {
             if (error) {
                 if (callbackBlock) {
                     callbackBlock(nil, error);
@@ -192,7 +192,7 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
             }
             return;
         }
-        [self parsePostPath:@"/api/user/change" parameters:parameters callbackBlock:^(NSDictionary *responseDictionary, NSError *error) {
+        [self parsePostPath:@"user/change" parameters:parameters callbackBlock:^(NSDictionary *responseDictionary, NSError *error) {
             if (error) {
                 if (callbackBlock) {
                     callbackBlock(nil, error);
@@ -227,7 +227,7 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
             }
             return;
         }
-        [self parsePostPath:@"/api/user/uuid" parameters:parameters callbackBlock:^(NSDictionary *responseDictionary, NSError *error) {
+        [self parsePostPath:@"user/uuid" parameters:parameters callbackBlock:^(NSDictionary *responseDictionary, NSError *error) {
             if (error) {
                 if (callbackBlock) {
                     callbackBlock(nil, error);
@@ -321,7 +321,7 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
 
 - (void) stopStream:(KFStream *)stream callbackBlock:(void (^)(BOOL, NSError *))callbackBlock {
     NSAssert(stream != nil, @"stream cannot be nil!");
-    [self betterPostPath:@"/api/stream/stop" parameters:@{@"stream_id": stream.streamID} callbackBlock:^(NSDictionary *responseDictionary, NSError *error) {
+    [self betterPostPath:@"stream/stop" parameters:@{@"stream_id": stream.streamID} callbackBlock:^(NSDictionary *responseDictionary, NSError *error) {
         if (!callbackBlock) {
             return;
         }
@@ -335,7 +335,7 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
 
 - (void) startStreamWithParameters:(NSDictionary*)parameters callbackBlock:(void (^)(KFStream *, NSError *))endpointCallback {
     NSAssert(endpointCallback != nil, @"endpointCallback should not be nil!");
-    [self betterPostPath:@"/api/stream/start" parameters:nil callbackBlock:^(NSDictionary *responseDictionary, NSError *error) {
+    [self betterPostPath:@"stream/start" parameters:nil callbackBlock:^(NSDictionary *responseDictionary, NSError *error) {
         if (error) {
             endpointCallback(nil, error);
             return;
@@ -376,7 +376,7 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
     }
     [self setPaginationForParameters:parameters pageNumber:pageNumber itemsPerPage:itemsPerPage];
 
-    [self betterPostPath:@"/api/search/user" parameters:parameters callbackBlock:^(NSDictionary *responseDictionary, NSError *error) {
+    [self betterPostPath:@"search/user" parameters:parameters callbackBlock:^(NSDictionary *responseDictionary, NSError *error) {
         if (error) {
             callbackBlock(nil, nil, error);
             return;
@@ -409,7 +409,7 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
     }
     [self setPaginationForParameters:parameters pageNumber:pageNumber itemsPerPage:itemsPerPage];
 
-    [self betterPostPath:@"/api/search/location" parameters:parameters callbackBlock:^(NSDictionary *responseDictionary, NSError *error) {
+    [self betterPostPath:@"search/location" parameters:parameters callbackBlock:^(NSDictionary *responseDictionary, NSError *error) {
         if (error) {
             callbackBlock(nil, nil, error);
             return;
@@ -454,7 +454,7 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
     }
     [self setPaginationForParameters:parameters pageNumber:pageNumber itemsPerPage:itemsPerPage];
     
-    [self betterPostPath:@"/api/search" parameters:parameters callbackBlock:^(NSDictionary *responseDictionary, NSError *error) {
+    [self betterPostPath:@"search" parameters:parameters callbackBlock:^(NSDictionary *responseDictionary, NSError *error) {
         if (error) {
             callbackBlock(nil, nil, error);
             return;
@@ -503,7 +503,7 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
     NSString *jsonString = [[NSString alloc] initWithData:[NSJSONSerialization dataWithJSONObject:parameters options:NSJSONWritingPrettyPrinted error:nil] encoding:NSUTF8StringEncoding];
     DDLogInfo(@"updateMetadata outgoing jsonString: %@", jsonString);
     */
-    [self betterPostPath:@"/api/stream/change" parameters:parameters callbackBlock:^(NSDictionary *responseDictionary, NSError *error) {
+    [self betterPostPath:@"stream/change" parameters:parameters callbackBlock:^(NSDictionary *responseDictionary, NSError *error) {
         if (!callbackBlock) {
             return;
         }
