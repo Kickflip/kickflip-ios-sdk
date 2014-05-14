@@ -34,7 +34,7 @@ Add the following line to your `Podfile`:
 
     pod 'Kickflip'
 
-Then run Cocoapods to install of the dependencies:
+Then run Cocoapods to install all of the dependencies:
 
     $ pod
     
