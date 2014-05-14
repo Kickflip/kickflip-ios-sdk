@@ -1,6 +1,6 @@
 # Kickflip SDK for iOS
 
-The [Kickflip](http://kickflip.io) platform provides a complete video broadcasting solution for your iOS application. You can use our pre-built `KFBroadcastViewController` to stream live video to your Kickflip account starting with one line of code. Check out our [Kickflip iOS SDK example](https://github.com/Kickflip/kickflip-ios-example).
+The [Kickflip](http://kickflip.io) platform provides a complete video broadcasting solution for your iOS application. You can use our pre-built `KFBroadcastViewController` to stream live video to your Kickflip account starting with one line of code. Check out our [Kickflip iOS SDK example](https://github.com/Kickflip/kickflip-ios-example) to get started.
 
 ## Quickstart
 
@@ -33,6 +33,10 @@ You'll need to install [Cocoapods](http://cocoapods.org) first. We haven't submi
 Add the following to your `Podfile`:
 
     pod 'Kickflip', :git => 'https://github.com/Kickflip/kickflip-ios-sdk.git'
+    
+## Documentation
+
+For a closer look at what you do with Kickflip, check out our [iOS Documentation](https://github.com/Kickflip/kickflip-docs/tree/master/ios) and [iOS API Reference](http://cocoadocs.org/docsets/Kickflip/). We also have some [tutorials](https://github.com/Kickflip/kickflip-docs) to help you get started.
     
 ## Screenshots
 
