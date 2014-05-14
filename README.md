@@ -28,11 +28,15 @@ The quickest way to get started will be to fork the [Kickflip iOS SDK example](h
 
 ## Cocoapods Setup
 
-You'll need to install [Cocoapods](http://cocoapods.org) first. We haven't submitted the SDK to Cocoapods yet, but it is available right now as a custom podspec so you can track development in the master branch.
+You'll need to install [Cocoapods](http://cocoapods.org) first.
     
-Add the following to your `Podfile`:
+Add the following line to your `Podfile`:
 
-    pod 'Kickflip', :git => 'https://github.com/Kickflip/kickflip-ios-sdk.git'
+    pod 'Kickflip'
+
+Then run Cocoapods to install of the dependencies:
+
+    $ pod
     
 ## Documentation
 
