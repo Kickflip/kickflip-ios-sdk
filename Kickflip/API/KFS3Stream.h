@@ -12,6 +12,7 @@ extern const struct KFS3StreamAttributes {
     __unsafe_unretained NSString *bucketName;
 	__unsafe_unretained NSString *awsAccessKey;
 	__unsafe_unretained NSString *awsSecretKey;
+    __unsafe_unretained NSString *awsPrefix;
 } KFS3StreamAttributes;
 
 extern NSString * const KFS3StreamType;
@@ -21,5 +22,6 @@ extern NSString * const KFS3StreamType;
 @property (nonatomic, strong) NSString *bucketName;
 @property (nonatomic, strong) NSString *awsAccessKey;
 @property (nonatomic, strong) NSString *awsSecretKey;
+@property (nonatomic, strong) NSString *awsPrefix;
 
 @end

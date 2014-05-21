@@ -21,7 +21,7 @@ Pod::Spec.new do |s|
   s.dependency 'AFOAuth2Client', '~> 0.1'
   s.dependency 'CocoaLumberjack', '~> 1.0'
   s.dependency 'SSKeychain', '~> 1.2'
-  s.dependency 'OWS3Client', '~> 1.0'
+  s.dependency 'OWS3Client', '~> 1.1'
   s.dependency 'FFmpegWrapper', '~> 1.0'
   s.dependency 'UIView+AutoLayout', '~> 1.3'
   s.dependency 'Mantle', '~> 1.4'

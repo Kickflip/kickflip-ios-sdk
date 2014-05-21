@@ -149,15 +149,15 @@ static NSString * const kUploadStateFailed = @"failed";
     }];
 }
 
-- (NSString*) awsKeyForStream:(KFStream*)stream fileName:(NSString*)fileName {
-    return [NSString stringWithFormat:@"%@/%@/%@", stream.username, stream.streamID, fileName];
+- (NSString*) awsKeyForStream:(KFS3Stream*)stream fileName:(NSString*)fileName {
+    return [NSString stringWithFormat:@"%@%@", stream.awsPrefix, fileName];
 }
 
 - (void) updateManifestWithString:(NSString*)manifestString manifestName:(NSString*)manifestName {
     NSData *data = [manifestString dataUsingEncoding:NSUTF8StringEncoding];
     DDLogVerbose(@"New manifest:\n%@", manifestString);
     NSString *key = [self awsKeyForStream:self.stream fileName:manifestName];
-    [self.s3Client postObjectWithData:data bucket:self.stream.bucketName key:key acl:@"public-read" success:^(S3PutObjectResponse *responseObject) {
+    [self.s3Client postObjectWithData:data bucket:self.stream.bucketName key:key acl:@"public-read" cacheControl:@"max-age=0" success:^(S3PutObjectResponse *responseObject) {
         dispatch_async(self.callbackQueue, ^{
             if (!_manifestReady) {
                 if (self.delegate && [self.delegate respondsToSelector:@selector(uploader:liveManifestReadyAtURL:)]) {
