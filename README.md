@@ -36,7 +36,7 @@ Add the following line to your `Podfile`:
 
 Then run Cocoapods to install all of the dependencies:
 
-    $ pod
+    $ pod install
 
 As with all projects that depend on Cocoapods, make sure to open the new `.xcworkspace` file, not your `.xcodeproj` file.
     
