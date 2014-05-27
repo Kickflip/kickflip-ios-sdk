@@ -28,7 +28,7 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
 
 - (instancetype) init {
     NSURL *url = [NSURL URLWithString:@"https://kickflip.io/api/1.1"];
-
+    
     if (self = [super initWithBaseURL:url]) {
         [self registerHTTPOperationClass:[AFJSONRequestOperation class]];
         [self setDefaultHeader:@"Accept" value:@"application/json"];

@@ -9,6 +9,7 @@
 #import <Foundation/Foundation.h>
 #import "KFDirectoryWatcher.h"
 #import "KFHLSManifestGenerator.h"
+#import "S3TransferManager.h"
 
 @class KFS3Stream, KFHLSUploader;
 
@@ -21,7 +22,7 @@
 - (void) uploaderHasFinished:(KFHLSUploader*)uploader;
 @end
 
-@interface KFHLSUploader : NSObject <KFDirectoryWatcherDelegate>
+@interface KFHLSUploader : NSObject <KFDirectoryWatcherDelegate, AmazonServiceRequestDelegate>
 
 @property (nonatomic, weak) id<KFHLSUploaderDelegate> delegate;
 @property (readonly, nonatomic, strong) NSString *directoryPath;

@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name         = "Kickflip"
-  s.version      = "1.0.0"
+  s.version      = "1.1"
   s.summary      = "The Kickflip platform provides a complete video broadcasting solution for your iOS application."
   s.homepage     = "https://github.com/Kickflip/kickflip-ios-sdk"
 
@@ -21,7 +21,6 @@ Pod::Spec.new do |s|
   s.dependency 'AFOAuth2Client', '~> 0.1'
   s.dependency 'CocoaLumberjack', '~> 1.0'
   s.dependency 'SSKeychain', '~> 1.2'
-  s.dependency 'OWS3Client', '~> 1.1'
   s.dependency 'FFmpegWrapper', '~> 1.0'
   s.dependency 'UIView+AutoLayout', '~> 1.3'
   s.dependency 'Mantle', '~> 1.4'
