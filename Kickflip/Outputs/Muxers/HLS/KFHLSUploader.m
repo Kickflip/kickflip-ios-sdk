@@ -8,7 +8,6 @@
 
 #import "KFHLSUploader.h"
 #import "KFS3Stream.h"
-#import "OWS3Client.h"
 #import "KFUser.h"
 #import "KFLog.h"
 #import "KFAPIClient.h"
