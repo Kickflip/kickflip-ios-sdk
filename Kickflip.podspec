@@ -19,7 +19,7 @@ Pod::Spec.new do |s|
 
   s.dependency 'AFNetworking'
   s.dependency 'AWSiOSSDK/S3'
-  s.dependency 'AFOAuth2Client', :git => "git@github.com:mlwelles/AFOAuth2Client.git"
+  s.dependency 'AFOAuth2Client',
   s.dependency 'CocoaLumberjack'
   s.dependency 'SSKeychain'
   s.dependency 'FFmpegWrapper'
