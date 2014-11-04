@@ -52,6 +52,11 @@ For a closer look at what you do with Kickflip, check out our [iOS Documentation
 
 [Screenshots Gallery](http://imgur.com/a/IwuZ7)
 
+
+## AFNetworking 2.0:
+ - make sure to  include this in your pod file pod "AFOAuth2Client", :git => "git@github.com:mlwelles/AFOAuth2Client.git" , You wont have todo it untill this pull request is merged into master AFOuth2Client which kickflip.io uses. 
+
+
     
 ## License
 

@@ -17,14 +17,13 @@ Pod::Spec.new do |s|
 
   s.libraries = 'c++'
 
-  s.dependency 'AFNetworking', '~> 1.3'
-  s.dependency 'AWSiOSSDK/S3', '~> 1.7'
-  s.dependency 'AFOAuth2Client', '~> 0.1'
-  s.dependency 'CocoaLumberjack', '~> 1.0'
-  s.dependency 'SSKeychain', '~> 1.2'
-  s.dependency 'FFmpegWrapper', '~> 1.0'
-  s.dependency 'UIView+AutoLayout', '~> 1.3'
-  s.dependency 'Mantle', '~> 1.4'
-  s.dependency 'SDWebImage', '~> 3.6'
-  s.dependency 'FormatterKit/TimeIntervalFormatter', '~> 1.4'
+  s.dependency 'AFNetworking'
+  s.dependency 'AWSiOSSDK/S3'
+  s.dependency 'CocoaLumberjack'
+  s.dependency 'SSKeychain'
+  s.dependency 'FFmpegWrapper'
+  s.dependency 'UIView+AutoLayout'
+  s.dependency 'Mantle'
+  s.dependency 'SDWebImage'
+  s.dependency 'FormatterKit/TimeIntervalFormatter'
 end

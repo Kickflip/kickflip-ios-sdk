@@ -30,8 +30,10 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
     NSURL *url = [NSURL URLWithString:@"https://kickflip.io/api/1.1"];
     
     if (self = [super initWithBaseURL:url]) {
-        [self registerHTTPOperationClass:[AFJSONRequestOperation class]];
-        [self setDefaultHeader:@"Accept" value:@"application/json"];
+        [self setRequestSerializer:[AFHTTPRequestSerializer serializer]];
+        [self setResponseSerializer:[AFJSONResponseSerializer serializer]];
+        self.responseSerializer.acceptableContentTypes = [NSSet setWithObjects:@"application/json", nil];
+
         
         [self checkOAuthCredentialsWithCallback:nil];
     }
@@ -55,21 +57,31 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
         return;
     }
 
-    [oauthClient authenticateUsingOAuthWithPath:@"/o/token/" parameters:@{@"grant_type": kAFOAuthClientCredentialsGrantType} success:^(AFOAuthCredential *credential) {
-        [AFOAuthCredential storeCredential:credential withIdentifier:apiKey];
-        [self setAuthorizationHeaderWithCredential:credential];
-        if (callback) {
-            callback(YES, nil);
-        }
+    [oauthClient authenticateUsingOAuthWithURLString:@"/o/token/" parameters:@{@"grant_type": kAFOAuthClientCredentialsGrantType} success:^(AFOAuthCredential *credential) {
+        
+        
+
+            [AFOAuthCredential storeCredential:credential withIdentifier:apiKey];
+            [self setAuthorizationHeaderWithCredential:credential];
+            if (callback) {
+                callback(YES, nil);
+            }
+    
+        
+        
     } failure:^(NSError *error) {
         if (callback) {
             callback(NO, error);
         }
+        
     }];
+    
+
 }
 
 - (void) setAuthorizationHeaderWithCredential:(AFOAuthCredential*)credential {
-    [self setDefaultHeader:@"Authorization" value:[NSString stringWithFormat:@"Bearer %@", credential.accessToken]];
+    [self.requestSerializer setValue:[NSString stringWithFormat:@"Bearer %@", credential.accessToken] forHTTPHeaderField:@"Authorization"];
+
 }
 
 - (NSString*) serializeExtraUserInfo:(NSDictionary*)extraInfo {
@@ -259,7 +271,10 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
 }
 
 - (void) parsePostPath:(NSString*)path parameters:(NSDictionary*)parameters callbackBlock:(void (^)(NSDictionary *responseDictionary, NSError *error))callbackBlock {
-    [self postPath:path parameters:parameters success:^(AFHTTPRequestOperation *operation, id responseObject) {
+    
+    
+    
+    [self POST:path parameters:parameters success:^(AFHTTPRequestOperation *operation, id responseObject) {
         if (responseObject && [responseObject isKindOfClass:[NSDictionary class]]) {
             NSDictionary *responseDictionary = (NSDictionary*)responseObject;
             NSNumber *successValue = [responseDictionary objectForKey:@"success"];

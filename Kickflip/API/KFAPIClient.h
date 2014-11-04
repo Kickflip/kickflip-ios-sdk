@@ -15,7 +15,7 @@
 /**
  *  Use KFAPIClient to interact with the kickflip.io API.
  */
-@interface KFAPIClient : AFHTTPClient
+@interface KFAPIClient : AFHTTPRequestOperationManager
 
 /**
  *  Singleton for easy access around your project
