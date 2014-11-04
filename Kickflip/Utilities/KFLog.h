@@ -9,16 +9,21 @@
 #ifndef _KFLog_h
 #define _KFLog_h
 
-#ifndef LOG_LEVEL_DEF
-#define LOG_LEVEL_DEF ddKickflipLogLevel
-#endif
 
-#import "DDLog.h"
+#import <CocoaLumberjack/CocoaLumberjack.h>
 
 #ifdef DEBUG
 static const int ddKickflipLogLevel = LOG_LEVEL_INFO;
 #else
 static const int ddKickflipLogLevel = LOG_LEVEL_OFF;
 #endif
+
+
+#ifndef LOG_LEVEL_DEF
+#define LOG_LEVEL_DEF ddKickflipLogLevel
+#endif
+
+
+static const DDLogLevel ddLogLevel = LOG_LEVEL_VERBOSE;
 
 #endif
