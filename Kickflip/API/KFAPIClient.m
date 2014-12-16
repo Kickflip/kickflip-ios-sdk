@@ -7,7 +7,7 @@
 //
 
 #import "KFAPIClient.h"
-#import "AFOAuth2Client.h"
+#import "AFOAuth2Manager.h"
 #import "KFLog.h"
 #import "KFUser.h"
 #import "KFS3Stream.h"
@@ -28,23 +28,25 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
 
 - (instancetype) init {
     NSURL *url = [NSURL URLWithString:@"https://kickflip.io/api/1.1"];
-    
     if (self = [super initWithBaseURL:url]) {
-        [self registerHTTPOperationClass:[AFJSONRequestOperation class]];
-        [self setDefaultHeader:@"Accept" value:@"application/json"];
-        
         [self checkOAuthCredentialsWithCallback:nil];
     }
     return self;
 }
 
 - (void) checkOAuthCredentialsWithCallback:(void (^)(BOOL success, NSError * error))callback {
+    if ([self.requestSerializer valueForHTTPHeaderField:@"Authorization"] != nil) {
+        if (callback) {
+            callback(YES, nil);
+        }
+        return;
+    }
     NSURL *url = self.baseURL;
     NSString *apiKey = [Kickflip apiKey];
     NSString *apiSecret = [Kickflip apiSecret];
     NSAssert(apiKey != nil && apiSecret != nil, @"Missing API key and secret. Call [Kickflip setupWithAPIKey:secret:] with your credentials obtained from kickflip.io");
 
-    AFOAuth2Client *oauthClient = [AFOAuth2Client clientWithBaseURL:url clientID:apiKey secret:apiSecret];
+    AFOAuth2Manager *oauthClient = [[AFOAuth2Manager alloc] initWithBaseURL:url clientID:apiKey secret:apiSecret];
     
     AFOAuthCredential *credential = [AFOAuthCredential retrieveCredentialWithIdentifier:apiKey];
     if (credential && !credential.isExpired) {
@@ -55,7 +57,7 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
         return;
     }
 
-    [oauthClient authenticateUsingOAuthWithPath:@"/o/token/" parameters:@{@"grant_type": kAFOAuthClientCredentialsGrantType} success:^(AFOAuthCredential *credential) {
+    [oauthClient authenticateUsingOAuthWithURLString:@"/o/token/" parameters:@{@"grant_type": kAFOAuthClientCredentialsGrantType} success:^(AFOAuthCredential *credential) {
         [AFOAuthCredential storeCredential:credential withIdentifier:apiKey];
         [self setAuthorizationHeaderWithCredential:credential];
         if (callback) {
@@ -69,7 +71,7 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
 }
 
 - (void) setAuthorizationHeaderWithCredential:(AFOAuthCredential*)credential {
-    [self setDefaultHeader:@"Authorization" value:[NSString stringWithFormat:@"Bearer %@", credential.accessToken]];
+    [self.requestSerializer setValue:[NSString stringWithFormat:@"Bearer %@", credential.accessToken] forHTTPHeaderField:@"Authorization"];
 }
 
 - (NSString*) serializeExtraUserInfo:(NSDictionary*)extraInfo {
@@ -259,7 +261,7 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
 }
 
 - (void) parsePostPath:(NSString*)path parameters:(NSDictionary*)parameters callbackBlock:(void (^)(NSDictionary *responseDictionary, NSError *error))callbackBlock {
-    [self postPath:path parameters:parameters success:^(AFHTTPRequestOperation *operation, id responseObject) {
+    [self POST:path parameters:parameters success:^(NSURLSessionDataTask *task, id responseObject) {
         if (responseObject && [responseObject isKindOfClass:[NSDictionary class]]) {
             NSDictionary *responseDictionary = (NSDictionary*)responseObject;
             NSNumber *successValue = [responseDictionary objectForKey:@"success"];
@@ -276,12 +278,12 @@ static NSString* const kKFAPIClientErrorDomain = @"kKFAPIClientErrorDomain";
         } else {
             if (callbackBlock) {
                 NSError *error = [NSError errorWithDomain:kKFAPIClientErrorDomain code:103 userInfo:@{NSLocalizedDescriptionKey: @"Bad request", @"response": responseObject}];
-                callbackBlock(NO, error);
+                callbackBlock(nil, error);
             }
         }
-    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+    } failure:^(NSURLSessionDataTask *task, NSError *error) {
         if (callbackBlock) {
-            callbackBlock(NO, error);
+            callbackBlock(nil, error);
         }
     }];
 }

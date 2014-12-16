@@ -8,7 +8,7 @@
 
 #import "KFStreamTableViewCell.h"
 #import "KFStream.h"
-#import "UIView+AutoLayout.h"
+#import "PureLayout.h"
 #import "KFDateUtils.h"
 #import "UIImageView+WebCache.h"
 

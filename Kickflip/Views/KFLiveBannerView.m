@@ -7,7 +7,7 @@
 //
 
 #import "KFLiveBannerView.h"
-#import "UIView+AutoLayout.h"
+#import "PureLayout.h"
 
 @implementation KFLiveBannerView
 
