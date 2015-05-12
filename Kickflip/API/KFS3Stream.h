@@ -22,6 +22,8 @@ extern NSString * const KFS3StreamType;
 @property (nonatomic, strong) NSString *bucketName;
 @property (nonatomic, strong) NSString *awsAccessKey;
 @property (nonatomic, strong) NSString *awsSecretKey;
+@property (nonatomic, strong) NSString *awsSessionToken;
+@property (nonatomic, strong) NSDate *awsExpirationDate;
 @property (nonatomic, strong) NSString *awsPrefix;
 
 @end

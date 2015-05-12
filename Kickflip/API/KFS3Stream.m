@@ -8,18 +8,14 @@
 
 #import "KFS3Stream.h"
 #import "KFUser.h"
-
-const struct KFS3StreamAttributes KFS3StreamAttributes = {
-    .bucketName = @"bucketName",
-	.awsAccessKey = @"awsAccessKey",
-	.awsSecretKey = @"awsSecretKey",
-    .awsPrefix = @"awsPrefix"
-};
+#import "KFDateUtils.h"
 
 NSString * const KFS3StreamType = @"HLS";
 static NSString * const KFS3StreamBucketNameKey = @"bucket_name";
 static NSString * const KFS3StreamAWSAccessKey = @"aws_access_key";
 static NSString * const KFS3StreamAWSSecretKey = @"aws_secret_key";
+static NSString * const KFS3StreamAWSSessionTokenKey = @"aws_session_token";
+static NSString * const KFS3StreamAWSExpirationDateKey = @"aws_duration";
 static NSString * const KFS3StreamAWSPrefix = @"aws_prefix";
 
 
@@ -30,11 +26,21 @@ static NSString * const KFS3StreamAWSPrefix = @"aws_prefix";
 
 + (NSDictionary*) JSONKeyPathsByPropertyKey {
     NSMutableDictionary *dictionary = [NSMutableDictionary dictionaryWithDictionary:[super JSONKeyPathsByPropertyKey]];
-    dictionary[KFS3StreamAttributes.bucketName] = KFS3StreamBucketNameKey;
-    dictionary[KFS3StreamAttributes.awsAccessKey] = KFS3StreamAWSAccessKey;
-    dictionary[KFS3StreamAttributes.awsSecretKey] = KFS3StreamAWSSecretKey;
-    dictionary[KFS3StreamAttributes.awsPrefix] = KFS3StreamAWSPrefix;
+    dictionary[NSStringFromSelector(@selector(bucketName))] = KFS3StreamBucketNameKey;
+    dictionary[NSStringFromSelector(@selector(awsAccessKey))] = KFS3StreamAWSAccessKey;
+    dictionary[NSStringFromSelector(@selector(awsSecretKey))] = KFS3StreamAWSSecretKey;
+    dictionary[NSStringFromSelector(@selector(awsPrefix))] = KFS3StreamAWSPrefix;
+    dictionary[NSStringFromSelector(@selector(awsSessionToken))] = KFS3StreamAWSSessionTokenKey;
+    dictionary[NSStringFromSelector(@selector(awsExpirationDate))] = KFS3StreamAWSExpirationDateKey;
     return dictionary;
+}
+
++ (NSValueTransformer *)awsExpirationDateJSONTransformer {
+    return [MTLValueTransformer reversibleTransformerWithForwardBlock:^(NSString *str) {
+        return [[KFDateUtils utcDateFormatter] dateFromString:str];
+    } reverseBlock:^(NSDate *date) {
+        return [[KFDateUtils utcDateFormatter] stringFromDate:date];
+    }];
 }
 
 @end
