@@ -8,13 +8,6 @@
 
 #import "KFStream.h"
 
-extern const struct KFS3StreamAttributes {
-    __unsafe_unretained NSString *bucketName;
-	__unsafe_unretained NSString *awsAccessKey;
-	__unsafe_unretained NSString *awsSecretKey;
-    __unsafe_unretained NSString *awsPrefix;
-} KFS3StreamAttributes;
-
 extern NSString * const KFS3StreamType;
 
 @interface KFS3Stream : KFStream
@@ -22,6 +15,9 @@ extern NSString * const KFS3StreamType;
 @property (nonatomic, strong) NSString *bucketName;
 @property (nonatomic, strong) NSString *awsAccessKey;
 @property (nonatomic, strong) NSString *awsSecretKey;
+@property (nonatomic, strong) NSString *awsSessionToken;
+@property (nonatomic, strong) NSDate *awsExpirationDate;
 @property (nonatomic, strong) NSString *awsPrefix;
+@property (nonatomic, strong) NSString *awsRegion;
 
 @end
