@@ -63,9 +63,9 @@ static NSString * const kKFS3Key = @"kKFS3Key";
         _manifestReady = NO;
         _isFinishedRecording = NO;
         
-        
+        AWSRegionType region = [KFAWSCredentialsProvider regionTypeForRegion:stream.awsRegion];
         KFAWSCredentialsProvider *awsCredentialsProvider = [[KFAWSCredentialsProvider alloc] initWithStream:stream];
-        AWSServiceConfiguration *configuration = [[AWSServiceConfiguration alloc] initWithRegion:AWSRegionUnknown
+        AWSServiceConfiguration *configuration = [[AWSServiceConfiguration alloc] initWithRegion:region
                                                                              credentialsProvider:awsCredentialsProvider];
         
         [AWSS3TransferManager registerS3TransferManagerWithConfiguration:configuration forKey:kKFS3TransferManagerKey];
@@ -155,6 +155,7 @@ static NSString * const kKFS3Key = @"kKFS3Key";
     uploadRequest.body = data;
     uploadRequest.ACL = AWSS3ObjectCannedACLPublicRead;
     uploadRequest.cacheControl = @"max-age=0";
+    uploadRequest.contentLength = @(data.length);
     
     [[self.s3 putObject:uploadRequest] continueWithBlock:^id(BFTask *task) {
         if (task.error) {

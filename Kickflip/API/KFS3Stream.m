@@ -16,6 +16,7 @@ static NSString * const KFS3StreamAWSAccessKey = @"aws_access_key";
 static NSString * const KFS3StreamAWSSecretKey = @"aws_secret_key";
 static NSString * const KFS3StreamAWSSessionTokenKey = @"aws_session_token";
 static NSString * const KFS3StreamAWSExpirationDateKey = @"aws_duration";
+static NSString * const KFS3StreamAWSRegionKey = @"aws_region";
 static NSString * const KFS3StreamAWSPrefix = @"aws_prefix";
 
 
@@ -32,6 +33,7 @@ static NSString * const KFS3StreamAWSPrefix = @"aws_prefix";
     dictionary[NSStringFromSelector(@selector(awsPrefix))] = KFS3StreamAWSPrefix;
     dictionary[NSStringFromSelector(@selector(awsSessionToken))] = KFS3StreamAWSSessionTokenKey;
     dictionary[NSStringFromSelector(@selector(awsExpirationDate))] = KFS3StreamAWSExpirationDateKey;
+    dictionary[NSStringFromSelector(@selector(awsRegion))] = KFS3StreamAWSRegionKey;
     return dictionary;
 }
 
