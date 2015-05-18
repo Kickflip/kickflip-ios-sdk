@@ -61,8 +61,15 @@
 
 - (void) setupEncoders {
     self.audioSampleRate = 44100;
-    self.videoHeight = 720;
-    self.videoWidth = 1280;
+
+    if (UIInterfaceOrientationIsPortrait([UIApplication sharedApplication].statusBarOrientation)) {
+        self.videoHeight = 1280;
+        self.videoWidth = 720;
+    } else {
+        self.videoHeight = 720;
+        self.videoWidth = 1280;
+    }
+    
     int audioBitrate = 64 * 1000; // 64 Kbps
     int maxBitrate = [Kickflip maxBitrate];
     int videoBitrate = maxBitrate - audioBitrate;
@@ -117,11 +124,32 @@
     [_videoOutput setSampleBufferDelegate:self queue:_videoQueue];
     NSDictionary *captureSettings = @{(NSString*)kCVPixelBufferPixelFormatTypeKey: @(kCVPixelFormatType_32BGRA)};
     _videoOutput.videoSettings = captureSettings;
-    _videoOutput.alwaysDiscardsLateVideoFrames = YES;
+    _videoOutput.alwaysDiscardsLateVideoFrames = NO;
     if ([_session canAddOutput:_videoOutput]) {
         [_session addOutput:_videoOutput];
     }
     _videoConnection = [_videoOutput connectionWithMediaType:AVMediaTypeVideo];
+    _videoConnection.videoOrientation = [self avOrientationForInterfaceOrientation:[UIApplication sharedApplication].statusBarOrientation];
+}
+
+- (AVCaptureVideoOrientation)avOrientationForInterfaceOrientation:(UIInterfaceOrientation)orientation {
+    switch (orientation) {
+        case UIInterfaceOrientationPortrait:
+            return AVCaptureVideoOrientationPortrait;
+            break;
+        case UIInterfaceOrientationPortraitUpsideDown:
+            return AVCaptureVideoOrientationPortraitUpsideDown;
+            break;
+        case UIInterfaceOrientationLandscapeLeft:
+            return AVCaptureVideoOrientationLandscapeLeft;
+            break;
+        case UIInterfaceOrientationLandscapeRight:
+            return AVCaptureVideoOrientationLandscapeRight;
+            break;
+        default:
+            return AVCaptureVideoOrientationLandscapeLeft;
+            break;
+    }
 }
 
 #pragma mark KFEncoderDelegate method
