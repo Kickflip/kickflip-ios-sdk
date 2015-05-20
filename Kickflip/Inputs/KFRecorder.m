@@ -63,14 +63,14 @@
     self.audioSampleRate = 44100;
 
     if (UIInterfaceOrientationIsPortrait([UIApplication sharedApplication].statusBarOrientation)) {
-        self.videoHeight = 1280;
-        self.videoWidth = 720;
+        self.videoHeight = 640;
+        self.videoWidth = 360;
     } else {
-        self.videoHeight = 720;
-        self.videoWidth = 1280;
+        self.videoHeight = 360;
+        self.videoWidth = 640;
     }
     
-    int audioBitrate = 64 * 1000; // 64 Kbps
+    int audioBitrate = 56 * 1000; // 56 Kbps
     int maxBitrate = [Kickflip maxBitrate];
     int videoBitrate = maxBitrate - audioBitrate;
     _h264Encoder = [[KFH264Encoder alloc] initWithBitrate:videoBitrate width:self.videoWidth height:self.videoHeight];
