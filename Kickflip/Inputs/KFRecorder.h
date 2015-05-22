@@ -46,10 +46,14 @@
 @property (nonatomic) NSUInteger audioSampleRate;
 
 @property (nonatomic) BOOL isRecording;
+@property (nonatomic) BOOL saveToCameraRoll;
 
 @property (nonatomic, weak) id<KFRecorderDelegate> delegate;
 
 - (void) startRecording;
 - (void) stopRecording;
+
+- (void) setupSession;
+- (void) setupEncoders;
 
 @end
