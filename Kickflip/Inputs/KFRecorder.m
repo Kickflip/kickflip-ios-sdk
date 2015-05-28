@@ -461,11 +461,6 @@
 #pragma mark - General Utilities
 
 - (void) startRecording {
-    // TEL
-    // Ensure encoder has its blocks set back up.
-    // Fixes asset writer errors.
-    [_h264Encoder startup];
-
     self.locationManager = [[CLLocationManager alloc] init];
     self.locationManager.delegate = self;
     [self.locationManager startUpdatingLocation];
@@ -576,10 +571,6 @@
     });
 
     // TEL
-    // Force encoder to relase its blocks.
-    // Fixes asset writer errors.
-    [_h264Encoder shutdown];
-    // Reset
     _hasScreenshot = NO;
 }
 
