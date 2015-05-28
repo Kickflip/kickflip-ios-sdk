@@ -82,13 +82,6 @@ static NSString * const kKFS3Key = @"kKFS3Key";
 - (void) finishedRecording {
     self.isFinishedRecording = YES;
     if (!self.hasUploadedFinalManifest) {
-        NSString *manifestSnapshot = [self manifestSnapshot];
-        DDLogInfo(@"final manifest snapshot: %@", manifestSnapshot);
-        [self.manifestGenerator appendFromLiveManifest:manifestSnapshot];
-        [self.manifestGenerator finalizeManifest];
-        NSString *manifestString = [self.manifestGenerator manifestString];
-        [self updateManifestWithString:manifestString manifestName:kVODManifestFileName];
-
         // TEL
         // Ensure the last segment is uploaded.
         // There were lots of situations where the logic throughout this class missed the last segment.
@@ -108,7 +101,7 @@ static NSString * const kKFS3Key = @"kKFS3Key";
             tsFileCount++;
         }
     }
-
+    
     
     NSDictionary *segmentInfo = [_queuedSegments objectForKey:@(_nextSegmentIndexToUpload)];
     
@@ -142,7 +135,7 @@ static NSString * const kKFS3Key = @"kKFS3Key";
         }
         return nil;
     }];
-
+    
 }
 
 - (NSString*) awsKeyForStream:(KFS3Stream*)stream fileName:(NSString*)fileName {
@@ -221,7 +214,7 @@ static NSString * const kKFS3Key = @"kKFS3Key";
     if (![uploadState isEqualToString:kUploadStateFinished]) {
         NSString *filePath = [_directoryPath stringByAppendingPathComponent:fileName];
         NSString *key = [self awsKeyForStream:self.stream fileName:fileName];
-
+        
         AWSS3TransferManagerUploadRequest *uploadRequest = [AWSS3TransferManagerUploadRequest new];
         uploadRequest.bucket = self.stream.bucketName;
         uploadRequest.key = key;
@@ -305,10 +298,10 @@ static NSString * const kKFS3Key = @"kKFS3Key";
         } else if ([fileName.pathExtension isEqualToString:@"ts"]) {
             NSDictionary *segmentInfo = [_queuedSegments objectForKey:@(_nextSegmentIndexToUpload)];
             NSString *filePath = [_directoryPath stringByAppendingPathComponent:fileName];
-
+            
             NSString *manifest = [segmentInfo objectForKey:kManifestKey];
             NSDate *uploadStartDate = [segmentInfo objectForKey:kFileStartDateKey];
-
+            
             NSDate *uploadFinishDate = [NSDate date];
             
             NSError *error = nil;
@@ -322,19 +315,27 @@ static NSString * const kKFS3Key = @"kKFS3Key";
             double bytesPerSecond = fileSize / timeToUpload;
             double KBps = bytesPerSecond / 1024;
             [_files setObject:kUploadStateFinished forKey:fileName];
-
+            
             [[NSFileManager defaultManager] removeItemAtPath:filePath error:&error];
             if (error) {
                 DDLogError(@"Error removing uploaded segment: %@", error.description);
             }
             [_queuedSegments removeObjectForKey:@(_nextSegmentIndexToUpload)];
             NSUInteger queuedSegmentsCount = _queuedSegments.count;
-
+            
             // TEL
             // Don't update the manifest in the middle of a stream. There seems to be race conditions and we just end up with an incorrect manifest.
             // This DISABLES live streaming! VOD only at this point.
             // [self updateManifestWithString:manifest manifestName:@"index.m3u8"];
-
+            if (self.isFinishedRecording) {
+                NSString *manifestSnapshot = [self manifestSnapshot];
+                DDLogInfo(@"final manifest snapshot: %@", manifestSnapshot);
+                [self.manifestGenerator appendFromLiveManifest:manifestSnapshot];
+                [self.manifestGenerator finalizeManifest];
+                NSString *manifestString = [self.manifestGenerator manifestString];
+                [self updateManifestWithString:manifestString manifestName:kVODManifestFileName];
+            }
+            
             _nextSegmentIndexToUpload++;
             [self uploadNextSegment];
             if (self.delegate && [self.delegate respondsToSelector:@selector(uploader:didUploadSegmentAtURL:uploadSpeed:numberOfQueuedSegments:)]) {

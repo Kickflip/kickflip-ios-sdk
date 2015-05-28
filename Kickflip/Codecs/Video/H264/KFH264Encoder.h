@@ -11,4 +11,7 @@
 
 @interface KFH264Encoder : KFVideoEncoder <KFSampleBufferEncoder>
 
+- (void)startup;
+- (void)shutdown;
+
 @end

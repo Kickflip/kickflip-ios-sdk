@@ -25,6 +25,7 @@
 @implementation KFH264Encoder
 
 - (void) dealloc {
+    [self shutdown];
     [_encoder shutdown];
 }
 
@@ -36,12 +37,7 @@
         self.orphanedFrames = [NSMutableArray arrayWithCapacity:2];
         self.orphanedSEIFrames = [NSMutableArray arrayWithCapacity:2];
         _encoder = [AVEncoder encoderForHeight:height andWidth:width bitrate:bitrate];
-        [_encoder encodeWithBlock:^int(NSArray* dataArray, CMTimeValue ptsValue) {
-            [self incomingVideoFrames:dataArray ptsValue:ptsValue];
-            return 0;
-        } onParams:^int(NSData *data) {
-            return 0;
-        }];
+        [self startup];
     }
     return self;
 }
@@ -178,5 +174,17 @@
     _lastPTS = pts;
 }
 
+- (void)startup {
+    [_encoder encodeWithBlock:^int(NSArray* dataArray, CMTimeValue ptsValue) {
+        [self incomingVideoFrames:dataArray ptsValue:ptsValue];
+        return 0;
+    } onParams:^int(NSData *data) {
+        return 0;
+    }];
+}
+
+- (void)shutdown {
+    [_encoder encodeWithBlock:nil onParams:nil];
+}
 
 @end
