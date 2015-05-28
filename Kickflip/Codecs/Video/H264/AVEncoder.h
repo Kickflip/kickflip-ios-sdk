@@ -28,7 +28,7 @@ typedef int (^param_handler_t)(NSData* params);
 - (void) encodeFrame:(CMSampleBufferRef) sampleBuffer;
 - (NSData*) getConfigData;
 - (void) shutdown;
-
+- (void)forceShutdown;
 
 @property (readonly, atomic) int bitspersecond;
 

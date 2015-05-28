@@ -499,4 +499,10 @@ static unsigned int to_host(unsigned char* p)
     }
 }
 
+- (void)forceShutdown {
+    _headerWriter = nil;
+    _writer = nil;
+}
+
+
 @end

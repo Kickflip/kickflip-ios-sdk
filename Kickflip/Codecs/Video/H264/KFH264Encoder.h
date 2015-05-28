@@ -11,4 +11,6 @@
 
 @interface KFH264Encoder : KFVideoEncoder <KFSampleBufferEncoder>
 
+@property (nonatomic, strong) AVEncoder* encoder;
+
 @end

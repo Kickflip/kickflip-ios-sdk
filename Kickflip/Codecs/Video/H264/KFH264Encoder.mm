@@ -13,7 +13,6 @@
 #import "KFVideoFrame.h"
 
 @interface KFH264Encoder()
-@property (nonatomic, strong) AVEncoder* encoder;
 @property (nonatomic, strong) NSData *naluStartCode;
 @property (nonatomic, strong) NSMutableData *videoSPSandPPS;
 @property (nonatomic) CMTimeScale timescale;
