@@ -88,6 +88,11 @@ static NSString * const kKFS3Key = @"kKFS3Key";
         [self.manifestGenerator finalizeManifest];
         NSString *manifestString = [self.manifestGenerator manifestString];
         [self updateManifestWithString:manifestString manifestName:kVODManifestFileName];
+
+        // TEL
+        // Ensure the last segment is uploaded.
+        // There were lots of situations where the logic throughout this class missed the last segment.
+        [self uploadNextSegment];
     }
 }
 
@@ -324,7 +329,12 @@ static NSString * const kKFS3Key = @"kKFS3Key";
             }
             [_queuedSegments removeObjectForKey:@(_nextSegmentIndexToUpload)];
             NSUInteger queuedSegmentsCount = _queuedSegments.count;
-            [self updateManifestWithString:manifest manifestName:@"index.m3u8"];
+
+            // TEL
+            // Don't update the manifest in the middle of a stream. There seems to be race conditions and we just end up with an incorrect manifest.
+            // This DISABLES live streaming! VOD only at this point.
+            // [self updateManifestWithString:manifest manifestName:@"index.m3u8"];
+
             _nextSegmentIndexToUpload++;
             [self uploadNextSegment];
             if (self.delegate && [self.delegate respondsToSelector:@selector(uploader:didUploadSegmentAtURL:uploadSpeed:numberOfQueuedSegments:)]) {
