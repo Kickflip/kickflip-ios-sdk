@@ -108,7 +108,7 @@
         videoWidth = 640;
     }
     
-    return [NSString stringWithFormat:@"#EXTM3U\n#EXT-X-STREAM-INF:RESOLUTION=%dx%d\nvod.m3u8", videoWidth, videoHeight];
+    return [NSString stringWithFormat:@"#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=1056000,RESOLUTION=%dx%d\nvod.m3u8", videoWidth, videoHeight];
 }
 
 - (NSString*) manifestString {
