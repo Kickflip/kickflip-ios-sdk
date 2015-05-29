@@ -551,10 +551,6 @@
             AVAssetWriterStatus completionStatus = _assetWriter.status;
             switch (completionStatus) {
                 case AVAssetWriterStatusCompleted: {
-                    _readyToRecordVideo = NO;
-                    _readyToRecordAudio = NO;
-                    _assetWriter = nil;
-                    
                     if (_saveToCameraRoll)
                         UISaveVideoAtPathToSavedPhotosAlbum(_outputFileURL.path, self, @selector(video:didFinishSavingWithError:contextInfo:), nil);
                     
@@ -567,9 +563,13 @@
                 default:
                     break;
             }
+            
+            _readyToRecordVideo = NO;
+            _readyToRecordAudio = NO;
+            _assetWriter = nil;
         }];
     });
-
+    
     // TEL
     _hasScreenshot = NO;
 }

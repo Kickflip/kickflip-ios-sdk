@@ -19,7 +19,7 @@ static NSString * const kFileNameKey = @"fileName";
 static NSString * const kFileStartDateKey = @"startDate";
 
 static NSString * const kVODManifestFileName = @"vod.m3u8";
-
+static NSString * const kMasterManifestFileName = @"master.m3u8";
 
 static NSString * const kUploadStateQueued = @"queued";
 static NSString * const kUploadStateFinished = @"finished";
@@ -334,6 +334,8 @@ static NSString * const kKFS3Key = @"kKFS3Key";
                 [self.manifestGenerator finalizeManifest];
                 NSString *manifestString = [self.manifestGenerator manifestString];
                 [self updateManifestWithString:manifestString manifestName:kVODManifestFileName];
+                NSString *masterString = [self.manifestGenerator masterString];
+                [self updateManifestWithString:masterString manifestName:kMasterManifestFileName];
             }
             
             _nextSegmentIndexToUpload++;

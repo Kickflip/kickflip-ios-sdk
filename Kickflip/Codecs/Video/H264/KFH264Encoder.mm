@@ -7,7 +7,6 @@
 //
 
 #import "KFH264Encoder.h"
-#import "AVEncoder.h"
 #import "NALUnit.h"
 #import "KFLog.h"
 #import "KFVideoFrame.h"
@@ -24,7 +23,6 @@
 @implementation KFH264Encoder
 
 - (void) dealloc {
-    [self shutdown];
     [_encoder shutdown];
 }
 

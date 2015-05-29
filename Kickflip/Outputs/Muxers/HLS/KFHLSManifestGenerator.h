@@ -28,6 +28,7 @@ typedef NS_ENUM(NSUInteger, KFHLSManifestPlaylistType) {
 
 - (void) finalizeManifest;
 
+- (NSString *)masterString;
 - (NSString*) manifestString;
 
 @end

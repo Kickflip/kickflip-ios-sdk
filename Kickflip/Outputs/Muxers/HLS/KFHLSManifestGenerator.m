@@ -95,6 +95,22 @@
     }
 }
 
+
+- (NSString *)masterString {
+    int videoHeight;
+    int videoWidth;
+    
+    if (UIInterfaceOrientationIsPortrait([UIApplication sharedApplication].statusBarOrientation)) {
+        videoHeight = 640;
+        videoWidth = 360;
+    } else {
+        videoHeight = 360;
+        videoWidth = 640;
+    }
+    
+    return [NSString stringWithFormat:@"#EXTM3U\n#EXT-X-STREAM-INF:RESOLUTION=%dx%d\nvod.m3u8", videoWidth, videoHeight];
+}
+
 - (NSString*) manifestString {
     NSMutableString *manifest = [self header];
     [manifest appendString:self.segmentsString];

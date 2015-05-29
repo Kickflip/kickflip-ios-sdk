@@ -8,6 +8,7 @@
 
 
 #import "KFVideoEncoder.h"
+#import "AVEncoder.h"
 
 @interface KFH264Encoder : KFVideoEncoder <KFSampleBufferEncoder>
 
