@@ -27,6 +27,10 @@
 
 @implementation KFHLSWriter
 
+- (void)dealloc {
+//    NSLog(@"KFHLSWriter dealloc");
+}
+
 - (id) initWithDirectoryPath:(NSString *)directoryPath {
     if (self = [super init]) {
         av_register_all();

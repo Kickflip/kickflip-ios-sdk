@@ -38,6 +38,10 @@
 
 @implementation KFRecorder
 
+- (void) dealloc {
+//    NSLog(@"KFRecorder dealloc");
+}
+
 - (id) init {
     if (self = [super init]) {
         _minBitrate = 300 * 1000;
@@ -271,26 +275,28 @@
     }
 
     // pass frame to disk
-    CFRetain(sampleBuffer);
-    dispatch_async(_movieWritingQueue, ^{
-        if (_assetWriter) {
-            if (connection == _videoConnection) {
-                if (!_readyToRecordVideo)
-                    _readyToRecordVideo = [self setupAssetWriterVideoInput:CMSampleBufferGetFormatDescription(sampleBuffer)];
-                
-                if ([self inputsReadyToRecord])
-                    [self writeSampleBuffer:sampleBuffer ofType:AVMediaTypeVideo];
-            } else if (connection == _audioConnection) {
-                if (!_readyToRecordAudio)
-                    _readyToRecordAudio = [self setupAssetWriterAudioInput:CMSampleBufferGetFormatDescription(sampleBuffer)];
-                
-                if ([self inputsReadyToRecord])
-                    [self writeSampleBuffer:sampleBuffer ofType:AVMediaTypeAudio];
+    if (_saveToCameraRoll) {
+        CFRetain(sampleBuffer);
+        dispatch_async(_movieWritingQueue, ^{
+            if (_assetWriter) {
+                if (connection == _videoConnection) {
+                    if (!_readyToRecordVideo)
+                        _readyToRecordVideo = [self setupAssetWriterVideoInput:CMSampleBufferGetFormatDescription(sampleBuffer)];
+                    
+                    if ([self inputsReadyToRecord])
+                        [self writeSampleBuffer:sampleBuffer ofType:AVMediaTypeVideo];
+                } else if (connection == _audioConnection) {
+                    if (!_readyToRecordAudio)
+                        _readyToRecordAudio = [self setupAssetWriterAudioInput:CMSampleBufferGetFormatDescription(sampleBuffer)];
+                    
+                    if ([self inputsReadyToRecord])
+                        [self writeSampleBuffer:sampleBuffer ofType:AVMediaTypeAudio];
+                }
             }
-        }
-        
-        CFRelease(sampleBuffer);
-    });
+            
+            CFRelease(sampleBuffer);
+        });
+    }
 }
 
 #pragma mark - AVCaptureOutputDelegate Utilities
@@ -359,6 +365,9 @@
             newBitrate = _minBitrate;
         }
         double newVideoBitrate = newBitrate - self.aacEncoder.bitrate;
+        
+        DDLogInfo(@"old bitrate: %d, new bitrate: %f", self.h264Encoder.bitrate, newBitrate);
+        
         self.h264Encoder.bitrate = newVideoBitrate;
     }
 }
@@ -499,13 +508,15 @@
         }
     }];
     
-    dispatch_async(_movieWritingQueue, ^{
-        [self removeFile:_outputFileURL];
-        NSError *error;
-        _assetWriter = [[AVAssetWriter alloc] initWithURL:_outputFileURL fileType:AVFileTypeQuickTimeMovie error:&error];
-        if (error)
-            NSLog(@"Error creating AVAssetWriter: %@", error);
-    });
+    if (_saveToCameraRoll) {
+        dispatch_async(_movieWritingQueue, ^{
+            [self removeFile:_outputFileURL];
+            NSError *error;
+            _assetWriter = [[AVAssetWriter alloc] initWithURL:_outputFileURL fileType:AVFileTypeQuickTimeMovie error:&error];
+            if (error)
+                NSLog(@"Error creating AVAssetWriter: %@", error);
+        });
+    }
 }
 
 - (void) stopRecording {
@@ -546,29 +557,29 @@
         });
     }
     
-    dispatch_async(_movieWritingQueue, ^{
-        [_assetWriter finishWritingWithCompletionHandler:^() {
-            AVAssetWriterStatus completionStatus = _assetWriter.status;
-            switch (completionStatus) {
-                case AVAssetWriterStatusCompleted: {
-                    if (_saveToCameraRoll)
+    if (_saveToCameraRoll) {
+        dispatch_async(_movieWritingQueue, ^{
+            [_assetWriter finishWritingWithCompletionHandler:^() {
+                AVAssetWriterStatus completionStatus = _assetWriter.status;
+                switch (completionStatus) {
+                    case AVAssetWriterStatusCompleted: {
                         UISaveVideoAtPathToSavedPhotosAlbum(_outputFileURL.path, self, @selector(video:didFinishSavingWithError:contextInfo:), nil);
-                    
-                    break;
+                        break;
+                    }
+                    case AVAssetWriterStatusFailed: {
+                        NSLog(@"stopRecording writer error: %@", _assetWriter.error.localizedDescription);
+                        break;
+                    }
+                    default:
+                        break;
                 }
-                case AVAssetWriterStatusFailed: {
-                    NSLog(@"stopRecording writer error: %@", _assetWriter.error.localizedDescription);
-                    break;
-                }
-                default:
-                    break;
-            }
-            
-            _readyToRecordVideo = NO;
-            _readyToRecordAudio = NO;
-            _assetWriter = nil;
-        }];
-    });
+                
+                _readyToRecordVideo = NO;
+                _readyToRecordAudio = NO;
+                _assetWriter = nil;
+            }];
+        });
+    }
     
     // TEL
     _hasScreenshot = NO;

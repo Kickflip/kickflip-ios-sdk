@@ -18,6 +18,7 @@ static NSString * const kManifestKey =  @"manifest";
 static NSString * const kFileNameKey = @"fileName";
 static NSString * const kFileStartDateKey = @"startDate";
 
+static NSString * const kLiveManifestFileName = @"index.m3u8";
 static NSString * const kVODManifestFileName = @"vod.m3u8";
 static NSString * const kMasterManifestFileName = @"master.m3u8";
 
@@ -182,7 +183,7 @@ static NSString * const kKFS3Key = @"kKFS3Key";
 
 - (void) detectNewSegmentsFromFiles:(NSArray*)files {
     if (!_manifestPath) {
-        DDLogVerbose(@"Manifest path not yet available");
+        DDLogInfo(@"Manifest path not yet available");
         return;
     }
     [files enumerateObjectsUsingBlock:^(NSString *fileName, NSUInteger idx, BOOL *stop) {
@@ -198,7 +199,6 @@ static NSString * const kKFS3Key = @"kKFS3Key";
                 NSDictionary *segmentInfo = @{kManifestKey: manifestSnapshot,
                                               kFileNameKey: fileName,
                                               kFileStartDateKey: [NSDate date]};
-                DDLogVerbose(@"new ts file detected: %@", fileName);
                 [_files setObject:kUploadStateQueued forKey:fileName];
                 [_queuedSegments setObject:segmentInfo forKey:@(segmentIndex)];
                 [self uploadNextSegment];
@@ -246,6 +246,20 @@ static NSString * const kKFS3Key = @"kKFS3Key";
 }
 
 - (NSString*) manifestSnapshot {
+    NSString *manifestSnapshot;
+    
+    do {
+        manifestSnapshot = [self fetchManifestSnapshotFromFile];
+        
+        if (manifestSnapshot == nil || [manifestSnapshot isEqualToString:@""]) {
+            DDLogInfo(@"manifestPath was nil or blank, trying again.");
+        }
+    } while (manifestSnapshot == nil || [manifestSnapshot isEqualToString:@""]);
+    
+    return manifestSnapshot;
+}
+
+- (NSString *)fetchManifestSnapshotFromFile {
     return [NSString stringWithContentsOfFile:_manifestPath encoding:NSUTF8StringEncoding error:nil];
 }
 
@@ -323,20 +337,18 @@ static NSString * const kKFS3Key = @"kKFS3Key";
             [_queuedSegments removeObjectForKey:@(_nextSegmentIndexToUpload)];
             NSUInteger queuedSegmentsCount = _queuedSegments.count;
             
-            // TEL
-            // Don't update the manifest in the middle of a stream. There seems to be race conditions and we just end up with an incorrect manifest.
-            // This DISABLES live streaming! VOD only at this point.
-            // [self updateManifestWithString:manifest manifestName:@"index.m3u8"];
+            NSString *manifestSnapshot = [self manifestSnapshot];
+            [self updateManifestWithString:manifestSnapshot manifestName:kLiveManifestFileName];
+            
             if (self.isFinishedRecording) {
-                NSString *manifestSnapshot = [self manifestSnapshot];
-                DDLogInfo(@"final manifest snapshot: %@", manifestSnapshot);
                 [self.manifestGenerator appendFromLiveManifest:manifestSnapshot];
                 [self.manifestGenerator finalizeManifest];
                 NSString *manifestString = [self.manifestGenerator manifestString];
                 [self updateManifestWithString:manifestString manifestName:kVODManifestFileName];
-                NSString *masterString = [self.manifestGenerator masterString];
-                [self updateManifestWithString:masterString manifestName:kMasterManifestFileName];
             }
+            
+            NSString *masterString = [self.manifestGenerator masterString];
+            [self updateManifestWithString:masterString manifestName:kMasterManifestFileName];
             
             _nextSegmentIndexToUpload++;
             [self uploadNextSegment];

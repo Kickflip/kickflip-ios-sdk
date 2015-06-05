@@ -13,11 +13,7 @@
 #import "AVFoundation/AVVideoSettings.h"
 
 @interface VideoEncoder : NSObject
-{
-    AVAssetWriter* _writer;
-    AVAssetWriterInput* _writerInput;
-    NSString* _path;
-}
+
 
 @property NSString* path;
 @property (nonatomic, readonly) NSUInteger bitrate;

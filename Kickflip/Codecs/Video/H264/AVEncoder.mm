@@ -75,6 +75,11 @@ static unsigned int to_host(unsigned char* p)
 
 @synthesize bitspersecond = _bitspersecond;
 
+- (void)dealloc {
+//    NSLog(@"AVEncoder dealloc");
+    [self removeObserver:self forKeyPath:NSStringFromSelector(@selector(bitrate))];
+}
+
 + (AVEncoder*) encoderForHeight:(int) height andWidth:(int) width bitrate:(int)bitrate
 {
     AVEncoder* enc = [AVEncoder alloc];
@@ -266,7 +271,7 @@ static unsigned int to_host(unsigned char* p)
                 {
                     _currentFile = 1;
                 }
-                //NSLog(@"Swap to file %d", _currentFile);
+//                NSLog(@"Swap to file %d", _currentFile);
                 _writer = [VideoEncoder encoderForPath:[self makeFilename] Height:_height andWidth:_width bitrate:self.bitrate];
                 
                 // to do this seamlessly requires a few steps in the right order
@@ -498,11 +503,5 @@ static unsigned int to_host(unsigned char* p)
         // !! wait for these to finish before returning and delete temp files
     }
 }
-
-- (void)forceShutdown {
-    _headerWriter = nil;
-    _writer = nil;
-}
-
 
 @end

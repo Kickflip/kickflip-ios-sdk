@@ -23,7 +23,12 @@
 @implementation KFH264Encoder
 
 - (void) dealloc {
+//    NSLog(@"KFH264Encoder dealloc");
     [_encoder shutdown];
+}
+
+- (void)shutdown {
+    [_encoder encodeWithBlock:nil onParams:nil];
 }
 
 - (instancetype) initWithBitrate:(NSUInteger)bitrate width:(int)width height:(int)height {

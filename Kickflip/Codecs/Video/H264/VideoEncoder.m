@@ -9,8 +9,17 @@
 #import "VideoEncoder.h"
 
 @implementation VideoEncoder
+{
+    AVAssetWriter* _writer;
+    AVAssetWriterInput* _writerInput;
+    NSString* _path;
+}
 
 @synthesize path = _path;
+
+- (void)dealloc {
+//    NSLog(@"VideoEncoder dealloc");
+}
 
 + (VideoEncoder*) encoderForPath:(NSString*) path Height:(int) height andWidth:(int) width bitrate:(int)bitrate
 {
