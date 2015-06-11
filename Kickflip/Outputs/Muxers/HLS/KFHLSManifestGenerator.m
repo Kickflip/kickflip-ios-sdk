@@ -10,7 +10,7 @@
 #import "KFLog.h"
 
 @interface KFHLSManifestGenerator()
-@property (nonatomic, strong) NSMutableString *segmentsString;
+@property (nonatomic, strong) NSMutableDictionary *segments;
 @property (nonatomic) BOOL finished;
 @end
 
@@ -41,21 +41,22 @@
         self.playlistType = playlistType;
         self.version = 3;
         self.mediaSequence = -1;
-        self.segmentsString = [NSMutableString string];
+        self.segments = [NSMutableDictionary new];
         self.finished = NO;
     }
     return self;
 }
 
 - (void) appendFileName:(NSString *)fileName duration:(float)duration mediaSequence:(NSUInteger)mediaSequence {
-    if (self.finished) {
-        return;
-    }
     self.mediaSequence = mediaSequence;
+    
     if (duration > self.targetDuration) {
         self.targetDuration = duration;
     }
-    [self.segmentsString appendFormat:@"#EXTINF:%g,\n%@\n", duration, fileName];
+    
+    if ([self.segments objectForKey:fileName] == nil) {
+        [self.segments setObject:[NSString stringWithFormat:@"#EXTINF:%g,\n%@\n", duration, fileName] forKey:fileName];
+    }
 }
 
 - (void) finalizeManifest {
@@ -72,31 +73,24 @@
 - (void) appendFromLiveManifest:(NSString *)liveManifest {
     NSArray *rawLines = [liveManifest componentsSeparatedByString:@"\n"];
     NSMutableArray *lines = [NSMutableArray arrayWithCapacity:rawLines.count];
+    
+    NSUInteger index = 0;
     for (NSString *line in rawLines) {
-        if (!line.length) {
-            continue;
+        if ([line rangeOfString:@"#EXTINF:"].location != NSNotFound) {
+            NSString *extInf = line;
+            NSString *extInfNumberString = [self stripToNumbers:extInf];
+            NSString *segmentName = rawLines[index+1];
+            NSString *segmentNumberString = [self stripToNumbers:segmentName];
+            float duration = [extInfNumberString floatValue];
+            NSInteger sequence = [segmentNumberString integerValue];
+            [self appendFileName:segmentName duration:duration mediaSequence:sequence];
         }
-        if ([line isEqualToString:@"#EXT-X-ENDLIST"]) {
-            continue;
-        }
-        [lines addObject:line];
-    }
-    if (lines.count < 6) {
-        return;
-    }
-    NSString *extInf = lines[lines.count-2];
-    NSString *extInfNumberString = [self stripToNumbers:extInf];
-    NSString *segmentName = lines[lines.count-1];
-    NSString *segmentNumberString = [self stripToNumbers:segmentName];
-    float duration = [extInfNumberString floatValue];
-    NSInteger sequence = [segmentNumberString integerValue];
-    if (sequence > self.mediaSequence) {
-        [self appendFileName:segmentName duration:duration mediaSequence:sequence];
+        index++;
     }
 }
 
 
-- (NSString *)masterString {
+- (NSString *) masterString {
     int videoHeight;
     int videoWidth;
     
@@ -108,16 +102,24 @@
         videoWidth = 640;
     }
     
-    return [NSString stringWithFormat:@"#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=1056000,RESOLUTION=%dx%d\n%@.m3u8", videoWidth, videoHeight, (self.finished ? @"vod" : @"index")];
+    return [NSString stringWithFormat:@"#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=1056000,RESOLUTION=%dx%d\n%@.m3u8",
+                videoWidth,
+                videoHeight,
+                (self.finished ? @"vod" : @"index")];
 }
 
-- (NSString*) manifestString {
+- (NSString *) manifestString {
     NSMutableString *manifest = [self header];
-    [manifest appendString:self.segmentsString];
-    if (self.finished) {
-        [manifest appendString:[self footer]];
+    
+    NSArray *sortedKeys = [[self.segments allKeys] sortedArrayUsingSelector:@selector(caseInsensitiveCompare:)];
+    for (NSString *key in sortedKeys) {
+        [manifest appendString:[self.segments objectForKey:key]];
     }
+    
+    [manifest appendString:[self footer]];
+    
     DDLogInfo(@"Latest manifest:\n%@", manifest);
+    
     return manifest;
 }
 
