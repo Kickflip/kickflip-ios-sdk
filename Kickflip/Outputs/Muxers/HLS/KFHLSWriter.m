@@ -23,13 +23,10 @@
 @property (nonatomic) AVRational videoTimeBase;
 @property (nonatomic) AVRational audioTimeBase;
 @property (nonatomic) NSUInteger segmentDurationSeconds;
+@property (nonatomic) NSUInteger segmentCount;
 @end
 
 @implementation KFHLSWriter
-
-- (void)dealloc {
-//    NSLog(@"KFHLSWriter dealloc");
-}
 
 - (id) initWithDirectoryPath:(NSString *)directoryPath {
     if (self = [super init]) {
@@ -52,6 +49,7 @@
         _audioTimeBase.num = 1;
         _audioTimeBase.den = 1000000000;
         _segmentDurationSeconds = 10;
+        _segmentCount = 3;
         [self setupOutputFile];
         _conversionQueue = dispatch_queue_create("HLS Write queue", DISPATCH_QUEUE_SERIAL);
         _uuid = [[NSUUID UUID] UUIDString];
@@ -72,6 +70,7 @@
     _videoStream = [[FFOutputStream alloc] initWithOutputFile:_outputFile outputCodec:@"h264"];
     [_videoStream setupVideoContextWithWidth:width height:height];
     av_opt_set_int(_outputFile.formatContext->priv_data, "hls_time", _segmentDurationSeconds, 0);
+    av_opt_set_int(_outputFile.formatContext->priv_data, "hls_list_size", _segmentCount, 0);
 }
 
 - (void) addAudioStreamWithSampleRate:(int)sampleRate {

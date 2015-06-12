@@ -48,7 +48,9 @@
 }
 
 - (void) appendFileName:(NSString *)fileName duration:(float)duration mediaSequence:(NSUInteger)mediaSequence {
-    self.mediaSequence = mediaSequence;
+    if (mediaSequence > self.mediaSequence) {
+        self.mediaSequence = mediaSequence;
+    }
     
     if (duration > self.targetDuration) {
         self.targetDuration = duration;
@@ -95,14 +97,14 @@
     int videoWidth;
     
     if (UIInterfaceOrientationIsPortrait([UIApplication sharedApplication].statusBarOrientation)) {
-        videoHeight = 640;
-        videoWidth = 360;
+        videoHeight = 568;
+        videoWidth = 320;
     } else {
-        videoHeight = 360;
-        videoWidth = 640;
+        videoHeight = 320;
+        videoWidth = 568;
     }
     
-    return [NSString stringWithFormat:@"#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=1056000,RESOLUTION=%dx%d\n%@.m3u8",
+    return [NSString stringWithFormat:@"#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=500000,CODECS=\"avc1.77.21,mp4a.40.2\",RESOLUTION=%dx%d\n%@.m3u8",
                 videoWidth,
                 videoHeight,
                 (self.finished ? @"vod" : @"index")];

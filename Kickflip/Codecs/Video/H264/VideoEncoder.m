@@ -17,10 +17,6 @@
 
 @synthesize path = _path;
 
-- (void)dealloc {
-//    NSLog(@"VideoEncoder dealloc");
-}
-
 + (VideoEncoder*) encoderForPath:(NSString*) path Height:(int) height andWidth:(int) width bitrate:(int)bitrate
 {
     VideoEncoder* enc = [VideoEncoder alloc];

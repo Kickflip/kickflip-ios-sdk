@@ -20,7 +20,7 @@ static NSString * const kFileStartDateKey = @"startDate";
 
 static NSString * const kLiveManifestFileName = @"index.m3u8";
 static NSString * const kVODManifestFileName = @"vod.m3u8";
-static NSString * const kMasterManifestFileName = @"master.m3u8";
+static NSString * const kMasterManifestFileName = @"playlist.m3u8";
 
 static NSString * const kUploadStateQueued = @"queued";
 static NSString * const kUploadStateFinished = @"finished";

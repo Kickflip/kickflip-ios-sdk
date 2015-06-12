@@ -76,7 +76,6 @@ static unsigned int to_host(unsigned char* p)
 @synthesize bitspersecond = _bitspersecond;
 
 - (void)dealloc {
-//    NSLog(@"AVEncoder dealloc");
     [self removeObserver:self forKeyPath:NSStringFromSelector(@selector(bitrate))];
 }
 

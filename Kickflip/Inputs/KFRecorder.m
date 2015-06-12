@@ -92,11 +92,11 @@
     self.audioSampleRate = 44100;
 
     if (UIInterfaceOrientationIsPortrait([UIApplication sharedApplication].statusBarOrientation)) {
-        self.videoHeight = 640;
-        self.videoWidth = 360;
+        self.videoHeight = 568;
+        self.videoWidth = 320;
     } else {
-        self.videoHeight = 360;
-        self.videoWidth = 640;
+        self.videoHeight = 320;
+        self.videoWidth = 568;
     }
     
     int audioBitrate = 56 * 1000; // 56 Kbps
@@ -357,7 +357,7 @@
         double currentUploadBitrate = uploadSpeed * 8 * 1024; // bps
         double maxBitrate = [Kickflip maxBitrate];
 
-        double newBitrate = currentUploadBitrate * 0.5;
+        double newBitrate = currentUploadBitrate * 0.8;
         if (newBitrate > maxBitrate) {
             newBitrate = maxBitrate;
         }
