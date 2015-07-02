@@ -128,6 +128,19 @@ static NSString * const kKFS3Key = @"kKFS3Key";
     uploadRequest.body = [NSURL fileURLWithPath:filePath];
     uploadRequest.ACL = AWSS3ObjectCannedACLPublicRead;
     
+    __block NSDate *startUploadDate = [NSDate date];
+    uploadRequest.uploadProgress = ^(int64_t bytesSent, int64_t totalBytesSent, int64_t totalBytesExpectedToSend) {
+        NSTimeInterval timeToUpload = [[NSDate date] timeIntervalSinceDate:startUploadDate];
+        double bytesPerSecond = totalBytesSent / timeToUpload;
+        double KBps = bytesPerSecond / 1024;
+        
+        DDLogVerbose(@"Speed: %f KB/s bytesSent: %d totalBytesSent: %d totalBytesExpectedToSend: %d", KBps, bytesSent, totalBytesSent, totalBytesExpectedToSend);
+        
+        if ([self.delegate respondsToSelector:@selector(uploader:didUploadPartOfASegmentAtUploadSpeed:)]) {
+            [self.delegate uploader:self didUploadPartOfASegmentAtUploadSpeed:KBps];
+        }
+    };
+    
     [[self.transferManager upload:uploadRequest] continueWithBlock:^id(BFTask *task) {
         if (task.error) {
             [self s3RequestFailedForFileName:fileName withError:task.error];

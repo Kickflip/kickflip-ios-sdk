@@ -44,7 +44,7 @@
 
 - (id) init {
     if (self = [super init]) {
-        _minBitrate = 300 * 1000;
+        _minBitrate = 120 * 1000;
         _outputFileURL = [NSURL fileURLWithPath:[NSTemporaryDirectory() stringByAppendingPathComponent:@"recording.mp4"]];
         [self setupSession];
         [self setupEncoders];
@@ -351,13 +351,12 @@
     DDLogVerbose(@"Manifest ready at URL: %@", manifestURL);
 }
 
-- (void) uploader:(KFHLSUploader *)uploader didUploadSegmentAtURL:(NSURL *)segmentURL uploadSpeed:(double)uploadSpeed numberOfQueuedSegments:(NSUInteger)numberOfQueuedSegments {
-    DDLogInfo(@"Uploaded segment %@ @ %f KB/s, numberOfQueuedSegments %d", segmentURL, uploadSpeed, numberOfQueuedSegments);
+- (void) uploader:(KFHLSUploader*)uploader didUploadPartOfASegmentAtUploadSpeed:(double)uploadSpeed {
     if ([Kickflip useAdaptiveBitrate]) {
         double currentUploadBitrate = uploadSpeed * 8 * 1024; // bps
         double maxBitrate = [Kickflip maxBitrate];
-
-        double newBitrate = currentUploadBitrate * 0.8;
+        
+        double newBitrate = currentUploadBitrate * 0.5;
         if (newBitrate > maxBitrate) {
             newBitrate = maxBitrate;
         }
@@ -366,10 +365,14 @@
         }
         double newVideoBitrate = newBitrate - self.aacEncoder.bitrate;
         
-        DDLogInfo(@"old bitrate: %d, new bitrate: %f", self.h264Encoder.bitrate, newBitrate);
+        DDLogInfo(@"old video bitrate: %d, new video bitrate: %f", self.h264Encoder.bitrate, newVideoBitrate);
         
         self.h264Encoder.bitrate = newVideoBitrate;
     }
+}
+
+- (void) uploader:(KFHLSUploader *)uploader didUploadSegmentAtURL:(NSURL *)segmentURL uploadSpeed:(double)uploadSpeed numberOfQueuedSegments:(NSUInteger)numberOfQueuedSegments {
+    DDLogInfo(@"Uploaded segment %@ @ %f KB/s, numberOfQueuedSegments %d", segmentURL, uploadSpeed, numberOfQueuedSegments);
 }
 
 - (void) locationManager:(CLLocationManager *)manager didUpdateLocations:(NSArray *)locations {
