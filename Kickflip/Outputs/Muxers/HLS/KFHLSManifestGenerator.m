@@ -56,8 +56,8 @@
         self.targetDuration = duration;
     }
     
-    if ([self.segments objectForKey:fileName] == nil) {
-        [self.segments setObject:[NSString stringWithFormat:@"#EXTINF:%g,\n%@\n", duration, fileName] forKey:fileName];
+    if ([self.segments objectForKey:[NSNumber numberWithInteger:mediaSequence]] == nil) {
+        [self.segments setObject:[NSString stringWithFormat:@"#EXTINF:%g,\n%@\n", duration, fileName] forKey:[NSNumber numberWithInteger:mediaSequence]];
     }
 }
 
@@ -113,8 +113,8 @@
 - (NSString *) manifestString {
     NSMutableString *manifest = [self header];
     
-    NSArray *sortedKeys = [[self.segments allKeys] sortedArrayUsingSelector:@selector(caseInsensitiveCompare:)];
-    for (NSString *key in sortedKeys) {
+    NSArray *sortedKeys = [[self.segments allKeys] sortedArrayUsingSelector:@selector(compare:)];
+    for (NSNumber *key in sortedKeys) {
         [manifest appendString:[self.segments objectForKey:key]];
     }
     
