@@ -293,23 +293,28 @@ static unsigned int to_host(unsigned char* p)
 
 - (void) swapFiles:(NSString*) oldPath
 {
-    // save current position
-    uint64_t pos = [_inputFile offsetInFile];
-    
-    // re-read mdat length
-    [_inputFile seekToFileOffset:_posMDAT];
-    NSData* hdr = [_inputFile readDataOfLength:4];
-    unsigned char* p = (unsigned char*) [hdr bytes];
-    int lenMDAT = to_host(p);
+    // TEL
+    // Sometimes _inputFile is nil and things crash. These bits are beyond my capabilities...
+    if (_inputFile) {
+        // save current position
+        uint64_t pos = [_inputFile offsetInFile];
+        
+        // re-read mdat length
+        [_inputFile seekToFileOffset:_posMDAT];
+        NSData* hdr = [_inputFile readDataOfLength:4];
+        unsigned char* p = (unsigned char*) [hdr bytes];
+        int lenMDAT = to_host(p);
 
-    // extract nalus from saved position to mdat end
-    uint64_t posEnd = _posMDAT + lenMDAT;
-    uint32_t cRead = (uint32_t)(posEnd - pos);
-    [_inputFile seekToFileOffset:pos];
-    [self readAndDeliver:cRead];
-    
-    // close and remove file
-    [_inputFile closeFile];
+        // extract nalus from saved position to mdat end
+        uint64_t posEnd = _posMDAT + lenMDAT;
+        uint32_t cRead = (uint32_t)(posEnd - pos);
+        [_inputFile seekToFileOffset:pos];
+        [self readAndDeliver:cRead];
+        
+        // close and remove file
+        [_inputFile closeFile];
+    }
+
     _foundMDAT = false;
     _bytesToNextAtom = 0;
     [[NSFileManager defaultManager] removeItemAtPath:oldPath error:nil];
