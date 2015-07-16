@@ -39,7 +39,7 @@
 @implementation KFRecorder
 
 - (void) dealloc {
-//    NSLog(@"KFRecorder dealloc");
+    [self destroySession];
 }
 
 - (id) init {
@@ -73,6 +73,14 @@
     
     _previewLayer = [AVCaptureVideoPreviewLayer layerWithSession:_session];
     _previewLayer.videoGravity = AVLayerVideoGravityResizeAspectFill;
+}
+
+- (void)destroySession {
+    [_session stopRunning];
+    
+    for (AVCaptureInput *input in [_session inputs]) {
+        [_session removeInput:input];
+    }
 }
 
 - (void) setupHLSWriterWithEndpoint:(KFS3Stream*)endpoint {
@@ -533,7 +541,9 @@
             }
         }];
     }
-    [_session stopRunning];
+    
+    [self destroySession];
+    
     self.isRecording = NO;
     
     NSError *error = nil;

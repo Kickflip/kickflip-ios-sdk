@@ -23,7 +23,6 @@
 @implementation KFH264Encoder
 
 - (void) dealloc {
-//    NSLog(@"KFH264Encoder dealloc");
     [_encoder shutdown];
 }
 
