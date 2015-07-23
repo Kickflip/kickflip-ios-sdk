@@ -9,6 +9,8 @@
 #import <Foundation/Foundation.h>
 #import <AVFoundation/AVFoundation.h>
 
+static kHLSListSize = 6;
+
 @interface KFHLSWriter : NSObject
 
 @property (nonatomic, strong) NSString *uuid;

@@ -49,7 +49,7 @@
         _audioTimeBase.num = 1;
         _audioTimeBase.den = 1000000000;
         _segmentDurationSeconds = 10;
-        _segmentCount = 3;
+        _segmentCount = kHLSListSize;
         [self setupOutputFile];
         _conversionQueue = dispatch_queue_create("HLS Write queue", DISPATCH_QUEUE_SERIAL);
         _uuid = [[NSUUID UUID] UUIDString];

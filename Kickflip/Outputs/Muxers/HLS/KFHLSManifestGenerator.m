@@ -104,7 +104,7 @@
         videoWidth = 568;
     }
     
-    return [NSString stringWithFormat:@"#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=500000,CODECS=\"avc1.77.21,mp4a.40.2\",RESOLUTION=%dx%d\n%@.m3u8",
+    return [NSString stringWithFormat:@"#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=556000,CODECS=\"avc1.77.21,mp4a.40.2\",RESOLUTION=%dx%d\n%@.m3u8",
                 videoWidth,
                 videoHeight,
                 (self.finished ? @"vod" : @"index")];

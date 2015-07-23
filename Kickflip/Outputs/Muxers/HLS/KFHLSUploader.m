@@ -12,6 +12,7 @@
 #import "KFLog.h"
 #import "KFAPIClient.h"
 #import "KFAWSCredentialsProvider.h"
+#import "KFHLSWriter.h"
 #import <AWSS3/AWSS3.h>
 
 static NSString * const kManifestKey =  @"manifest";
@@ -306,7 +307,7 @@ static NSString * const kKFS3Key = @"kKFS3Key";
     dispatch_async(_scanningQueue, ^{
         if ([fileName.pathExtension isEqualToString:@"m3u8"]) {
             dispatch_async(self.callbackQueue, ^{
-                if (!_manifestReady) {
+                if (!_manifestReady && [fileName isEqualToString:kLiveManifestFileName]) {
                     if (self.delegate && [self.delegate respondsToSelector:@selector(uploader:liveManifestReadyAtURL:)]) {
                         [self.delegate uploader:self liveManifestReadyAtURL:[self manifestURL]];
                     }
@@ -350,18 +351,20 @@ static NSString * const kKFS3Key = @"kKFS3Key";
             [_queuedSegments removeObjectForKey:@(_nextSegmentIndexToUpload)];
             NSUInteger queuedSegmentsCount = _queuedSegments.count;
             
-            NSString *manifestSnapshot = [self manifestSnapshot];
-            [self updateManifestWithString:manifestSnapshot manifestName:kLiveManifestFileName];
+            // Master (Playlist)
+            [self updateManifestWithString:[self.manifestGenerator masterString] manifestName:kMasterManifestFileName];
             
-            if (self.isFinishedRecording) {
-                [self.manifestGenerator appendFromLiveManifest:manifestSnapshot];
-                [self.manifestGenerator finalizeManifest];
-                NSString *manifestString = [self.manifestGenerator manifestString];
-                [self updateManifestWithString:manifestString manifestName:kVODManifestFileName];
+            // Live (Wait for a full live manifest before going live)
+            if (_nextSegmentIndexToUpload >= kHLSListSize - 1) {
+                [self updateManifestWithString:[self manifestSnapshot] manifestName:kLiveManifestFileName];
             }
             
-            NSString *masterString = [self.manifestGenerator masterString];
-            [self updateManifestWithString:masterString manifestName:kMasterManifestFileName];
+            // VOD
+            if (self.isFinishedRecording) {
+                [self.manifestGenerator appendFromLiveManifest:[self manifestSnapshot]];
+                [self.manifestGenerator finalizeManifest];
+                [self updateManifestWithString:[self.manifestGenerator manifestString] manifestName:kVODManifestFileName];
+            }
             
             _nextSegmentIndexToUpload++;
             [self uploadNextSegment];
