@@ -76,7 +76,11 @@ static unsigned int to_host(unsigned char* p)
 @synthesize bitspersecond = _bitspersecond;
 
 - (void)dealloc {
-    [self removeObserver:self forKeyPath:NSStringFromSelector(@selector(bitrate))];
+    @try {
+        [self removeObserver:self forKeyPath:NSStringFromSelector(@selector(bitrate))];
+    } @catch(id anException) {
+        // no op
+    }
 }
 
 + (AVEncoder*) encoderForHeight:(int) height andWidth:(int) width bitrate:(int)bitrate

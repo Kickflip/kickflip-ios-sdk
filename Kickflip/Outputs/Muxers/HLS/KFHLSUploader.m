@@ -45,6 +45,8 @@ static NSString * const kKFS3Key = @"kKFS3Key";
 @property (nonatomic, strong) NSString *finalManifestString;
 @property (nonatomic) BOOL isFinishedRecording;
 @property (nonatomic) BOOL hasUploadedFinalManifest;
+@property (nonatomic) double uploadRateTotal;
+@property (nonatomic) double uploadRateCount;
 @end
 
 @implementation KFHLSUploader
@@ -64,6 +66,8 @@ static NSString * const kKFS3Key = @"kKFS3Key";
         _nextSegmentIndexToUpload = 0;
         _manifestReady = NO;
         _isFinishedRecording = NO;
+        _uploadRateTotal = 0;
+        _uploadRateCount = 0;
         
         AWSRegionType region = [KFAWSCredentialsProvider regionTypeForRegion:stream.awsRegion];
         KFAWSCredentialsProvider *awsCredentialsProvider = [[KFAWSCredentialsProvider alloc] initWithStream:stream];
@@ -135,10 +139,14 @@ static NSString * const kKFS3Key = @"kKFS3Key";
         double bytesPerSecond = totalBytesSent / timeToUpload;
         double KBps = bytesPerSecond / 1024;
         
-        DDLogVerbose(@"Speed: %f KB/s bytesSent: %d totalBytesSent: %d totalBytesExpectedToSend: %d", KBps, bytesSent, totalBytesSent, totalBytesExpectedToSend);
+        _uploadRateTotal += KBps;
+        _uploadRateCount += 1;
+        double averageUploadSpeed = _uploadRateTotal / _uploadRateCount;
+        
+//        NSLog(@"Average Speed: %f Speed: %f KB/s bytesSent: %d totalBytesSent: %d totalBytesExpectedToSend: %d", averageUploadSpeed, KBps, bytesSent, totalBytesSent, totalBytesExpectedToSend);
         
         if ([self.delegate respondsToSelector:@selector(uploader:didUploadPartOfASegmentAtUploadSpeed:)]) {
-            [self.delegate uploader:self didUploadPartOfASegmentAtUploadSpeed:KBps];
+            [self.delegate uploader:self didUploadPartOfASegmentAtUploadSpeed:averageUploadSpeed];
         }
     };
     
@@ -351,11 +359,8 @@ static NSString * const kKFS3Key = @"kKFS3Key";
             [_queuedSegments removeObjectForKey:@(_nextSegmentIndexToUpload)];
             NSUInteger queuedSegmentsCount = _queuedSegments.count;
             
-            // Master (Playlist)
-            [self updateManifestWithString:[self.manifestGenerator masterString] manifestName:kMasterManifestFileName];
-            
             // Live (Wait for a full live manifest before going live)
-            if (_nextSegmentIndexToUpload >= kHLSListSize - 1) {
+            if (_nextSegmentIndexToUpload >= kHLSListSize) {
                 [self updateManifestWithString:[self manifestSnapshot] manifestName:kLiveManifestFileName];
             }
             
@@ -365,6 +370,9 @@ static NSString * const kKFS3Key = @"kKFS3Key";
                 [self.manifestGenerator finalizeManifest];
                 [self updateManifestWithString:[self.manifestGenerator manifestString] manifestName:kVODManifestFileName];
             }
+            
+            // Master (Playlist)
+            [self updateManifestWithString:[self.manifestGenerator masterString] manifestName:kMasterManifestFileName];
             
             _nextSegmentIndexToUpload++;
             [self uploadNextSegment];

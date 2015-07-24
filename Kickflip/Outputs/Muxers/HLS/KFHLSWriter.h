@@ -9,7 +9,7 @@
 #import <Foundation/Foundation.h>
 #import <AVFoundation/AVFoundation.h>
 
-static kHLSListSize = 6;
+static kHLSListSize = 3;
 
 @interface KFHLSWriter : NSObject
 

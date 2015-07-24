@@ -78,6 +78,11 @@ typedef void (^KFBroadcastCompletionBlock)(BOOL success, NSError* error);
 /// @name Configuration
 ///-------------------------------
 
+
++ (double) initialBitrate;
+
++ (void) setInitialBitrate:(double)initialBitrate;
+
 /**
  *  Maximum bitrate (combined video + audio)
  *

@@ -13,6 +13,7 @@
 @interface Kickflip()
 @property (nonatomic, copy) NSString *apiKey;
 @property (nonatomic, copy) NSString *apiSecret;
+@property (nonatomic) NSUInteger initialBitrate;
 @property (nonatomic) NSUInteger maxBitrate;
 @property (nonatomic) BOOL useAdaptiveBitrate;
 @end
@@ -38,7 +39,8 @@ static Kickflip *_kickflip = nil;
 
 - (id) init {
     if (self = [super init]) {
-        _maxBitrate = 2000 * 1000; // 2 Mbps
+        _initialBitrate = 456 * 1000;
+        _maxBitrate = 2056 * 1000; // 2 Mbps
         _useAdaptiveBitrate = YES;
     }
     return self;
@@ -67,6 +69,14 @@ static Kickflip *_kickflip = nil;
 
 + (NSString*) apiSecret {
     return [Kickflip sharedInstance].apiSecret;
+}
+
++ (void) setInitialBitrate:(double)initialBitrate {
+    [Kickflip sharedInstance].initialBitrate = initialBitrate;
+}
+
++ (double) initialBitrate {
+    return [Kickflip sharedInstance].initialBitrate;
 }
 
 + (void) setMaxBitrate:(double)maxBitrate {

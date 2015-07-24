@@ -44,7 +44,7 @@
 
 - (id) init {
     if (self = [super init]) {
-        _minBitrate = 120 * 1000;
+        _minBitrate = (120 + 56) * 1000;
         _outputFileURL = [NSURL fileURLWithPath:[NSTemporaryDirectory() stringByAppendingPathComponent:@"recording.mp4"]];
         [self setupSession];
         [self setupEncoders];
@@ -108,8 +108,8 @@
     }
     
     int audioBitrate = 56 * 1000; // 56 Kbps
-    int maxBitrate = [Kickflip maxBitrate];
-    int videoBitrate = maxBitrate - audioBitrate;
+    int initialBitrate = [Kickflip initialBitrate];
+    int videoBitrate = initialBitrate - audioBitrate;
     _h264Encoder = [[KFH264Encoder alloc] initWithBitrate:videoBitrate width:self.videoWidth height:self.videoHeight];
     _h264Encoder.delegate = self;
     
@@ -360,11 +360,17 @@
 }
 
 - (void) uploader:(KFHLSUploader*)uploader didUploadPartOfASegmentAtUploadSpeed:(double)uploadSpeed {
+    // No op
+}
+
+- (void) uploader:(KFHLSUploader *)uploader didUploadSegmentAtURL:(NSURL *)segmentURL uploadSpeed:(double)uploadSpeed numberOfQueuedSegments:(NSUInteger)numberOfQueuedSegments {
+    NSLog(@"Uploaded segment %@ @ %f KB/s, numberOfQueuedSegments %d", segmentURL, uploadSpeed, numberOfQueuedSegments);
+    
     if ([Kickflip useAdaptiveBitrate]) {
         double currentUploadBitrate = uploadSpeed * 8 * 1024; // bps
         double maxBitrate = [Kickflip maxBitrate];
         
-        double newBitrate = currentUploadBitrate * 0.5;
+        double newBitrate = currentUploadBitrate * 0.8;
         if (newBitrate > maxBitrate) {
             newBitrate = maxBitrate;
         }
@@ -373,14 +379,10 @@
         }
         double newVideoBitrate = newBitrate - self.aacEncoder.bitrate;
         
-        DDLogInfo(@"old video bitrate: %d, new video bitrate: %f", self.h264Encoder.bitrate, newVideoBitrate);
+        NSLog(@"old video bitrate: %d, new video bitrate: %f", self.h264Encoder.bitrate, newVideoBitrate);
         
         self.h264Encoder.bitrate = newVideoBitrate;
     }
-}
-
-- (void) uploader:(KFHLSUploader *)uploader didUploadSegmentAtURL:(NSURL *)segmentURL uploadSpeed:(double)uploadSpeed numberOfQueuedSegments:(NSUInteger)numberOfQueuedSegments {
-    DDLogInfo(@"Uploaded segment %@ @ %f KB/s, numberOfQueuedSegments %d", segmentURL, uploadSpeed, numberOfQueuedSegments);
 }
 
 - (void) locationManager:(CLLocationManager *)manager didUpdateLocations:(NSArray *)locations {
