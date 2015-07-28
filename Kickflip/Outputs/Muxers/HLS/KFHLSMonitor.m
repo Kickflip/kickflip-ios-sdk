@@ -36,9 +36,11 @@ static KFHLSMonitor *_sharedMonitor = nil;
 }
 
 - (void) startMonitoringFolderPath:(NSString *)path endpoint:(KFS3Stream *)endpoint delegate:(id<KFHLSUploaderDelegate>)delegate {
+    self.delegate = delegate;
+    
     dispatch_async(self.monitorQueue, ^{
         KFHLSUploader *hlsUploader = [[KFHLSUploader alloc] initWithDirectoryPath:path stream:endpoint];
-        hlsUploader.delegate = delegate;
+        hlsUploader.delegate = self;
         [self.hlsUploaders setObject:hlsUploader forKey:path];
     });
 }
@@ -50,20 +52,34 @@ static KFHLSMonitor *_sharedMonitor = nil;
             hlsUploader = [[KFHLSUploader alloc] initWithDirectoryPath:path stream:endpoint];
             [self.hlsUploaders setObject:hlsUploader forKey:path];
         }
-        hlsUploader.delegate = self;
         [hlsUploader finishedRecording];
     });
 }
 
+#pragma mark - KFHLSUploaderDelegate
+
+- (void) uploader:(KFHLSUploader*)uploader didUploadPartOfASegmentAtUploadSpeed:(double)uploadSpeed {
+    [self.delegate uploader:uploader didUploadPartOfASegmentAtUploadSpeed:uploadSpeed];
+}
+
 - (void) uploader:(KFHLSUploader *)uploader didUploadSegmentAtURL:(NSURL *)segmentURL uploadSpeed:(double)uploadSpeed numberOfQueuedSegments:(NSUInteger)numberOfQueuedSegments {
-    DDLogInfo(@"[Background monitor] Uploaded segment %@ @ %f KB/s, numberOfQueuedSegments %d", segmentURL, uploadSpeed, numberOfQueuedSegments);
+    [self.delegate uploader:uploader didUploadSegmentAtURL:segmentURL uploadSpeed:uploadSpeed numberOfQueuedSegments:numberOfQueuedSegments];
+}
+
+- (void) uploader:(KFHLSUploader *)uploader liveManifestReadyAtURL:(NSURL*)manifestURL {
+    [self.delegate uploader:uploader liveManifestReadyAtURL:manifestURL];
+}
+
+- (void) uploader:(KFHLSUploader *)uploader thumbnailReadyAtURL:(NSURL*)manifestURL {
+    [self.delegate uploader:uploader thumbnailReadyAtURL:manifestURL];
 }
 
 - (void) uploaderHasFinished:(KFHLSUploader*)uploader {
-    DDLogInfo(@"Uploader finished, switched to VOD manifest");
     dispatch_async(self.monitorQueue, ^{
         [self.hlsUploaders removeObjectForKey:uploader.directoryPath];
     });
+    
+    [self.delegate uploaderHasFinished:uploader];
 }
 
 @end

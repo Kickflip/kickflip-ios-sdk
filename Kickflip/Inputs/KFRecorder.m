@@ -30,7 +30,6 @@
     NSURL *_outputFileURL;
 }
 
-@property (nonatomic) double minBitrate;
 @property (nonatomic) BOOL hasScreenshot;
 @property (nonatomic, strong) CLLocationManager *locationManager;
 
@@ -44,7 +43,6 @@
 
 - (id) init {
     if (self = [super init]) {
-        _minBitrate = (120 + 56) * 1000;
         _outputFileURL = [NSURL fileURLWithPath:[NSTemporaryDirectory() stringByAppendingPathComponent:@"recording.mp4"]];
         [self setupSession];
         [self setupEncoders];
@@ -350,41 +348,6 @@
     return (image);
 }
 
-- (void) uploader:(KFHLSUploader *)uploader liveManifestReadyAtURL:(NSURL *)manifestURL {
-    if (self.delegate && [self.delegate respondsToSelector:@selector(recorder:streamReadyAtURL:)]) {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [self.delegate recorder:self streamReadyAtURL:manifestURL];
-        });
-    }
-    DDLogVerbose(@"Manifest ready at URL: %@", manifestURL);
-}
-
-- (void) uploader:(KFHLSUploader*)uploader didUploadPartOfASegmentAtUploadSpeed:(double)uploadSpeed {
-    // No op
-}
-
-- (void) uploader:(KFHLSUploader *)uploader didUploadSegmentAtURL:(NSURL *)segmentURL uploadSpeed:(double)uploadSpeed numberOfQueuedSegments:(NSUInteger)numberOfQueuedSegments {
-    NSLog(@"Uploaded segment %@ @ %f KB/s, numberOfQueuedSegments %d", segmentURL, uploadSpeed, numberOfQueuedSegments);
-    
-    if ([Kickflip useAdaptiveBitrate]) {
-        double currentUploadBitrate = uploadSpeed * 8 * 1024; // bps
-        double maxBitrate = [Kickflip maxBitrate];
-        
-        double newBitrate = currentUploadBitrate * 0.8;
-        if (newBitrate > maxBitrate) {
-            newBitrate = maxBitrate;
-        }
-        if (newBitrate < _minBitrate) {
-            newBitrate = _minBitrate;
-        }
-        double newVideoBitrate = newBitrate - self.aacEncoder.bitrate;
-        
-        NSLog(@"old video bitrate: %d, new video bitrate: %f", self.h264Encoder.bitrate, newVideoBitrate);
-        
-        self.h264Encoder.bitrate = newVideoBitrate;
-    }
-}
-
 - (void) locationManager:(CLLocationManager *)manager didUpdateLocations:(NSArray *)locations {
     self.lastLocation = [locations lastObject];
     [self setStreamStartLocation];
@@ -665,6 +628,61 @@
         BOOL success = [fileManager removeItemAtPath:filePath error:&error];
         if (!success)
             NSLog(@"Error removing file: %@", error);
+    }
+}
+
+#pragma mark - KFHLSUploaderDelegate
+
+- (void) uploader:(KFHLSUploader*)uploader didUploadPartOfASegmentAtUploadSpeed:(double)uploadSpeed {
+    DDLogVerbose(@"Uploaded part of a segment @ %f kbps", uploadSpeed);
+}
+
+- (void) uploader:(KFHLSUploader *)uploader didUploadSegmentAtURL:(NSURL *)segmentURL uploadSpeed:(double)uploadSpeed numberOfQueuedSegments:(NSUInteger)numberOfQueuedSegments {
+    DDLogVerbose(@"Uploaded segment %@ @ %f kbps, numberOfQueuedSegments %d", segmentURL, uploadSpeed, numberOfQueuedSegments);
+    
+    if (self.delegate && [self.delegate respondsToSelector:@selector(recorder:didUpdateUploadSpeed:)]) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self.delegate recorder:self didUpdateUploadSpeed:uploadSpeed];
+        });
+    }
+    
+    if ([Kickflip useAdaptiveBitrate]) {
+        double currentUploadBitrate = uploadSpeed * 1024; // bps
+        double minBitrate = [Kickflip minBitrate];
+        double maxBitrate = [Kickflip maxBitrate];
+        
+        double newBitrate = currentUploadBitrate * 0.8;
+        if (newBitrate > maxBitrate) {
+            newBitrate = maxBitrate;
+        }
+        if (newBitrate < minBitrate) {
+            newBitrate = minBitrate;
+        }
+        double newVideoBitrate = newBitrate - self.aacEncoder.bitrate;
+        
+        DDLogVerbose(@"old video bitrate: %d, new video bitrate: %f", self.h264Encoder.bitrate, newVideoBitrate);
+        
+        self.h264Encoder.bitrate = newVideoBitrate;
+    }
+}
+
+- (void) uploader:(KFHLSUploader *)uploader liveManifestReadyAtURL:(NSURL *)manifestURL {
+    if (self.delegate && [self.delegate respondsToSelector:@selector(recorder:streamReadyAtURL:)]) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self.delegate recorder:self streamReadyAtURL:manifestURL];
+        });
+    }
+}
+
+- (void)uploader:(KFHLSUploader *)uploader thumbnailReadyAtURL:(NSURL *)manifestURL {
+    
+}
+
+- (void) uploaderHasFinished:(KFHLSUploader*)uploader {
+    if (self.delegate && [self.delegate respondsToSelector:@selector(recorderDidFinishUploading:)]) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self.delegate recorderDidFinishUploading:self];
+        });
     }
 }
 

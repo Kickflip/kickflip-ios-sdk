@@ -79,9 +79,11 @@ typedef void (^KFBroadcastCompletionBlock)(BOOL success, NSError* error);
 ///-------------------------------
 
 
-+ (double) initialBitrate;
-
-+ (void) setInitialBitrate:(double)initialBitrate;
+/**
+ *  Minimum bitrate (combined video + audio)
+ */
++ (double) minBitrate;
++ (void) setMinBitrate:(double)minBitrate;
 
 /**
  *  Maximum bitrate (combined video + audio)
@@ -97,6 +99,12 @@ typedef void (^KFBroadcastCompletionBlock)(BOOL success, NSError* error);
  *  @warn Do not set this value to lower than ~300 Kbps
  */
 + (void) setMaxBitrate:(double)maxBitrate;
+
+/**
+ *  Initial bitrate (combined video + audio)
+ */
++ (double) initialBitrate;
++ (void) setInitialBitrate:(double)initialBitrate;
 
 /**
  *  Whether or not to actively adjust the bitrate to network conditions.

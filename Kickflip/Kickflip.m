@@ -13,8 +13,9 @@
 @interface Kickflip()
 @property (nonatomic, copy) NSString *apiKey;
 @property (nonatomic, copy) NSString *apiSecret;
-@property (nonatomic) NSUInteger initialBitrate;
+@property (nonatomic) NSUInteger minBitrate;
 @property (nonatomic) NSUInteger maxBitrate;
+@property (nonatomic) NSUInteger initialBitrate;
 @property (nonatomic) BOOL useAdaptiveBitrate;
 @end
 
@@ -39,8 +40,9 @@ static Kickflip *_kickflip = nil;
 
 - (id) init {
     if (self = [super init]) {
-        _initialBitrate = 456 * 1000;
+        _minBitrate = 456 * 1000; // 400 Kbps
         _maxBitrate = 2056 * 1000; // 2 Mbps
+        _initialBitrate = _maxBitrate;
         _useAdaptiveBitrate = YES;
     }
     return self;
@@ -71,12 +73,12 @@ static Kickflip *_kickflip = nil;
     return [Kickflip sharedInstance].apiSecret;
 }
 
-+ (void) setInitialBitrate:(double)initialBitrate {
-    [Kickflip sharedInstance].initialBitrate = initialBitrate;
++ (void) setMinBitrate:(double)minBitrate {
+    [Kickflip sharedInstance].minBitrate = minBitrate;
 }
 
-+ (double) initialBitrate {
-    return [Kickflip sharedInstance].initialBitrate;
++ (double) minBitrate {
+    return [Kickflip sharedInstance].minBitrate;
 }
 
 + (void) setMaxBitrate:(double)maxBitrate {
@@ -85,6 +87,22 @@ static Kickflip *_kickflip = nil;
 
 + (double) maxBitrate {
     return [Kickflip sharedInstance].maxBitrate;
+}
+
++ (void) setInitialBitrate:(double)initialBitrate {
+    if (initialBitrate < [self minBitrate]) {
+        initialBitrate = [self minBitrate];
+    }
+    
+    if (initialBitrate > [self maxBitrate]) {
+        initialBitrate = [self maxBitrate];
+    }
+    
+    [Kickflip sharedInstance].initialBitrate = initialBitrate;
+}
+
++ (double) initialBitrate {
+    return [Kickflip sharedInstance].initialBitrate;
 }
 
 + (BOOL) useAdaptiveBitrate {

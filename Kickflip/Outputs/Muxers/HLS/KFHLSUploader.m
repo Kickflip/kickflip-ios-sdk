@@ -13,6 +13,7 @@
 #import "KFAPIClient.h"
 #import "KFAWSCredentialsProvider.h"
 #import "KFHLSWriter.h"
+#import "KFRecorder.h"
 #import <AWSS3/AWSS3.h>
 
 static NSString * const kManifestKey =  @"manifest";
@@ -133,20 +134,28 @@ static NSString * const kKFS3Key = @"kKFS3Key";
     uploadRequest.body = [NSURL fileURLWithPath:filePath];
     uploadRequest.ACL = AWSS3ObjectCannedACLPublicRead;
     
-    __block NSDate *startUploadDate = [NSDate date];
+    __block NSDate *startUploadDate;
     uploadRequest.uploadProgress = ^(int64_t bytesSent, int64_t totalBytesSent, int64_t totalBytesExpectedToSend) {
-        NSTimeInterval timeToUpload = [[NSDate date] timeIntervalSinceDate:startUploadDate];
-        double bytesPerSecond = totalBytesSent / timeToUpload;
-        double KBps = bytesPerSecond / 1024;
+        NSUInteger queuedSegmentsCount = _queuedSegments.count;
         
-        _uploadRateTotal += KBps;
-        _uploadRateCount += 1;
-        double averageUploadSpeed = _uploadRateTotal / _uploadRateCount;
-        
-//        NSLog(@"Average Speed: %f Speed: %f KB/s bytesSent: %d totalBytesSent: %d totalBytesExpectedToSend: %d", averageUploadSpeed, KBps, bytesSent, totalBytesSent, totalBytesExpectedToSend);
-        
-        if ([self.delegate respondsToSelector:@selector(uploader:didUploadPartOfASegmentAtUploadSpeed:)]) {
-            [self.delegate uploader:self didUploadPartOfASegmentAtUploadSpeed:averageUploadSpeed];
+        if (bytesSent == totalBytesSent) {
+            startUploadDate = [NSDate date];
+            _uploadRateTotal = 0;
+            _uploadRateCount = 0;
+        } else {
+            NSTimeInterval timeToUpload = [[NSDate date] timeIntervalSinceDate:startUploadDate];
+            double bitsPerSecond = (totalBytesSent / timeToUpload) * 8;
+            double kbps = bitsPerSecond / 1024;
+            
+            _uploadRateTotal += kbps;
+            _uploadRateCount += 1;
+            double averageUploadSpeed = _uploadRateTotal / _uploadRateCount;
+            
+            DDLogVerbose(@"Speed: %f kbps Average Speed: %f bytesSent: %d", kbps, averageUploadSpeed, bytesSent);
+            
+            if ([self.delegate respondsToSelector:@selector(uploader:didUploadPartOfASegmentAtUploadSpeed:)]) {
+                [self.delegate uploader:self didUploadPartOfASegmentAtUploadSpeed:kbps];
+            }
         }
     };
     
@@ -321,11 +330,8 @@ static NSString * const kKFS3Key = @"kKFS3Key";
                     }
                     _manifestReady = YES;
                 }
-                if (self.isFinishedRecording && _queuedSegments.count == 0) {
+                if (self.isFinishedRecording && _queuedSegments.count == 0 && fileName == kVODManifestFileName) {
                     self.hasUploadedFinalManifest = YES;
-                    if (self.delegate && [self.delegate respondsToSelector:@selector(uploader:vodManifestReadyAtURL:)]) {
-                        [self.delegate uploader:self vodManifestReadyAtURL:[self manifestURL]];
-                    }
                     if (self.delegate && [self.delegate respondsToSelector:@selector(uploaderHasFinished:)]) {
                         [self.delegate uploaderHasFinished:self];
                     }
@@ -348,8 +354,8 @@ static NSString * const kKFS3Key = @"kKFS3Key";
             uint64_t fileSize = [fileStats fileSize];
             
             NSTimeInterval timeToUpload = [uploadFinishDate timeIntervalSinceDate:uploadStartDate];
-            double bytesPerSecond = fileSize / timeToUpload;
-            double KBps = bytesPerSecond / 1024;
+            double bitsPerSecond = fileSize / timeToUpload * 8;
+            double kbps = bitsPerSecond / 1024;
             [_files setObject:kUploadStateFinished forKey:fileName];
             
             [[NSFileManager defaultManager] removeItemAtPath:filePath error:&error];
@@ -379,7 +385,7 @@ static NSString * const kKFS3Key = @"kKFS3Key";
             if (self.delegate && [self.delegate respondsToSelector:@selector(uploader:didUploadSegmentAtURL:uploadSpeed:numberOfQueuedSegments:)]) {
                 NSURL *url = [self urlWithFileName:fileName];
                 dispatch_async(self.callbackQueue, ^{
-                    [self.delegate uploader:self didUploadSegmentAtURL:url uploadSpeed:KBps numberOfQueuedSegments:queuedSegmentsCount];
+                    [self.delegate uploader:self didUploadSegmentAtURL:url uploadSpeed:kbps numberOfQueuedSegments:queuedSegmentsCount];
                 });
             }
         } else if ([fileName.pathExtension isEqualToString:@"jpg"]) {

@@ -12,6 +12,8 @@
 
 @interface KFHLSMonitor : NSObject <KFHLSUploaderDelegate>
 
+@property (nonatomic, strong) id<KFHLSUploaderDelegate> delegate;
+
 + (KFHLSMonitor*) sharedMonitor;
 
 - (void) startMonitoringFolderPath:(NSString*)path endpoint:(KFS3Stream*)endpoint delegate:(id<KFHLSUploaderDelegate>)delegate;
