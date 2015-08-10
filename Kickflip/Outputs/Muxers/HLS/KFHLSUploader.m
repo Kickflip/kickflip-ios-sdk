@@ -110,7 +110,7 @@ static NSString * const kKFS3Key = @"kKFS3Key";
     }
     
     
-    NSDictionary *segmentInfo = [_queuedSegments objectForKey:@(_nextSegmentIndexToUpload)];
+    NSMutableDictionary *segmentInfo = [_queuedSegments objectForKey:@(_nextSegmentIndexToUpload)];
     
     // Skip uploading files that are currently being written
     if (tsFileCount == 1 && !self.isFinishedRecording) {
@@ -158,6 +158,10 @@ static NSString * const kKFS3Key = @"kKFS3Key";
             }
         }
     };
+    
+    // Set the 'uploadStartDate' here, just before being added to the queue, instead of where the segmentInfo is created
+    // Gives more accurate upload speed readings
+    [segmentInfo setObject:[NSDate date] forKey:kFileStartDateKey];
     
     [[self.transferManager upload:uploadRequest] continueWithBlock:^id(BFTask *task) {
         if (task.error) {
@@ -227,9 +231,8 @@ static NSString * const kKFS3Key = @"kKFS3Key";
                 NSString *manifestSnapshot = [self manifestSnapshot];
                 [self.manifestGenerator appendFromLiveManifest:manifestSnapshot];
                 NSUInteger segmentIndex = [self indexForFilePrefix:filePrefix];
-                NSDictionary *segmentInfo = @{kManifestKey: manifestSnapshot,
-                                              kFileNameKey: fileName,
-                                              kFileStartDateKey: [NSDate date]};
+                NSMutableDictionary *segmentInfo = [[NSMutableDictionary alloc] initWithDictionary:@{kManifestKey: manifestSnapshot,
+                                                                                                     kFileNameKey: fileName }];
                 [_files setObject:kUploadStateQueued forKey:fileName];
                 [_queuedSegments setObject:segmentInfo forKey:@(segmentIndex)];
                 [self uploadNextSegment];
@@ -343,7 +346,6 @@ static NSString * const kKFS3Key = @"kKFS3Key";
             
             NSString *manifest = [segmentInfo objectForKey:kManifestKey];
             NSDate *uploadStartDate = [segmentInfo objectForKey:kFileStartDateKey];
-            
             NSDate *uploadFinishDate = [NSDate date];
             
             NSError *error = nil;
