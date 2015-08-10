@@ -366,7 +366,7 @@ static NSString * const kKFS3Key = @"kKFS3Key";
             NSUInteger queuedSegmentsCount = _queuedSegments.count;
             
             // Live (Wait for a full live manifest before going live)
-            if (_nextSegmentIndexToUpload >= kHLSListSize) {
+            if (_nextSegmentIndexToUpload >= kHLSListSize || self.isFinishedRecording) {
                 [self updateManifestWithString:[self manifestSnapshot] manifestName:kLiveManifestFileName];
             }
             
