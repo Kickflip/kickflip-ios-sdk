@@ -116,6 +116,7 @@
     NSMutableData *aggregateFrameData = [NSMutableData data];
     NSData *sei = nil; // Supplemental enhancement information
     BOOL hasKeyframe = NO;
+    BOOL lastFrameWasKeyframe = NO;
     for (NSData *data in totalFrames) {
         unsigned char* pNal = (unsigned char*)[data bytes];
         int idc = pNal[0] & 0x60;
@@ -126,8 +127,9 @@
         if (idc == 0 && naltype == 6) { // SEI
             sei = data;
             continue;
-        } else if (naltype == 5) { // IDR
+        } else if (naltype == 5 && !lastFrameWasKeyframe) { // IDR
             hasKeyframe = YES;
+            lastFrameWasKeyframe = YES;
             NSMutableData *IDRData = [NSMutableData dataWithData:_videoSPSandPPS];
             if (sei) {
                 [IDRData appendData:_naluStartCode];
@@ -138,10 +140,12 @@
             [IDRData appendData:data];
             videoData = IDRData;
         } else {
+            lastFrameWasKeyframe = NO;
             NSMutableData *regularData = [NSMutableData dataWithData:_naluStartCode];
             [regularData appendData:data];
             videoData = regularData;
         }
+        
         [aggregateFrameData appendData:videoData];
     }
     if (self.delegate) {
