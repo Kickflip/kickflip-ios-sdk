@@ -57,6 +57,7 @@
     }
     
     if ([self.segments objectForKey:[NSNumber numberWithInteger:mediaSequence]] == nil) {
+        DDLogVerbose(@"%@", [NSString stringWithFormat:@"Writing to manifest... #EXTINF:%g %@", duration, fileName]);
         [self.segments setObject:[NSString stringWithFormat:@"#EXTINF:%g,\n%@\n", duration, fileName] forKey:[NSNumber numberWithInteger:mediaSequence]];
     }
 }

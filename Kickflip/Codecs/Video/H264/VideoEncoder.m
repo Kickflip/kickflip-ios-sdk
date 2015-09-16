@@ -40,12 +40,9 @@
         AVVideoHeightKey: @(height),
         AVVideoCompressionPropertiesKey: @{
              AVVideoAverageBitRateKey: @(self.bitrate),
-             AVVideoMaxKeyFrameIntervalKey: @(150),
+             AVVideoMaxKeyFrameIntervalKey: @(30),
              AVVideoProfileLevelKey: AVVideoProfileLevelH264BaselineAutoLevel,
              AVVideoAllowFrameReorderingKey: @NO,
-             //AVVideoH264EntropyModeKey: AVVideoH264EntropyModeCAVLC,
-             //AVVideoExpectedSourceFrameRateKey: @(30),
-             //AVVideoAverageNonDroppableFrameRateKey: @(30)
         }
     };
     _writerInput = [AVAssetWriterInput assetWriterInputWithMediaType:AVMediaTypeVideo outputSettings:settings];

@@ -222,8 +222,12 @@
     NSDictionary *videoCompressionSettings = @{AVVideoCodecKey : AVVideoCodecH264,
                                                AVVideoWidthKey : [NSNumber numberWithInteger:dimensions.width],
                                                AVVideoHeightKey : [NSNumber numberWithInteger:dimensions.height],
-                                               AVVideoCompressionPropertiesKey : @{ AVVideoAverageBitRateKey : [NSNumber numberWithInteger:bitsPerSecond],
-                                                                                    AVVideoMaxKeyFrameIntervalKey :[NSNumber numberWithInteger:30]}};
+                                               AVVideoCompressionPropertiesKey : @{
+                                                       AVVideoAverageBitRateKey: @(bitsPerSecond),
+                                                       AVVideoMaxKeyFrameIntervalKey: @(30),
+                                                       AVVideoProfileLevelKey: AVVideoProfileLevelH264BaselineAutoLevel,
+                                                       AVVideoAllowFrameReorderingKey: @NO,
+                                                       }};
     
     if ([_assetWriter canApplyOutputSettings:videoCompressionSettings forMediaType:AVMediaTypeVideo]) {
         // Intialize asset writer video input with the above created settings dictionary

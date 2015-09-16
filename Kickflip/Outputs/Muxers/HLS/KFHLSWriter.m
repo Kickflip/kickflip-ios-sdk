@@ -48,7 +48,7 @@
         _videoTimeBase.den = 1000000000;
         _audioTimeBase.num = 1;
         _audioTimeBase.den = 1000000000;
-        _segmentDurationSeconds = 10;
+        _segmentDurationSeconds = kHLSSegmentDurationSeconds;
         _segmentCount = kHLSListSize;
         [self setupOutputFile];
         _conversionQueue = dispatch_queue_create("HLS Write queue", DISPATCH_QUEUE_SERIAL);
@@ -107,17 +107,20 @@
         _packet->data = (uint8_t*)data.bytes;
         _packet->size = (int)data.length;
         _packet->stream_index = streamIndex;
+        
         uint64_t scaledPTS = av_rescale_q(originalPTS, _videoTimeBase, _outputFile.formatContext->streams[_packet->stream_index]->time_base);
         //DDLogInfo(@"*** Scaled PTS: %lld", scaledPTS);
-        
         _packet->pts = scaledPTS;
         _packet->dts = scaledPTS;
+        
         NSError *error = nil;
+        
         [_outputFile writePacket:_packet error:&error];
+        
         if (error) {
             DDLogError(@"Error writing packet at streamIndex %d and PTS %lld: %@", streamIndex, originalPTS, error.description);
         } else {
-            //DDLogVerbose(@"Wrote packet of length %d at streamIndex %d and \t oPTS %lld \t scaledPTS %lld", data.length, streamIndex, originalPTS, scaledPTS);
+            DDLogVerbose(@"Wrote packet of length %d at streamIndex %d and \t oPTS %lld \t scaledPTS %lld", data.length, streamIndex, originalPTS, scaledPTS);
         }
     });
 }
