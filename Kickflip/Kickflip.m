@@ -13,6 +13,9 @@
 @interface Kickflip()
 @property (nonatomic, copy) NSString *apiKey;
 @property (nonatomic, copy) NSString *apiSecret;
+@property (nonatomic) NSString *h264Profile;
+@property (nonatomic) NSUInteger resolutionWidth;
+@property (nonatomic) NSUInteger resolutionHeight;
 @property (nonatomic) NSUInteger minBitrate;
 @property (nonatomic) NSUInteger maxBitrate;
 @property (nonatomic) NSUInteger initialBitrate;
@@ -40,6 +43,9 @@ static Kickflip *_kickflip = nil;
 
 - (id) init {
     if (self = [super init]) {
+        _h264Profile = AVVideoProfileLevelH264BaselineAutoLevel;
+        _resolutionWidth = 568;
+        _resolutionHeight = 320;
         _minBitrate = 456 * 1000; // 400 Kbps
         _maxBitrate = 2056 * 1000; // 2 Mbps
         _initialBitrate = _maxBitrate;
@@ -71,6 +77,27 @@ static Kickflip *_kickflip = nil;
 
 + (NSString*) apiSecret {
     return [Kickflip sharedInstance].apiSecret;
+}
+
++ (void)setH264Profile:(NSString *)profile {
+    [Kickflip sharedInstance].h264Profile = profile;
+}
+
++ (NSString *)h264Profile {
+    return [Kickflip sharedInstance].h264Profile;
+}
+
++ (void)setResolutionWidth:(int)width height:(int)height {
+    [Kickflip sharedInstance].resolutionWidth = width;
+    [Kickflip sharedInstance].resolutionHeight = height;
+}
+
++ (double)resolutionWidth {
+    return [Kickflip sharedInstance].resolutionWidth;
+}
+
++ (double)resolutionHeight {
+    return [Kickflip sharedInstance].resolutionHeight;
 }
 
 + (void) setMinBitrate:(double)minBitrate {

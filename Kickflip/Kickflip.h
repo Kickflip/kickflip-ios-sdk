@@ -11,6 +11,7 @@
 #import "KFAPIClient.h"
 #import "KFUser.h"
 #import "KFStream.h"
+//#import "AVFoundation/AVVideoSettings.h"
 
 /**
  *  Block executed when stream is ready.
@@ -78,6 +79,15 @@ typedef void (^KFBroadcastCompletionBlock)(BOOL success, NSError* error);
 /// @name Configuration
 ///-------------------------------
 
++ (NSString *)h264Profile;
++ (void)setH264Profile:(NSString *)profile;
+
++ (double)resolutionWidth;
++ (double)resolutionHeight;
++ (void)setResolutionWidth:(int)width height:(int)height;
+
+//+ (NSString)profile;
+//+ (void)setProfile:(AVVideoComposition)
 
 /**
  *  Minimum bitrate (combined video + audio)

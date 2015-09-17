@@ -98,16 +98,17 @@
     self.audioSampleRate = 44100;
 
     if (UIInterfaceOrientationIsPortrait([UIApplication sharedApplication].statusBarOrientation)) {
-        self.videoHeight = 568;
-        self.videoWidth = 320;
+        self.videoWidth = [Kickflip resolutionHeight];
+        self.videoHeight = [Kickflip resolutionWidth];
     } else {
-        self.videoHeight = 320;
-        self.videoWidth = 568;
+        self.videoWidth = [Kickflip resolutionWidth];
+        self.videoHeight = [Kickflip resolutionHeight];
     }
     
     int audioBitrate = 56 * 1000; // 56 Kbps
     int initialBitrate = [Kickflip initialBitrate];
     int videoBitrate = initialBitrate - audioBitrate;
+    
     _h264Encoder = [[KFH264Encoder alloc] initWithBitrate:videoBitrate width:self.videoWidth height:self.videoHeight];
     _h264Encoder.delegate = self;
     
@@ -126,7 +127,7 @@
     NSError *error = nil;
     AVCaptureDeviceInput *audioInput = [[AVCaptureDeviceInput alloc] initWithDevice:audioDevice error:&error];
     if (error) {
-        NSLog(@"Error getting audio input device: %@", error.description);
+        DDLogError(@"Error getting audio input device: %@", error.description);
     }
     if ([_session canAddInput:audioInput]) {
         [_session addInput:audioInput];
@@ -146,7 +147,7 @@
     AVCaptureDevice* videoDevice = [AVCaptureDevice defaultDeviceWithMediaType:AVMediaTypeVideo];
     AVCaptureDeviceInput* videoInput = [AVCaptureDeviceInput deviceInputWithDevice:videoDevice error:&error];
     if (error) {
-        NSLog(@"Error getting video input device: %@", error.description);
+        DDLogError(@"Error getting video input device: %@", error.description);
     }
     if ([_session canAddInput:videoInput]) {
         [_session addInput:videoInput];
@@ -193,11 +194,11 @@
         if ([_assetWriter canAddInput:_assetWriterAudioIn]) {
             [_assetWriter addInput:_assetWriterAudioIn];
         } else {
-            NSLog(@"Couldn't add asset writer audio input.");
+            DDLogError(@"Couldn't add asset writer audio input.");
             return NO;
         }
     } else {
-        NSLog(@"Couldn't apply audio output settings.");
+        DDLogError(@"Couldn't apply audio output settings.");
         return NO;
     }
     
@@ -225,7 +226,7 @@
                                                AVVideoCompressionPropertiesKey : @{
                                                        AVVideoAverageBitRateKey: @(bitsPerSecond),
                                                        AVVideoMaxKeyFrameIntervalKey: @(30),
-                                                       AVVideoProfileLevelKey: AVVideoProfileLevelH264BaselineAutoLevel,
+                                                       AVVideoProfileLevelKey: [Kickflip h264Profile],
                                                        AVVideoAllowFrameReorderingKey: @NO,
                                                        }};
     
@@ -239,11 +240,11 @@
         if ([_assetWriter canAddInput:_assetWriterVideoIn]) {
             [_assetWriter addInput:_assetWriterVideoIn];
         } else {
-            NSLog(@"Couldn't add asset writer video input.");
+            DDLogError(@"Couldn't add asset writer video input.");
             return NO;
         }
     } else {
-        NSLog(@"Couldn't apply video output settings.");
+        DDLogError(@"Couldn't apply video output settings.");
         return NO;
     }
     
@@ -413,7 +414,7 @@
         if ([_assetWriter startWriting]) {
             [_assetWriter startSessionAtSourceTime:presentationTime];
         } else {
-            NSLog(@"Error writing initial buffer");
+            DDLogError(@"Error writing initial buffer");
         }
     }
     
@@ -421,20 +422,20 @@
         if (mediaType == AVMediaTypeVideo) {
             if (_assetWriterVideoIn.readyForMoreMediaData) {
                 if (![_assetWriterVideoIn appendSampleBuffer:sampleBuffer]) {
-                    NSLog(@"Error writing video buffer");
+                    DDLogError(@"Error writing video buffer");
                 }
             }
         } else if (mediaType == AVMediaTypeAudio) {
             if (_assetWriterAudioIn.readyForMoreMediaData) {
                 if (![_assetWriterAudioIn appendSampleBuffer:sampleBuffer]) {
-                    NSLog(@"Error writing audio buffer");
+                    DDLogError(@"Error writing audio buffer");
                 }
             }
         }
     }
     
     if (_assetWriter.status == AVAssetWriterStatusFailed) {
-        NSLog(@"writeSampleBuffer writer error: %@", _assetWriter.error.localizedDescription);
+        DDLogError(@"writeSampleBuffer writer error: %@", _assetWriter.error.localizedDescription);
     }
 }
 
@@ -494,7 +495,7 @@
             NSError *error;
             _assetWriter = [[AVAssetWriter alloc] initWithURL:_outputFileURL fileType:AVFileTypeQuickTimeMovie error:&error];
             if (error)
-                NSLog(@"Error creating AVAssetWriter: %@", error);
+                DDLogError(@"Error creating AVAssetWriter: %@", error);
         });
     }
 }
@@ -549,7 +550,7 @@
                         break;
                     }
                     case AVAssetWriterStatusFailed: {
-                        NSLog(@"stopRecording writer error: %@", _assetWriter.error.localizedDescription);
+                        DDLogError(@"stopRecording writer error: %@", _assetWriter.error.localizedDescription);
                         break;
                     }
                     default:
@@ -631,7 +632,7 @@
         NSError *error;
         BOOL success = [fileManager removeItemAtPath:filePath error:&error];
         if (!success)
-            NSLog(@"Error removing file: %@", error);
+            DDLogError(@"Error removing file: %@", error);
     }
 }
 

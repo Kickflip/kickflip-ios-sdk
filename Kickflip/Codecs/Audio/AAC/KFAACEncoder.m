@@ -11,6 +11,7 @@
 #import <AVFoundation/AVFoundation.h>
 #import <AudioToolbox/AudioToolbox.h>
 #import "KFFrame.h"
+#import "KFLog.h"
 
 @interface KFAACEncoder()
 @property (nonatomic) AudioConverterRef audioConverter;
@@ -74,7 +75,7 @@
 
     OSStatus status = AudioConverterNewSpecific(&inAudioStreamBasicDescription, &outAudioStreamBasicDescription, 1, description, &_audioConverter);
     if (status != 0) {
-        NSLog(@"setup converter: %d", (int)status);
+        DDLogError(@"setup converter: %d", (int)status);
     }
     
     if (self.bitrate != 0) {
@@ -98,7 +99,7 @@
                                     &encoderSpecifier,
                                     &size);
     if (st) {
-        NSLog(@"error getting audio format propery info: %d", (int)(st));
+        DDLogError(@"error getting audio format propery info: %d", (int)(st));
         return nil;
     }
     
@@ -110,7 +111,7 @@
                                 &size,
                                 descriptions);
     if (st) {
-        NSLog(@"error getting audio format propery: %d", (int)(st));
+        DDLogError(@"error getting audio format propery: %d", (int)(st));
         return nil;
     }
     

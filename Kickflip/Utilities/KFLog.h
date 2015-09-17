@@ -6,19 +6,17 @@
 //  Copyright (c) 2014 Christopher Ballinger. All rights reserved.
 //
 
-#ifndef _KFLog_h
+#ifndef KFLog_h
+#define KFLog_h
 
-    #define _KFLog_h
+#import <CocoaLumberjack/CocoaLumberjack.h>
 
-    #import <CocoaLumberjack/CocoaLumberjack.h>
+#define LOG_LEVEL_DEF ddKickflipLogLevel
 
-    #ifndef LOG_LEVEL_DEF
-
-        #ifdef DEBUG
-            #define LOG_LEVEL_DEF DDLogLevelInfo
-        #else
-            #define LOG_LEVEL_DEF DDLogLevelOff
-        #endif
-    #endif
+#ifdef DEBUG
+static const DDLogLevel ddKickflipLogLevel = DDLogLevelDebug;
+#else
+static const DDLogLevel ddKickflipLogLevel = DDLogLevelOff;
+#endif
 
 #endif

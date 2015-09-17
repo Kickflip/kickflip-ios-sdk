@@ -57,7 +57,7 @@
     }
     
     if ([self.segments objectForKey:[NSNumber numberWithInteger:mediaSequence]] == nil) {
-        DDLogVerbose(@"%@", [NSString stringWithFormat:@"Writing to manifest... #EXTINF:%g %@", duration, fileName]);
+        DDLogDebug(@"%@", [NSString stringWithFormat:@"Writing to manifest... #EXTINF:%g %@", duration, fileName]);
         [self.segments setObject:[NSString stringWithFormat:@"#EXTINF:%g,\n%@\n", duration, fileName] forKey:[NSNumber numberWithInteger:mediaSequence]];
     }
 }
@@ -94,15 +94,15 @@
 
 
 - (NSString *) masterString {
-    int videoHeight;
     int videoWidth;
+    int videoHeight;
     
     if (UIInterfaceOrientationIsPortrait([UIApplication sharedApplication].statusBarOrientation)) {
-        videoHeight = 568;
-        videoWidth = 320;
+        videoWidth = [Kickflip resolutionHeight];
+        videoHeight = [Kickflip resolutionWidth];
     } else {
-        videoHeight = 320;
-        videoWidth = 568;
+        videoWidth = [Kickflip resolutionWidth];
+        videoHeight = [Kickflip resolutionHeight];
     }
     
     return [NSString stringWithFormat:@"#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=556000,CODECS=\"avc1.77.21,mp4a.40.2\",RESOLUTION=%dx%d\n%@.m3u8",
@@ -121,7 +121,7 @@
     
     [manifest appendString:[self footer]];
     
-    DDLogInfo(@"Latest manifest:\n%@", manifest);
+    DDLogVerbose(@"Latest manifest:\n%@", manifest);
     
     return manifest;
 }

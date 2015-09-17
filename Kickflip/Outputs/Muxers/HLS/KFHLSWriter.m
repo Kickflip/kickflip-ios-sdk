@@ -109,7 +109,6 @@
         _packet->stream_index = streamIndex;
         
         uint64_t scaledPTS = av_rescale_q(originalPTS, _videoTimeBase, _outputFile.formatContext->streams[_packet->stream_index]->time_base);
-        //DDLogInfo(@"*** Scaled PTS: %lld", scaledPTS);
         _packet->pts = scaledPTS;
         _packet->dts = scaledPTS;
         

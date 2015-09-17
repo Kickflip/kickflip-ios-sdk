@@ -109,21 +109,22 @@ static NSString * const kKFS3Key = @"kKFS3Key";
         }
     }
     
-    DDLogVerbose(@"Attempting to queue next segment... %lld", _nextSegmentIndexToUpload);
+    DDLogDebug(@"Attempting to queue next segment... %lld", _nextSegmentIndexToUpload);
     NSMutableDictionary *segmentInfo = [_queuedSegments objectForKey:@(_nextSegmentIndexToUpload)];
+    NSString *fileName = [segmentInfo objectForKey:kFileNameKey];
+    NSString *fileUploadState = [_files objectForKey:fileName];
     
     // Skip uploading files that are currently being written
     if (tsFileCount == 1 && !self.isFinishedRecording) {
-        DDLogInfo(@"Skipping upload of ts file currently being recorded: %@ %@", segmentInfo, contents);
+        DDLogDebug(@"Skipping upload of ts file currently being recorded... %@", fileName);
         return;
     }
     
-    NSString *fileName = [segmentInfo objectForKey:kFileNameKey];
-    NSString *fileUploadState = [_files objectForKey:fileName];
     if (![fileUploadState isEqualToString:kUploadStateQueued]) {
-        DDLogInfo(@"Trying to upload file that isn't queued (%@): %@", fileUploadState, segmentInfo);
+        DDLogDebug(@"Trying to upload file that isn't queued (is currently %@)... %@", fileUploadState, fileName);
         return;
     }
+    
     [_files setObject:kUploadStateUploading forKey:fileName];
     NSString *filePath = [_directoryPath stringByAppendingPathComponent:fileName];
     NSString *key = [self awsKeyForStream:self.stream fileName:fileName];
@@ -163,7 +164,7 @@ static NSString * const kKFS3Key = @"kKFS3Key";
     // Gives more accurate upload speed readings
     [segmentInfo setObject:[NSDate date] forKey:kFileStartDateKey];
     
-    DDLogVerbose(@"Queueing ts... %@", fileName);
+    DDLogDebug(@"Queueing ts... %@", fileName);
     
     [[self.transferManager upload:uploadRequest] continueWithBlock:^id(BFTask *task) {
         if (task.error) {
@@ -193,7 +194,7 @@ static NSString * const kKFS3Key = @"kKFS3Key";
     uploadRequest.cacheControl = @"max-age=0";
     uploadRequest.contentLength = @(data.length);
     
-    DDLogVerbose(@"Queueing manifest... %@", manifestName);
+    DDLogDebug(@"Queueing manifest... %@", manifestName);
     
     [[self.s3 putObject:uploadRequest] continueWithBlock:^id(BFTask *task) {
         if (task.error) {
@@ -222,7 +223,7 @@ static NSString * const kKFS3Key = @"kKFS3Key";
 
 - (void) detectNewSegmentsFromFiles:(NSArray*)files {
     if (!_manifestPath) {
-        DDLogInfo(@"Manifest path not yet available");
+        DDLogVerbose(@"Manifest path not yet available");
         return;
     }
     [files enumerateObjectsUsingBlock:^(NSString *fileName, NSUInteger idx, BOOL *stop) {
@@ -232,7 +233,7 @@ static NSString * const kKFS3Key = @"kKFS3Key";
         if ([fileExtension isEqualToString:@"ts"]) {
             NSString *uploadState = [_files objectForKey:fileName];
             if (!uploadState) {
-                DDLogVerbose(@"Detected ts... %@", fileName);
+                DDLogDebug(@"Detected ts... %@", fileName);
                 
                 NSString *manifestSnapshot = [self manifestSnapshot];
                 
@@ -293,7 +294,7 @@ static NSString * const kKFS3Key = @"kKFS3Key";
         manifestSnapshot = [self fetchManifestSnapshotFromFile];
         
         if (manifestSnapshot == nil || [manifestSnapshot isEqualToString:@""]) {
-            DDLogInfo(@"manifestPath was nil or blank, trying again.");
+            DDLogVerbose(@"manifestPath was nil or blank, trying again.");
         }
     } while (manifestSnapshot == nil || [manifestSnapshot isEqualToString:@""]);
     
@@ -333,7 +334,7 @@ static NSString * const kKFS3Key = @"kKFS3Key";
 {
     dispatch_async(_scanningQueue, ^{
         if ([fileName.pathExtension isEqualToString:@"m3u8"]) {
-            DDLogVerbose(@"Uploaded manifest... %@", fileName);
+            DDLogDebug(@"Uploaded manifest... %@", fileName);
             
             dispatch_async(self.callbackQueue, ^{
                 if (!_manifestReady && [fileName isEqualToString:kLiveManifestFileName]) {
@@ -350,7 +351,7 @@ static NSString * const kKFS3Key = @"kKFS3Key";
                 }
             });
         } else if ([fileName.pathExtension isEqualToString:@"ts"]) {
-            DDLogVerbose(@"Uploaded ts... %@", fileName);
+            DDLogDebug(@"Uploaded ts... %@", fileName);
             
             NSDictionary *segmentInfo = [_queuedSegments objectForKey:@(_nextSegmentIndexToUpload)];
             NSString *filePath = [_directoryPath stringByAppendingPathComponent:fileName];
@@ -410,7 +411,9 @@ static NSString * const kKFS3Key = @"kKFS3Key";
             NSString *filePath = [_directoryPath stringByAppendingPathComponent:fileName];
             
             NSError *error = nil;
-            [[NSFileManager defaultManager] removeItemAtPath:filePath error:&error];
+            if ([[NSFileManager defaultManager] fileExistsAtPath:filePath]) {
+                [[NSFileManager defaultManager] removeItemAtPath:filePath error:&error];
+            }
             if (error) {
                 DDLogError(@"Error removing thumbnail: %@", error.description);
             }
@@ -419,7 +422,7 @@ static NSString * const kKFS3Key = @"kKFS3Key";
                 if (error) {
                     DDLogError(@"Error updating stream thumbnail: %@", error);
                 } else {
-                    DDLogInfo(@"Updated stream thumbnail: %@", updatedStream.thumbnailURL);
+                    DDLogDebug(@"Updated stream thumbnail: %@", updatedStream.thumbnailURL);
                 }
             }];
         }

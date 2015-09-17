@@ -7,6 +7,7 @@
 //
 
 #import "VideoEncoder.h"
+#import "KFLog.h"
 
 @implementation VideoEncoder
 {
@@ -41,7 +42,7 @@
         AVVideoCompressionPropertiesKey: @{
              AVVideoAverageBitRateKey: @(self.bitrate),
              AVVideoMaxKeyFrameIntervalKey: @(30),
-             AVVideoProfileLevelKey: AVVideoProfileLevelH264BaselineAutoLevel,
+             AVVideoProfileLevelKey: [Kickflip h264Profile],
              AVVideoAllowFrameReorderingKey: @NO,
         }
     };
@@ -69,7 +70,7 @@
         }
         if (_writer.status == AVAssetWriterStatusFailed)
         {
-            NSLog(@"writer error %@", _writer.error.localizedDescription);
+            DDLogError(@"writer error %@", _writer.error.localizedDescription);
             return NO;
         }
         if (_writerInput.readyForMoreMediaData == YES)
