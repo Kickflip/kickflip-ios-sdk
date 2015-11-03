@@ -8,6 +8,7 @@
 
 #import "AVEncoder.h"
 #import "NALUnit.h"
+#import "LiveEncoder.h"
 
 static void * AVEncoderContext = &AVEncoderContext;
 
@@ -20,7 +21,7 @@ static unsigned int to_host(unsigned char* p)
 #define MAX_FILENAME_INDEX  5                       // filenames "capture1.mp4" wraps at capture5.mp4
 
 
-@interface AVEncoder ()
+@interface AVEncoder () <LiveEncoderDelegate>
 
 {
     // initial writer, used to obtain SPS/PPS from header
@@ -67,6 +68,7 @@ static unsigned int to_host(unsigned char* p)
     CMTimeValue _firstpts;
 }
 
+@property (nonatomic, strong) LiveEncoder *encoder;
 @property (atomic) BOOL bitrateChanged;
 
 @end
@@ -109,7 +111,8 @@ static unsigned int to_host(unsigned char* p)
     // swap between 3 filenames
     _currentFile = 1;
     _writer = [VideoEncoder encoderForPath:[self makeFilename] Height:height andWidth:width bitrate:self.bitrate];
-    
+    self.encoder = [[LiveEncoder alloc] initWithHeight:height width:width bitrate:bitrate];
+    self.encoder.delegate = self;
     [self addObserver:self forKeyPath:NSStringFromSelector(@selector(bitrate)) options:0 context:AVEncoderContext];
 }
 
@@ -291,7 +294,8 @@ static unsigned int to_host(unsigned char* p)
                 });
             }
         }
-        [_writer encodeFrame:sampleBuffer];
+        [self.encoder encodeSampleBuffer:sampleBuffer];
+//        [_writer encodeFrame:sampleBuffer];
     }
 }
 
@@ -335,6 +339,38 @@ static unsigned int to_host(unsigned char* p)
 }
 
 
+- (void)readAndDeliver:(uint32_t)cReady offset:(size_t)offset withSampleBuffer:(CMSampleBufferRef)sampleBuffer {
+    while (cReady > _lengthSize) {
+        size_t lengthAtOffset = 0;
+        char *pointer;
+        CMBlockBufferRef blockBuffer = CMSampleBufferGetDataBuffer(sampleBuffer);
+        CMBlockBufferGetDataPointer(blockBuffer, offset, &lengthAtOffset, NULL, &pointer);
+        
+        char *lenFieldPointer = (char*)malloc(_lengthSize);
+        memcpy(lenFieldPointer, pointer, _lengthSize);
+        offset += _lengthSize;
+        
+        cReady -= _lengthSize;
+        unsigned int lenNALU = to_host((unsigned char*)lenFieldPointer);
+        
+        if (lenNALU > cReady) {
+            offset -= 4;
+            break;
+        }
+        
+        CMBlockBufferGetDataPointer(blockBuffer, offset, &lengthAtOffset, NULL, &pointer);
+        char *naluPointer = (char*)malloc(lenNALU);
+        memcpy(naluPointer, pointer, lenNALU);
+        NSData *nalu = [NSData dataWithBytes:naluPointer length:lenNALU];
+        
+        cReady -= lenNALU;
+        [self onNALU:nalu];
+        
+        free(naluPointer);
+        free(lenFieldPointer);
+    }
+}
+
 - (void) readAndDeliver:(uint32_t) cReady
 {
     // Identify the individual NALUs and extract them
@@ -356,6 +392,59 @@ static unsigned int to_host(unsigned char* p)
         
         [self onNALU:nalu];
     }
+}
+
+- (void)encoder:(LiveEncoder*)encoder didEncodeSampleBuffer:(CMSampleBufferRef)sampleBuffer {
+    if (!CMSampleBufferDataIsReady(sampleBuffer)) {
+        NSLog(@"sample buffer data IS NOT READY");
+    }
+    
+    
+    
+    CMBlockBufferRef blockBuffer = CMSampleBufferGetDataBuffer(sampleBuffer);
+    
+    int cReady = 0;
+    size_t lengthAtOffset = 0;
+    size_t totalLength = 0;
+    char *pointer;
+    size_t offset = 0;
+    
+    while (!_foundMDAT) {
+        CMBlockBufferGetDataPointer(blockBuffer, offset, &lengthAtOffset, &totalLength, &pointer);
+        cReady = lengthAtOffset;
+        if (cReady <= 8) { break; }
+        if (_bytesToNextAtom == 0) {
+            NSData *hdr = [[NSData alloc] initWithBytes:pointer length:8];
+            cReady -= 8;
+            unsigned char* p = (unsigned char*) [hdr bytes];
+            int lenAtom = to_host(p);
+            unsigned int nameAtom = to_host(p+4);
+            if (nameAtom == (unsigned int)('mdat'))
+            {
+                _foundMDAT = true;
+                _posMDAT = [_inputFile offsetInFile] - 8;
+            }
+            else
+            {
+                _bytesToNextAtom = lenAtom - 8;
+            }
+        }
+        if (_bytesToNextAtom > 0)
+        {
+            int cThis = cReady < _bytesToNextAtom ? cReady :_bytesToNextAtom;
+            _bytesToNextAtom -= cThis;
+            offset += cThis;
+        }
+    }
+    
+    if (!_foundMDAT)
+    {
+        return;
+    }
+    
+    // the mdat must be just encoded video.
+    [self readAndDeliver:cReady offset:offset withSampleBuffer:sampleBuffer];
+
 }
 
 - (void) onFileUpdate
