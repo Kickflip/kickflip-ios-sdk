@@ -95,7 +95,7 @@
 }
 
 - (void) setupEncoders {
-    self.audioSampleRate = 48000;
+    self.audioSampleRate = 44100;
 
     if (UIInterfaceOrientationIsPortrait([UIApplication sharedApplication].statusBarOrientation)) {
         self.videoWidth = [Kickflip resolutionHeight];
