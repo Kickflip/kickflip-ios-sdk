@@ -451,6 +451,19 @@
 #pragma mark - General Utilities
 
 - (void) startRecording {
+    if ([_session isRunning]) {
+        [_session stopRunning];
+    }
+    
+    [[AVAudioSession sharedInstance] setActive:NO error:nil];
+    if ([[AVAudioSession sharedInstance] sampleRate] > 44100) {
+        [[AVAudioSession sharedInstance] setPreferredIOBufferDuration:0.023 error:nil];
+    }
+    [[AVAudioSession sharedInstance] setActive:YES error:nil];
+    [[AVAudioSession sharedInstance] overrideOutputAudioPort:AVAudioSessionPortOverrideNone error:nil];
+
+    [_session startRunning];
+    
     self.locationManager = [[CLLocationManager alloc] init];
     self.locationManager.delegate = self;
     [self.locationManager startUpdatingLocation];
@@ -566,6 +579,8 @@
     
     // TEL
     _hasScreenshot = NO;
+    
+    [[AVAudioSession sharedInstance] overrideOutputAudioPort:AVAudioSessionPortOverrideSpeaker error:nil];    
 }
 
 - (AVCaptureVideoOrientation)avOrientationForInterfaceOrientation:(UIInterfaceOrientation)orientation {
