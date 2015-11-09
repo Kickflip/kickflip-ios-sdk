@@ -63,11 +63,10 @@
     _session = [[AVCaptureSession alloc] init];
     _movieWritingQueue = dispatch_queue_create("Movie Writing Queue", DISPATCH_QUEUE_SERIAL);
     
-    _session.automaticallyConfiguresApplicationAudioSession = NO;
-
     [self setupVideoCapture];
     [self setupAudioCapture];
     
+    // start capture and a preview layer
     [_session startRunning];
     
     _previewLayer = [AVCaptureVideoPreviewLayer layerWithSession:_session];
@@ -452,19 +451,6 @@
 #pragma mark - General Utilities
 
 - (void) startRecording {
-    if ([_session isRunning]) {
-        [_session stopRunning];
-    }
-    
-    [[AVAudioSession sharedInstance] setActive:NO error:nil];
-    if ([[AVAudioSession sharedInstance] sampleRate] > 44100) {
-        [[AVAudioSession sharedInstance] setPreferredIOBufferDuration:0.023 error:nil];
-    }
-    [[AVAudioSession sharedInstance] setActive:YES error:nil];
-    [[AVAudioSession sharedInstance] overrideOutputAudioPort:AVAudioSessionPortOverrideNone error:nil];
-
-    [_session startRunning];
-    
     self.locationManager = [[CLLocationManager alloc] init];
     self.locationManager.delegate = self;
     [self.locationManager startUpdatingLocation];
@@ -580,10 +566,6 @@
     
     // TEL
     _hasScreenshot = NO;
-    
-//    [[AVAudioSession sharedInstance] setActive:NO error:nil];
-    [[AVAudioSession sharedInstance] overrideOutputAudioPort:AVAudioSessionPortOverrideSpeaker error:nil];
-    
 }
 
 - (AVCaptureVideoOrientation)avOrientationForInterfaceOrientation:(UIInterfaceOrientation)orientation {
