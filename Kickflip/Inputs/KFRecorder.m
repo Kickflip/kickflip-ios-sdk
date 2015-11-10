@@ -457,7 +457,8 @@
     
     [[AVAudioSession sharedInstance] setActive:NO error:nil];
     if ([[AVAudioSession sharedInstance] sampleRate] > 44100) {
-        [[AVAudioSession sharedInstance] setPreferredIOBufferDuration:0.023 error:nil];
+        DDLogInfo(@"Sample rate is above the default 44100... %d", (int)[[AVAudioSession sharedInstance] sampleRate]);
+        [[AVAudioSession sharedInstance] setPreferredIOBufferDuration:(1024.f / 44100) error:nil];
     }
     [[AVAudioSession sharedInstance] setActive:YES error:nil];
     [[AVAudioSession sharedInstance] overrideOutputAudioPort:AVAudioSessionPortOverrideNone error:nil];
