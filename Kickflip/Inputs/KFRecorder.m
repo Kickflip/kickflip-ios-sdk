@@ -222,13 +222,7 @@
     
     NSDictionary *videoCompressionSettings = @{AVVideoCodecKey : AVVideoCodecH264,
                                                AVVideoWidthKey : [NSNumber numberWithInteger:dimensions.width],
-                                               AVVideoHeightKey : [NSNumber numberWithInteger:dimensions.height],
-                                               AVVideoCompressionPropertiesKey : @{
-                                                       AVVideoAverageBitRateKey: @(bitsPerSecond),
-                                                       AVVideoMaxKeyFrameIntervalKey: @(30),
-                                                       AVVideoProfileLevelKey: [Kickflip h264Profile],
-                                                       AVVideoAllowFrameReorderingKey: @NO,
-                                                       }};
+                                               AVVideoHeightKey : [NSNumber numberWithInteger:dimensions.height]};
     
     if ([_assetWriter canApplyOutputSettings:videoCompressionSettings forMediaType:AVMediaTypeVideo]) {
         // Intialize asset writer video input with the above created settings dictionary
@@ -435,7 +429,7 @@
     }
     
     if (_assetWriter.status == AVAssetWriterStatusFailed) {
-        DDLogError(@"writeSampleBuffer writer error: %@", _assetWriter.error.localizedDescription);
+        DDLogError(@"writeSampleBuffer writer error: %@", _assetWriter.error);
     }
 }
 
@@ -455,14 +449,8 @@
         [_session stopRunning];
     }
     
-    [[AVAudioSession sharedInstance] setActive:NO error:nil];
-    if ([[AVAudioSession sharedInstance] sampleRate] > 44100) {
-        DDLogInfo(@"Sample rate is above the default 44100... %d", (int)[[AVAudioSession sharedInstance] sampleRate]);
-        [[AVAudioSession sharedInstance] setPreferredIOBufferDuration:(1024.f / 44100) error:nil];
-    }
-    [[AVAudioSession sharedInstance] setActive:YES error:nil];
     [[AVAudioSession sharedInstance] overrideOutputAudioPort:AVAudioSessionPortOverrideNone error:nil];
-
+    
     [_session startRunning];
     
     self.locationManager = [[CLLocationManager alloc] init];
