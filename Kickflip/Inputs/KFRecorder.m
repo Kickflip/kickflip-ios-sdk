@@ -566,7 +566,6 @@
         });
     }
     
-    // TEL
     _hasScreenshot = NO;
     
     [[AVAudioSession sharedInstance] overrideOutputAudioPort:AVAudioSessionPortOverrideSpeaker error:nil];    
