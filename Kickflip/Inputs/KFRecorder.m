@@ -450,6 +450,7 @@
     }
     
     [[AVAudioSession sharedInstance] overrideOutputAudioPort:AVAudioSessionPortOverrideNone error:nil];
+    [[AVAudioSession sharedInstance] setPreferredSampleRate:44100.f error:nil];
     
     [_session startRunning];
     
@@ -500,6 +501,13 @@
                 DDLogError(@"Error creating AVAssetWriter: %@", error);
         });
     }
+    
+    DDLogDebug(@"AVAudioSession preferred sample rate: %f", [AVAudioSession sharedInstance].preferredSampleRate);
+    DDLogDebug(@"AVAudioSession sample rate: %f", [AVAudioSession sharedInstance].sampleRate);
+    DDLogDebug(@"AVAudioSession preferred number of channels: %i", [AVAudioSession sharedInstance].preferredInputNumberOfChannels);
+    DDLogDebug(@"AVAudioSession number of channels: %i", [AVAudioSession sharedInstance].inputNumberOfChannels);
+    DDLogDebug(@"AVAudioSession preferred buffer duration: %f", [AVAudioSession sharedInstance].preferredIOBufferDuration);
+    DDLogDebug(@"AVAudioSession buffer duration: %f", [AVAudioSession sharedInstance].IOBufferDuration);
 }
 
 - (void) stopRecording {
