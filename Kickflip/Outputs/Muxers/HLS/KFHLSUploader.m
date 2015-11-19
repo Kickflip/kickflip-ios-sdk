@@ -89,9 +89,6 @@ static NSString * const kKFS3Key = @"kKFS3Key";
 - (void) finishedRecording {
     self.isFinishedRecording = YES;
     if (!self.hasUploadedFinalManifest) {
-        // TEL
-        // Ensure the last segment is uploaded.
-        // There were lots of situations where the logic throughout this class missed the last segment.
         [self uploadNextSegment];
     }
 }
