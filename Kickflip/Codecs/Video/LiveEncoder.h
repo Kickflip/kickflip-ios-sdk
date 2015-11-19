@@ -21,4 +21,6 @@
 @property (nonatomic, weak) id<LiveEncoderDelegate> delegate;
 
 - (BOOL)encodeSampleBuffer:(CMSampleBufferRef)sampleBuffer;
+
+- (BOOL)finish;
 @end

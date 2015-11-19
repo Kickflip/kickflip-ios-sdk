@@ -62,6 +62,10 @@
     return [self.session encodeSampleBuffer:sampleBuffer forceKeyframe:NO];
 }
 
+- (BOOL)finish {
+    return [self.session finish];
+}
+
 #pragma mark - delegate
 - (void)videoCompressionSession:(VTPCompressionSession *)compressionSession didEncodeSampleBuffer:(CMSampleBufferRef)sampleBuffer {
     if (self.delegate) {
