@@ -83,11 +83,15 @@
     NSData* spsData = [NSData dataWithBytes:avcC.sps()->Start() length:avcC.sps()->Length()];
     NSData *ppsData = [NSData dataWithBytes:avcC.pps()->Start() length:avcC.pps()->Length()];
     
+    NSLog(@"spsData: %@", spsData);
+    NSLog(@"ppsData: %@", ppsData);
+    
     _videoSPSandPPS = [NSMutableData dataWithCapacity:avcC.sps()->Length() + avcC.pps()->Length() + _naluStartCode.length * 2];
     [_videoSPSandPPS appendData:_naluStartCode];
     [_videoSPSandPPS appendData:spsData];
     [_videoSPSandPPS appendData:_naluStartCode];
     [_videoSPSandPPS appendData:ppsData];
+    NSLog(@"videoSPSandPPS: %@", _videoSPSandPPS);
 }
 
 - (void) addOrphanedFramesFromArray:(NSArray*)frames {
@@ -106,6 +110,15 @@
 }
 
 - (void) writeVideoFrames:(NSArray*)frames pts:(CMTime)pts {
+    if (self.delegate) {
+        NSLog(@"pts value: %lld", pts.value);
+        KFVideoFrame *videoFrame = [[KFVideoFrame alloc] initWithData:[frames firstObject] pts:pts];
+        videoFrame.isKeyFrame = NO;
+        dispatch_async(self.callbackQueue, ^{
+            [self.delegate encoder:self encodedFrame:videoFrame];
+        });
+    }
+    return;
     NSMutableArray *totalFrames = [NSMutableArray array];
     if (self.orphanedSEIFrames.count > 0) {
         [totalFrames addObjectsFromArray:self.orphanedSEIFrames];
@@ -128,6 +141,7 @@
             sei = data;
             continue;
         } else if (naltype == 5 && !lastFrameWasKeyframe) { // IDR
+            NSLog(@"has key frame");
             hasKeyframe = YES;
             lastFrameWasKeyframe = YES;
             NSMutableData *IDRData = [NSMutableData dataWithData:_videoSPSandPPS];
@@ -140,6 +154,7 @@
             [IDRData appendData:data];
             videoData = IDRData;
         } else {
+            NSLog(@"was not key frame");
             lastFrameWasKeyframe = NO;
             NSMutableData *regularData = [NSMutableData dataWithData:_naluStartCode];
             [regularData appendData:data];
@@ -158,6 +173,7 @@
 }
 
 - (void) incomingVideoFrames:(NSArray*)frames ptsValue:(CMTimeValue)ptsValue {
+    NSLog(@"incoming video frames: %d, ptsValue: %d", frames.count, ptsValue);
     if (ptsValue == 0) {
         [self addOrphanedFramesFromArray:frames];
         return;

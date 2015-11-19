@@ -21,7 +21,7 @@
     self = [super init];
     if (self) {
         NSError *error;
-        self.session = [[VTPCompressionSession alloc] initWithWidth:height height:width codec:kCMVideoCodecType_H264 error:&error];
+        self.session = [[VTPCompressionSession alloc] initWithWidth:width height:height codec:kCMVideoCodecType_H264 error:&error];
         if (error) {
             NSLog(@"encoder error - %@", error.localizedDescription);
         }

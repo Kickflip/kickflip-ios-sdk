@@ -70,7 +70,8 @@ static unsigned int to_host(unsigned char* p)
 
 @property (nonatomic, strong) LiveEncoder *encoder;
 @property (atomic) BOOL bitrateChanged;
-
+@property (nonatomic, strong) NSMutableData *dataBuffer;
+@property (nonatomic) NSInteger dataReadOffset;
 @end
 
 @implementation AVEncoder
@@ -237,7 +238,7 @@ static unsigned int to_host(unsigned char* p)
 {
     @synchronized(self)
     {
-        if (_needParams)
+        if (NO) //_needParams)
         {
             // the avcC record is needed for decoding and it's not written to the file until
             // completion. We get round that by writing the first frame to two files; the first
@@ -256,8 +257,12 @@ static unsigned int to_host(unsigned char* p)
     NSNumber* pts = [NSNumber numberWithLongLong:prestime.value];
     @synchronized(_times)
     {
+        NSLog(@"add pts: %ull", pts.longLongValue);
         [_times addObject:pts];
     }
+    
+    [self.encoder encodeSampleBuffer:sampleBuffer];
+    return;
     @synchronized(self)
     {
         // switch output files when we reach a size limit
@@ -294,13 +299,13 @@ static unsigned int to_host(unsigned char* p)
                 });
             }
         }
-        [self.encoder encodeSampleBuffer:sampleBuffer];
-//        [_writer encodeFrame:sampleBuffer];
+        [_writer encodeFrame:sampleBuffer];
     }
 }
 
 - (void) swapFiles:(NSString*) oldPath
 {
+    NSLog(@"SWAPPING FILE");
     // TEL
     // Sometimes _inputFile is nil and things crash. These bits are beyond my capabilities...
     if (_inputFile) {
@@ -340,6 +345,7 @@ static unsigned int to_host(unsigned char* p)
 
 
 - (void)readAndDeliver:(uint32_t)cReady offset:(size_t)offset withSampleBuffer:(CMSampleBufferRef)sampleBuffer {
+    NSLog(@"read and deliver - cReady: %d,  offset: %d", cReady, offset);
     while (cReady > _lengthSize) {
         size_t lengthAtOffset = 0;
         char *pointer;
@@ -373,6 +379,7 @@ static unsigned int to_host(unsigned char* p)
 
 - (void) readAndDeliver:(uint32_t) cReady
 {
+    NSLog(@"length size: %d", _lengthSize);
     // Identify the individual NALUs and extract them
     while (cReady > _lengthSize)
     {
@@ -401,46 +408,184 @@ static unsigned int to_host(unsigned char* p)
     
     
     
-    CMBlockBufferRef blockBuffer = CMSampleBufferGetDataBuffer(sampleBuffer);
+    // In this example we will use a NSMutableData object to store the
+    // elementary stream.
+    NSMutableData *elementaryStream = [NSMutableData data];
     
+    
+    // Find out if the sample buffer contains an I-Frame.
+    // If so we will write the SPS and PPS NAL units to the elementary stream.
+    BOOL isIFrame = NO;
+    CFArrayRef attachmentsArray = CMSampleBufferGetSampleAttachmentsArray(sampleBuffer, 0);
+    if (CFArrayGetCount(attachmentsArray)) {
+        CFBooleanRef notSync;
+        CFDictionaryRef dict = (CFDictionaryRef)CFArrayGetValueAtIndex(attachmentsArray, 0);
+        BOOL keyExists = CFDictionaryGetValueIfPresent(dict,
+                                                       kCMSampleAttachmentKey_NotSync,
+                                                       (const void **)&notSync);
+        // An I-Frame is a sync frame
+        isIFrame = !keyExists || !CFBooleanGetValue(notSync);
+    }
+    
+    // This is the start code that we will write to
+    // the elementary stream before every NAL unit
+    static const size_t startCodeLength = 4;
+    static const uint8_t startCode[] = {0x00, 0x00, 0x00, 0x01};
+    
+    // Write the SPS and PPS NAL units to the elementary stream before every I-Frame
+    if (isIFrame) {
+        CMFormatDescriptionRef description = CMSampleBufferGetFormatDescription(sampleBuffer);
+        
+        // Find out how many parameter sets there are
+        size_t numberOfParameterSets;
+        CMVideoFormatDescriptionGetH264ParameterSetAtIndex(description,
+                                                           0, NULL, NULL,
+                                                           &numberOfParameterSets,
+                                                           NULL);
+        
+        // Write each parameter set to the elementary stream
+        for (int i = 0; i < numberOfParameterSets; i++) {
+            const uint8_t *parameterSetPointer;
+            size_t parameterSetLength;
+            CMVideoFormatDescriptionGetH264ParameterSetAtIndex(description,
+                                                               i,
+                                                               &parameterSetPointer,
+                                                               &parameterSetLength,
+                                                               NULL, NULL);
+            
+            // Write the parameter set to the elementary stream
+            [elementaryStream appendBytes:startCode length:startCodeLength];
+            [elementaryStream appendBytes:parameterSetPointer length:parameterSetLength];
+        }
+    }
+    
+    // Get a pointer to the raw AVCC NAL unit data in the sample buffer
+    size_t blockBufferLength;
+    uint8_t *bufferDataPointer = NULL;
+    CMBlockBufferGetDataPointer(CMSampleBufferGetDataBuffer(sampleBuffer),
+                                0,
+                                NULL,
+                                &blockBufferLength,
+                                (char **)&bufferDataPointer);
+    
+    // Loop through all the NAL units in the block buffer
+    // and write them to the elementary stream with
+    // start codes instead of AVCC length headers
+    size_t bufferOffset = 0;
+    static const int AVCCHeaderLength = 4;
+    while (bufferOffset < blockBufferLength - AVCCHeaderLength) {
+        // Read the NAL unit length
+        uint32_t NALUnitLength = 0;
+        memcpy(&NALUnitLength, bufferDataPointer + bufferOffset, AVCCHeaderLength);
+        // Convert the length value from Big-endian to Little-endian
+        NALUnitLength = CFSwapInt32BigToHost(NALUnitLength);
+        // Write start code to the elementary stream
+        [elementaryStream appendBytes:startCode length:startCodeLength];
+        // Write the NAL unit without the AVCC length header to the elementary stream
+        [elementaryStream appendBytes:bufferDataPointer + bufferOffset + AVCCHeaderLength
+                               length:NALUnitLength];
+        // Move to the next NAL unit in the block buffer
+        bufferOffset += AVCCHeaderLength + NALUnitLength;
+    }
+    
+//    NSLog(@"elementary stream: %@", elementaryStream);
+    if (!_pendingNALU) {
+        _pendingNALU = [NSMutableArray new];
+    }
+    [_pendingNALU removeAllObjects];
+    [_pendingNALU addObject:elementaryStream];
+//    elementaryStream;
+    [self onEncodedFrame];
+    return;
+//    if (_lengthSize == 0) { return; }
+    
+    CMTime pts = CMSampleBufferGetPresentationTimeStamp(sampleBuffer);
+    NSLog(@"presentation time stamp: %f", (pts.value));
+    const uint8_t *paramenterSetPointerOut =  NULL;
+    size_t parameterSetSizeOut,parameterSizeCountOut;
+    int nalUnitHeaderLengthOut;
+    CMFormatDescriptionRef fdesc = CMSampleBufferGetFormatDescription(sampleBuffer);
+    OSStatus status = CMVideoFormatDescriptionGetH264ParameterSetAtIndex(fdesc, 0, &paramenterSetPointerOut,&parameterSetSizeOut, &parameterSizeCountOut, &nalUnitHeaderLengthOut);
+
+    _lengthSize = nalUnitHeaderLengthOut;
+    /*
+    NSMutableData *data = [NSMutableData new];
+    
+    [data appendBytes:paramenterSetPointerOut length:parameterSetSizeOut];
+    NSLog(@"param 1: %d", paramenterSetPointerOut);
+    status = CMVideoFormatDescriptionGetH264ParameterSetAtIndex(fdesc, 1, &paramenterSetPointerOut,&parameterSetSizeOut, &parameterSizeCountOut, &nalUnitHeaderLengthOut);
+    [data appendBytes:paramenterSetPointerOut length:parameterSetSizeOut];
+    NSLog(@"param 2: %d", paramenterSetPointerOut);
+*/
+    
+//    NSLog(@"nalUnitHeaderLengthOut: %d", nalUnitHeaderLengthOut);
+//    NSLog(@"parameter set: %d", paramenterSetPointerOut);
+//    NSLog(@"parameter size count: %d", parameterSizeCountOut);
+//    NSLog(@"extensions: %@", CMFormatDescriptionGetExtensions(fdesc));
+    CFPropertyListRef dict = CMFormatDescriptionGetExtension(fdesc, kCMFormatDescriptionExtension_SampleDescriptionExtensionAtoms);
+    NSDictionary *d = (__bridge NSDictionary*)dict;
+    _avcC = [d objectForKey:@"avcC"];
+//    NSLog(@"avcc: %@", CMFormatDescriptionGetExtension(fdesc, kCMFormatDescriptionExtension_SampleDescriptionExtensionAtoms));
+    CMBlockBufferRef blockBuffer = CMSampleBufferGetDataBuffer(sampleBuffer);
+//    NSLog(@"block buffer data length: %d", CMBlockBufferGetDataLength(blockBuffer));
     int cReady = 0;
     size_t lengthAtOffset = 0;
     size_t totalLength = 0;
     char *pointer;
     size_t offset = 0;
-    
-    while (!_foundMDAT) {
-        CMBlockBufferGetDataPointer(blockBuffer, offset, &lengthAtOffset, &totalLength, &pointer);
-        cReady = lengthAtOffset;
-        if (cReady <= 8) { break; }
-        if (_bytesToNextAtom == 0) {
-            NSData *hdr = [[NSData alloc] initWithBytes:pointer length:8];
-            cReady -= 8;
-            unsigned char* p = (unsigned char*) [hdr bytes];
-            int lenAtom = to_host(p);
-            unsigned int nameAtom = to_host(p+4);
-            if (nameAtom == (unsigned int)('mdat'))
-            {
-                _foundMDAT = true;
-                _posMDAT = [_inputFile offsetInFile] - 8;
-            }
-            else
-            {
-                _bytesToNextAtom = lenAtom - 8;
-            }
-        }
-        if (_bytesToNextAtom > 0)
-        {
-            int cThis = cReady < _bytesToNextAtom ? cReady :_bytesToNextAtom;
-            _bytesToNextAtom -= cThis;
-            offset += cThis;
-        }
+    if (CMBlockBufferGetDataPointer(blockBuffer, offset, &lengthAtOffset, &totalLength, &pointer) != noErr) {
+        NSLog(@"error getting data pointer");
     }
-    
-    if (!_foundMDAT)
-    {
-        return;
-    }
+    cReady = totalLength;
+//    NSLog(@"bytes: %@", pointer);
+//    NSData *data = [NSData dataWithBytes:pointer length:totalLength];
+//    [data appendBytes:pointer length:totalLength];
+//    [self onNALU:data];
+//    if (!self.dataBuffer) { self.dataBuffer = [NSMutableData new]; }
+//    [self.dataBuffer appendBytes:pointer length:totalLength];
+//    
+//    if (_needParams) { return; }
+//    
+//    cReady = self.dataBuffer.length - self.dataReadOffset;
+//    while (!_foundMDAT && cReady > 8) {
+//        if (_bytesToNextAtom == 0) {
+//            NSLog(@"read offset: %d", self.dataReadOffset);
+//            
+//            NSData *hdr = [self.dataBuffer subdataWithRange:NSMakeRange(self.dataReadOffset, 8)];
+//            self.dataReadOffset += 8;
+//            NSLog(@"hdr length: %d", hdr.length);
+//            cReady -= 8;
+//            unsigned char* p = (unsigned char*) [hdr bytes];
+//            NSLog(p == NULL ? @"p is NULL" : @"p is not NULL");
+//            int lenAtom = to_host(p);
+//            NSLog(@"lenAtom: %d", lenAtom);
+//            unsigned int nameAtom = to_host(p+4);
+//            NSLog(@"nameAtom: %d", nameAtom);
+//            NSLog(@"cReady: %d", cReady);
+//            if (nameAtom == (unsigned int)('mdat'))
+//            {
+//                _foundMDAT = true;
+//                _posMDAT = [_inputFile offsetInFile] - 8;
+//            }
+//            else
+//            {
+//                _bytesToNextAtom = lenAtom - 8;
+//            }
+//        }
+//        if (_bytesToNextAtom > 0)
+//        {
+//            int cThis = cReady < _bytesToNextAtom ? cReady :_bytesToNextAtom;
+//            _bytesToNextAtom -= cThis;
+//            offset += cThis;
+//            self.dataReadOffset += cThis;
+//            cReady -= cThis;
+//        }
+//    }
+//    
+//    if (!_foundMDAT)
+//    {
+//        return;
+//    }
     
     // the mdat must be just encoded video.
     [self readAndDeliver:cReady offset:offset withSampleBuffer:sampleBuffer];
@@ -460,11 +605,16 @@ static unsigned int to_host(unsigned char* p)
     {
         if (_bytesToNextAtom == 0)
         {
+            NSLog(@"offset in file: %d", [_inputFile offsetInFile]);
             NSData* hdr = [_inputFile readDataOfLength:8];
             cReady -= 8;
             unsigned char* p = (unsigned char*) [hdr bytes];
             int lenAtom = to_host(p);
             unsigned int nameAtom = to_host(p+4);
+            
+            NSLog(@"len: %d", lenAtom);
+            NSLog(@"name: %d", nameAtom);
+            
             if (nameAtom == (unsigned int)('mdat'))
             {
                 _foundMDAT = true;
@@ -523,6 +673,7 @@ static unsigned int to_host(unsigned char* p)
     }
     if (_outputBlock != nil)
     {
+        NSLog(@"pts val: %d", pts);
         _outputBlock(_pendingNALU, pts);
     }
 }
@@ -538,7 +689,7 @@ static unsigned int to_host(unsigned char* p)
     if (_pendingNALU)
     {
         NALUnit nal(pNal, [nalu length]);
-        
+        NSLog(@"type: %d", nal.Type());
         // we have existing data —is this the same frame?
         // typically there are a couple of NALUs per frame in iOS encoding.
         // This is not general-purpose: it assumes that arbitrary slice ordering is not allowed.
@@ -577,6 +728,7 @@ static unsigned int to_host(unsigned char* p)
 
 - (NSData*) getConfigData
 {
+    NSLog(@"+++++++======= avcc: %@", _avcC);
     return [_avcC copy];
 }
 
