@@ -62,7 +62,7 @@
 - (void) setupSession {
     _session = [[AVCaptureSession alloc] init];
     _movieWritingQueue = dispatch_queue_create("Movie Writing Queue", DISPATCH_QUEUE_SERIAL);
-    
+    _session.automaticallyConfiguresApplicationAudioSession = NO;
     [self setupVideoCapture];
     [self setupAudioCapture];
     
@@ -222,13 +222,7 @@
     
     NSDictionary *videoCompressionSettings = @{AVVideoCodecKey : AVVideoCodecH264,
                                                AVVideoWidthKey : [NSNumber numberWithInteger:dimensions.width],
-                                               AVVideoHeightKey : [NSNumber numberWithInteger:dimensions.height],
-                                               AVVideoCompressionPropertiesKey : @{
-                                                       AVVideoAverageBitRateKey: @(bitsPerSecond),
-                                                       AVVideoMaxKeyFrameIntervalKey: @(30),
-                                                       AVVideoProfileLevelKey: [Kickflip h264Profile],
-                                                       AVVideoAllowFrameReorderingKey: @NO,
-                                                       }};
+                                               AVVideoHeightKey : [NSNumber numberWithInteger:dimensions.height]};
     
     if ([_assetWriter canApplyOutputSettings:videoCompressionSettings forMediaType:AVMediaTypeVideo]) {
         // Intialize asset writer video input with the above created settings dictionary
@@ -435,7 +429,7 @@
     }
     
     if (_assetWriter.status == AVAssetWriterStatusFailed) {
-        DDLogError(@"writeSampleBuffer writer error: %@", _assetWriter.error.localizedDescription);
+        DDLogError(@"writeSampleBuffer writer error: %@", _assetWriter.error);
     }
 }
 
@@ -451,6 +445,15 @@
 #pragma mark - General Utilities
 
 - (void) startRecording {
+    if ([_session isRunning]) {
+        [_session stopRunning];
+    }
+    
+    [[AVAudioSession sharedInstance] overrideOutputAudioPort:AVAudioSessionPortOverrideNone error:nil];
+    [[AVAudioSession sharedInstance] setPreferredSampleRate:44100.f error:nil];
+    
+    [_session startRunning];
+    
     self.locationManager = [[CLLocationManager alloc] init];
     self.locationManager.delegate = self;
     [self.locationManager startUpdatingLocation];
@@ -498,6 +501,13 @@
                 DDLogError(@"Error creating AVAssetWriter: %@", error);
         });
     }
+    
+    DDLogDebug(@"AVAudioSession preferred sample rate: %f", [AVAudioSession sharedInstance].preferredSampleRate);
+    DDLogDebug(@"AVAudioSession sample rate: %f", [AVAudioSession sharedInstance].sampleRate);
+    DDLogDebug(@"AVAudioSession preferred number of channels: %i", [AVAudioSession sharedInstance].preferredInputNumberOfChannels);
+    DDLogDebug(@"AVAudioSession number of channels: %i", [AVAudioSession sharedInstance].inputNumberOfChannels);
+    DDLogDebug(@"AVAudioSession preferred buffer duration: %f", [AVAudioSession sharedInstance].preferredIOBufferDuration);
+    DDLogDebug(@"AVAudioSession buffer duration: %f", [AVAudioSession sharedInstance].IOBufferDuration);
 }
 
 - (void) stopRecording {
@@ -564,8 +574,9 @@
         });
     }
     
-    // TEL
     _hasScreenshot = NO;
+    
+    [[AVAudioSession sharedInstance] overrideOutputAudioPort:AVAudioSessionPortOverrideSpeaker error:nil];    
 }
 
 - (AVCaptureVideoOrientation)avOrientationForInterfaceOrientation:(UIInterfaceOrientation)orientation {

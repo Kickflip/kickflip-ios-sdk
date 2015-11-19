@@ -305,7 +305,6 @@ static unsigned int to_host(unsigned char* p)
 
 - (void) swapFiles:(NSString*) oldPath
 {
-    NSLog(@"SWAPPING FILE");
     // TEL
     // Sometimes _inputFile is nil and things crash. These bits are beyond my capabilities...
     if (_inputFile) {

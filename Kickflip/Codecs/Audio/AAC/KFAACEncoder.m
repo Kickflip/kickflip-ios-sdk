@@ -168,7 +168,7 @@ static OSStatus inInputDataProc(AudioConverterRef inAudioConverter, UInt32 *ioNu
         if (status != kCMBlockBufferNoErr) {
             error = [NSError errorWithDomain:NSOSStatusErrorDomain code:status userInfo:nil];
         }
-        //NSLog(@"PCM Buffer Size: %zu", _pcmBufferSize);
+        DDLogVerbose(@"PCM Buffer Size: %d", _pcmBufferSize);
         
         memset(_aacBuffer, 0, _aacBufferSize);
         AudioBufferList outAudioBufferList = {0};
