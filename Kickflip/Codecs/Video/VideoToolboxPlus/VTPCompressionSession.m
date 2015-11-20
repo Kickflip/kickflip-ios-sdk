@@ -57,6 +57,7 @@
 	if(compressionSession != NULL)
 	{
 		VTCompressionSessionInvalidate(compressionSession);
+        CFRelease(compressionSession);
 	}
 }
 

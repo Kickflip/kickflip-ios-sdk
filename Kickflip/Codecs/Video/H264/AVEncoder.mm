@@ -222,11 +222,8 @@ static void * AVEncoderContext = &AVEncoderContext;
 
 - (void) shutdown
 {
-    @synchronized(self)
-    {
-       
-        // !! wait for these to finish before returning and delete temp files
-    }
+    [self.encoder finish];
+    self.encoder = nil;
 }
 
 @end
