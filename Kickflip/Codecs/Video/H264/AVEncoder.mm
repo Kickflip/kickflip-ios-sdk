@@ -10,6 +10,17 @@
 #import "NALUnit.h"
 #import "LiveEncoder.h"
 
+@implementation EncodedDataWrapper
+- (id)initWithData:(NSData*)data isKeyFrame:(BOOL)isKeyFrame {
+    if (self = [super init]) {
+        _data = data;
+        _isKeyFrame = isKeyFrame;
+    }
+    return self;
+}
+@end
+
+
 static void * AVEncoderContext = &AVEncoderContext;
 
 @interface AVEncoder () <LiveEncoderDelegate>
@@ -177,15 +188,10 @@ static void * AVEncoderContext = &AVEncoderContext;
         bufferOffset += AVCCHeaderLength + NALUnitLength;
     }
     
-    if (!_pendingNALU) {
-        _pendingNALU = [NSMutableArray new];
-    }
-    [_pendingNALU removeAllObjects];
-    [_pendingNALU addObject:elementaryStream];
-    [self onEncodedFrame];
+    [self onEncodedFrame:elementaryStream isKeyFrame:isIFrame];
 }
 
-- (void) onEncodedFrame
+- (void) onEncodedFrame:(NSData*)data isKeyFrame:(BOOL)isKeyFrame
 {
     CMTimeValue pts = 0;
     @synchronized(_times)
@@ -216,7 +222,8 @@ static void * AVEncoderContext = &AVEncoderContext;
     }
     if (_outputBlock != nil)
     {
-        _outputBlock(_pendingNALU, pts);
+        EncodedDataWrapper *wrapper = [[EncodedDataWrapper alloc] initWithData:data isKeyFrame:isKeyFrame];
+        _outputBlock(wrapper, pts);
     }
 }
 

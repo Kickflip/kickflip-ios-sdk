@@ -32,8 +32,8 @@
         _timescale = 0;
         
         _encoder = [AVEncoder encoderForHeight:height andWidth:width bitrate:bitrate];
-        [_encoder encodeWithBlock:^int(NSArray* dataArray, CMTimeValue ptsValue) {
-          [self incomingVideoFrames:dataArray ptsValue:ptsValue];
+        [_encoder encodeWithBlock:^int(EncodedDataWrapper* wrapper, CMTimeValue ptsValue) {
+          [self incomingVideoFrames:wrapper ptsValue:ptsValue];
               return 0;
           } onParams:^int(NSData *data) {
               return 0;
@@ -55,19 +55,19 @@
     [_encoder encodeFrame:sampleBuffer];
 }
 
-- (void) writeVideoFrames:(NSArray*)frames pts:(CMTime)pts {
+- (void) writeVideoFrames:(EncodedDataWrapper*)wrapper pts:(CMTime)pts {
     if (self.delegate) {
-        KFVideoFrame *videoFrame = [[KFVideoFrame alloc] initWithData:[frames firstObject] pts:pts];
-        videoFrame.isKeyFrame = NO;
+        KFVideoFrame *videoFrame = [[KFVideoFrame alloc] initWithData:wrapper.data pts:pts];
+        videoFrame.isKeyFrame = wrapper.isKeyFrame;
         dispatch_async(self.callbackQueue, ^{
             [self.delegate encoder:self encodedFrame:videoFrame];
         });
     }
 }
 
-- (void) incomingVideoFrames:(NSArray*)frames ptsValue:(CMTimeValue)ptsValue {
+- (void) incomingVideoFrames:(EncodedDataWrapper*)wrapper ptsValue:(CMTimeValue)ptsValue {
     CMTime pts = CMTimeMake(ptsValue, _timescale);
-    [self writeVideoFrames:frames pts:pts];
+    [self writeVideoFrames:wrapper pts:pts];
     _lastPTS = pts;
 }
 
