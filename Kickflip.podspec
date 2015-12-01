@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name         = "Kickflip"
-  s.version      = "1.3"
+  s.version      = "1.4"
   s.summary      = "The Kickflip platform provides a complete video broadcasting solution for your iOS application."
   s.homepage     = "https://github.com/Kickflip/kickflip-ios-sdk"
 
@@ -8,7 +8,7 @@ Pod::Spec.new do |s|
 
   s.author       = { "Chris Ballinger" => "chris@openwatch.net" }
   s.platform     = :ios, '7.0'
-  s.source       = { :git => "https://github.com/Kickflip/kickflip-ios-sdk.git", :tag => s.version.to_s }
+  s.source       = { :git => "https://github.com/twinenginelabs/kickflip-ios-sdk.git", :tag => s.version.to_s }
 
   s.source_files  = 'Kickflip', 'Kickflip/**/*.{h,m,mm,cpp}'
   s.resources = 'Kickflip/Resources/*'
@@ -20,7 +20,7 @@ Pod::Spec.new do |s|
   s.dependency 'AFNetworking', '~> 2.2'
   s.dependency 'AWSS3', '~> 2.1.1'
   s.dependency 'AFOAuth2Manager', '~> 2.0'
-  s.dependency 'CocoaLumberjack', '>= 1.0'
+  s.dependency 'CocoaLumberjack', '~> 2.0'
   s.dependency 'SSKeychain', '~> 1.2'
   s.dependency 'FFmpegWrapper', '~> 1.0'
   s.dependency 'PureLayout', '~> 2.0'
