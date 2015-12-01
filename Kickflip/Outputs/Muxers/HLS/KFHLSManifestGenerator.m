@@ -10,7 +10,7 @@
 #import "KFLog.h"
 
 @interface KFHLSManifestGenerator()
-@property (nonatomic, strong) NSMutableString *segmentsString;
+@property (nonatomic, strong) NSMutableDictionary *segments;
 @property (nonatomic) BOOL finished;
 @end
 
@@ -41,21 +41,25 @@
         self.playlistType = playlistType;
         self.version = 3;
         self.mediaSequence = -1;
-        self.segmentsString = [NSMutableString string];
+        self.segments = [NSMutableDictionary new];
         self.finished = NO;
     }
     return self;
 }
 
 - (void) appendFileName:(NSString *)fileName duration:(float)duration mediaSequence:(NSUInteger)mediaSequence {
-    if (self.finished) {
-        return;
+    if (mediaSequence > self.mediaSequence) {
+        self.mediaSequence = mediaSequence;
     }
-    self.mediaSequence = mediaSequence;
+    
     if (duration > self.targetDuration) {
         self.targetDuration = duration;
     }
-    [self.segmentsString appendFormat:@"#EXTINF:%g,\n%@\n", duration, fileName];
+    
+    if ([self.segments objectForKey:[NSNumber numberWithInteger:mediaSequence]] == nil) {
+        DDLogDebug(@"%@", [NSString stringWithFormat:@"Writing to manifest... #EXTINF:%g %@", duration, fileName]);
+        [self.segments setObject:[NSString stringWithFormat:@"#EXTINF:%g,\n%@\n", duration, fileName] forKey:[NSNumber numberWithInteger:mediaSequence]];
+    }
 }
 
 - (void) finalizeManifest {
@@ -72,36 +76,53 @@
 - (void) appendFromLiveManifest:(NSString *)liveManifest {
     NSArray *rawLines = [liveManifest componentsSeparatedByString:@"\n"];
     NSMutableArray *lines = [NSMutableArray arrayWithCapacity:rawLines.count];
+    
+    NSUInteger index = 0;
     for (NSString *line in rawLines) {
-        if (!line.length) {
-            continue;
+        if ([line rangeOfString:@"#EXTINF:"].location != NSNotFound) {
+            NSString *extInf = line;
+            NSString *extInfNumberString = [self stripToNumbers:extInf];
+            NSString *segmentName = rawLines[index+1];
+            NSString *segmentNumberString = [self stripToNumbers:segmentName];
+            float duration = [extInfNumberString floatValue];
+            NSInteger sequence = [segmentNumberString integerValue];
+            [self appendFileName:segmentName duration:duration mediaSequence:sequence];
         }
-        if ([line isEqualToString:@"#EXT-X-ENDLIST"]) {
-            continue;
-        }
-        [lines addObject:line];
-    }
-    if (lines.count < 6) {
-        return;
-    }
-    NSString *extInf = lines[lines.count-2];
-    NSString *extInfNumberString = [self stripToNumbers:extInf];
-    NSString *segmentName = lines[lines.count-1];
-    NSString *segmentNumberString = [self stripToNumbers:segmentName];
-    float duration = [extInfNumberString floatValue];
-    NSInteger sequence = [segmentNumberString integerValue];
-    if (sequence > self.mediaSequence) {
-        [self appendFileName:segmentName duration:duration mediaSequence:sequence];
+        index++;
     }
 }
 
-- (NSString*) manifestString {
-    NSMutableString *manifest = [self header];
-    [manifest appendString:self.segmentsString];
-    if (self.finished) {
-        [manifest appendString:[self footer]];
+
+- (NSString *) masterString {
+    int videoWidth;
+    int videoHeight;
+    
+    if (UIInterfaceOrientationIsPortrait([UIApplication sharedApplication].statusBarOrientation)) {
+        videoWidth = [Kickflip resolutionHeight];
+        videoHeight = [Kickflip resolutionWidth];
+    } else {
+        videoWidth = [Kickflip resolutionWidth];
+        videoHeight = [Kickflip resolutionHeight];
     }
-    DDLogInfo(@"Latest manifest:\n%@", manifest);
+    
+    return [NSString stringWithFormat:@"#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=556000,CODECS=\"avc1.77.21,mp4a.40.2\",RESOLUTION=%dx%d\n%@.m3u8",
+                videoWidth,
+                videoHeight,
+                (self.finished ? @"vod" : @"index")];
+}
+
+- (NSString *) manifestString {
+    NSMutableString *manifest = [self header];
+    
+    NSArray *sortedKeys = [[self.segments allKeys] sortedArrayUsingSelector:@selector(compare:)];
+    for (NSNumber *key in sortedKeys) {
+        [manifest appendString:[self.segments objectForKey:key]];
+    }
+    
+    [manifest appendString:[self footer]];
+    
+    DDLogVerbose(@"Latest manifest:\n%@", manifest);
+    
     return manifest;
 }
 

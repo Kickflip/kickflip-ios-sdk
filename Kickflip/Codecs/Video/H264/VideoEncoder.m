@@ -7,8 +7,14 @@
 //
 
 #import "VideoEncoder.h"
+#import "KFLog.h"
 
 @implementation VideoEncoder
+{
+    AVAssetWriter* _writer;
+    AVAssetWriterInput* _writerInput;
+    NSString* _path;
+}
 
 @synthesize path = _path;
 
@@ -35,12 +41,9 @@
         AVVideoHeightKey: @(height),
         AVVideoCompressionPropertiesKey: @{
              AVVideoAverageBitRateKey: @(self.bitrate),
-             AVVideoMaxKeyFrameIntervalKey: @(150),
-             AVVideoProfileLevelKey: AVVideoProfileLevelH264BaselineAutoLevel,
+             AVVideoMaxKeyFrameIntervalKey: @(30),
+             AVVideoProfileLevelKey: [Kickflip h264Profile],
              AVVideoAllowFrameReorderingKey: @NO,
-             //AVVideoH264EntropyModeKey: AVVideoH264EntropyModeCAVLC,
-             //AVVideoExpectedSourceFrameRateKey: @(30),
-             //AVVideoAverageNonDroppableFrameRateKey: @(30)
         }
     };
     _writerInput = [AVAssetWriterInput assetWriterInputWithMediaType:AVMediaTypeVideo outputSettings:settings];
@@ -67,7 +70,7 @@
         }
         if (_writer.status == AVAssetWriterStatusFailed)
         {
-            NSLog(@"writer error %@", _writer.error.localizedDescription);
+            DDLogError(@"writer error %@", _writer.error.localizedDescription);
             return NO;
         }
         if (_writerInput.readyForMoreMediaData == YES)
