@@ -61,7 +61,6 @@
     NSString *outputPath = [_directoryPath stringByAppendingPathComponent:@"index.m3u8"];
     
     _outputFile = [[FFOutputFile alloc] initWithPath:outputPath options:@{kFFmpegOutputFormatKey: @"hls"}];
-    
     FFBitstreamFilter *bitstreamFilter = [[FFBitstreamFilter alloc] initWithFilterName:@"h264_mp4toannexb"];
     [_outputFile addBitstreamFilter:bitstreamFilter];
 }
@@ -113,7 +112,6 @@
         _packet->dts = scaledPTS;
         
         NSError *error = nil;
-        
         [_outputFile writePacket:_packet error:&error];
         
         if (error) {
