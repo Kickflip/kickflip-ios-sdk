@@ -39,7 +39,7 @@
  *
  *  @return BFTask.
  */
-- (BFTask *)refresh;
+- (AWSTask *)refresh;
 
 - (instancetype)initWithStream:(KFS3Stream*)stream;
 

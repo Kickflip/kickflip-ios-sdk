@@ -7,7 +7,7 @@
 //
 
 #import "KFAWSCredentialsProvider.h"
-#import <Bolts/BFTask.h>
+#import <AWSCore/AWSCore.h>
 
 @implementation KFAWSCredentialsProvider
 
@@ -28,8 +28,8 @@
  *
  *  @return BFTask.
  */
-- (BFTask *)refresh {
-    return [BFTask taskWithError:[NSError errorWithDomain:@"io.kickflip.sdk" code:100 userInfo:@{NSLocalizedDescriptionKey: @"Refresh not supported"}]];
+- (AWSTask *)refresh {
+    return [AWSTask taskWithError:[NSError errorWithDomain:@"io.kickflip.sdk" code:100 userInfo:@{NSLocalizedDescriptionKey: @"Refresh not supported"}]];
 }
 
 /** Utility to convert from "us-west-1" to enum AWSRegionUSWest1 */

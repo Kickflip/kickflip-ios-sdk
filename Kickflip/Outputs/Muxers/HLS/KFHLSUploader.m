@@ -129,7 +129,7 @@ static NSString * const kKFS3Key = @"kKFS3Key";
     uploadRequest.body = [NSURL fileURLWithPath:filePath];
     uploadRequest.ACL = AWSS3ObjectCannedACLPublicRead;
     
-    [[self.transferManager upload:uploadRequest] continueWithBlock:^id(BFTask *task) {
+    [[self.transferManager upload:uploadRequest] continueWithBlock:^id(AWSTask *task) {
         if (task.error) {
             [self s3RequestFailedForFileName:fileName withError:task.error];
         } else {
@@ -157,7 +157,7 @@ static NSString * const kKFS3Key = @"kKFS3Key";
     uploadRequest.cacheControl = @"max-age=0";
     uploadRequest.contentLength = @(data.length);
     
-    [[self.s3 putObject:uploadRequest] continueWithBlock:^id(BFTask *task) {
+    [[self.s3 putObject:uploadRequest] continueWithBlock:^id(AWSTask *task) {
         if (task.error) {
             [self s3RequestFailedForFileName:manifestName withError:task.error];
         } else {
@@ -223,7 +223,7 @@ static NSString * const kKFS3Key = @"kKFS3Key";
         uploadRequest.body = [NSURL fileURLWithPath:filePath];
         uploadRequest.ACL = AWSS3ObjectCannedACLPublicRead;
         
-        [[self.transferManager upload:uploadRequest] continueWithBlock:^id(BFTask *task) {
+        [[self.transferManager upload:uploadRequest] continueWithBlock:^id(AWSTask *task) {
             if (task.error) {
                 [self s3RequestFailedForFileName:fileName withError:task.error];
             } else {
