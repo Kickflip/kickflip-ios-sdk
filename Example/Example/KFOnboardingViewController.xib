@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="6250" systemVersion="14A388a" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES">
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="6244"/>
+        <capability name="Aspect ratio constraints" minToolsVersion="5.1"/>
+    </dependencies>
+    <objects>
+        <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="KFOnboardingViewController">
+            <connections>
+                <outlet property="dismissButton" destination="L6C-0E-H2h" id="ekJ-8c-q9K"/>
+                <outlet property="introductionTextView" destination="D0c-xb-tgr" id="KcU-Ui-5mN"/>
+                <outlet property="logoImageView" destination="Ewr-iH-bxE" id="77s-21-pzp"/>
+                <outlet property="titleLabel" destination="ctH-fL-G22" id="9nB-yk-GQk"/>
+                <outlet property="view" destination="i5M-Pr-FkT" id="sfx-zR-JGt"/>
+            </connections>
+        </placeholder>
+        <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
+        <view clearsContextBeforeDrawing="NO" contentMode="scaleToFill" id="i5M-Pr-FkT">
+            <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
+            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+            <subviews>
+                <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Welcome to Kickflip!" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="ctH-fL-G22">
+                    <rect key="frame" x="20" y="47" width="200" height="26"/>
+                    <fontDescription key="fontDescription" name="HelveticaNeue-Medium" family="Helvetica Neue" pointSize="21"/>
+                    <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                    <nil key="highlightedColor"/>
+                </label>
+                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="KFLogoTransparent" translatesAutoresizingMaskIntoConstraints="NO" id="Ewr-iH-bxE">
+                    <rect key="frame" x="250" y="35" width="50" height="50"/>
+                    <constraints>
+                        <constraint firstAttribute="width" constant="50" id="QnF-pA-3LV"/>
+                        <constraint firstAttribute="height" constant="50" id="TH5-Mf-eZh"/>
+                        <constraint firstAttribute="width" secondItem="Ewr-iH-bxE" secondAttribute="height" multiplier="1:1" id="ZW3-O3-Pdy"/>
+                    </constraints>
+                </imageView>
+                <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" indicatorStyle="white" editable="NO" translatesAutoresizingMaskIntoConstraints="NO" id="D0c-xb-tgr">
+                    <rect key="frame" x="20" y="107" width="280" height="381"/>
+                    <string key="text">• Kickflip makes it easy to add live broadcasting to your app!
+
+• All streams made with this app are public and may be subject to periodic deletion.
+
+• This app is open source! Check it out on GitHub: https://github.com/kickflip/kickflip-ios-example
+
+• Sign up today at https://kickflip.io</string>
+                    <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                    <fontDescription key="fontDescription" name="HelveticaNeue" family="Helvetica Neue" pointSize="17"/>
+                    <textInputTraits key="textInputTraits" autocapitalizationType="sentences"/>
+                    <dataDetectorType key="dataDetectorTypes" link="YES"/>
+                </textView>
+                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="L6C-0E-H2h" customClass="BButton">
+                    <rect key="frame" x="20" y="508" width="280" height="40"/>
+                    <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                    <constraints>
+                        <constraint firstAttribute="height" constant="40" id="mOn-7A-G4Z"/>
+                    </constraints>
+                    <fontDescription key="fontDescription" name="HelveticaNeue-Medium" family="Helvetica Neue" pointSize="22"/>
+                    <state key="normal" title="Got it!">
+                        <color key="titleColor" red="0.27843137254901962" green="0.64313725490196072" blue="0.27843137254901962" alpha="1" colorSpace="calibratedRGB"/>
+                        <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
+                    </state>
+                    <connections>
+                        <action selector="dismissButtonPressed:" destination="-1" eventType="touchUpInside" id="Iii-md-9o6"/>
+                    </connections>
+                </button>
+            </subviews>
+            <color key="backgroundColor" red="0.27843137254901962" green="0.64313725490196072" blue="0.27843137254901962" alpha="1" colorSpace="calibratedRGB"/>
+            <constraints>
+                <constraint firstItem="D0c-xb-tgr" firstAttribute="leading" secondItem="i5M-Pr-FkT" secondAttribute="leading" constant="20" id="3Ie-3h-Lox"/>
+                <constraint firstItem="L6C-0E-H2h" firstAttribute="leading" secondItem="i5M-Pr-FkT" secondAttribute="leading" constant="20" id="5V5-uz-ozs"/>
+                <constraint firstItem="ctH-fL-G22" firstAttribute="centerY" secondItem="Ewr-iH-bxE" secondAttribute="centerY" id="CPT-UA-qYw"/>
+                <constraint firstAttribute="bottom" secondItem="L6C-0E-H2h" secondAttribute="bottom" constant="20" id="GBf-S6-ogY"/>
+                <constraint firstAttribute="trailing" secondItem="Ewr-iH-bxE" secondAttribute="trailing" constant="20" id="Jju-18-zyX"/>
+                <constraint firstItem="ctH-fL-G22" firstAttribute="leading" secondItem="i5M-Pr-FkT" secondAttribute="leading" constant="20" id="Mu5-bY-H2I"/>
+                <constraint firstAttribute="trailing" secondItem="D0c-xb-tgr" secondAttribute="trailing" constant="20" id="SUP-7Y-jnb"/>
+                <constraint firstItem="D0c-xb-tgr" firstAttribute="top" secondItem="Ewr-iH-bxE" secondAttribute="bottom" constant="22" id="ise-Yk-PmJ"/>
+                <constraint firstAttribute="trailing" secondItem="L6C-0E-H2h" secondAttribute="trailing" constant="20" id="m03-sJ-LHj"/>
+                <constraint firstItem="L6C-0E-H2h" firstAttribute="top" secondItem="D0c-xb-tgr" secondAttribute="bottom" constant="20" id="mNR-d1-DKw"/>
+                <constraint firstItem="Ewr-iH-bxE" firstAttribute="top" secondItem="i5M-Pr-FkT" secondAttribute="top" constant="35" id="uFR-mL-f6d"/>
+            </constraints>
+            <simulatedStatusBarMetrics key="simulatedStatusBarMetrics" statusBarStyle="lightContent"/>
+        </view>
+    </objects>
+    <resources>
+        <image name="KFLogoTransparent" width="92" height="92"/>
+    </resources>
+    <simulatedMetricsContainer key="defaultSimulatedMetrics">
+        <simulatedStatusBarMetrics key="statusBar"/>
+        <simulatedOrientationMetrics key="orientation"/>
+        <simulatedScreenMetrics key="destination" type="retina4"/>
+    </simulatedMetricsContainer>
+</document>
