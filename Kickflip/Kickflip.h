@@ -11,6 +11,7 @@
 #import "KFAPIClient.h"
 #import "KFUser.h"
 #import "KFStream.h"
+//#import "AVFoundation/AVVideoSettings.h"
 
 /**
  *  Block executed when stream is ready.
@@ -78,6 +79,22 @@ typedef void (^KFBroadcastCompletionBlock)(BOOL success, NSError* error);
 /// @name Configuration
 ///-------------------------------
 
++ (NSString *)h264Profile;
++ (void)setH264Profile:(NSString *)profile;
+
++ (double)resolutionWidth;
++ (double)resolutionHeight;
++ (void)setResolutionWidth:(int)width height:(int)height;
+
+//+ (NSString)profile;
+//+ (void)setProfile:(AVVideoComposition)
+
+/**
+ *  Minimum bitrate (combined video + audio)
+ */
++ (double) minBitrate;
++ (void) setMinBitrate:(double)minBitrate;
+
 /**
  *  Maximum bitrate (combined video + audio)
  *
@@ -92,6 +109,12 @@ typedef void (^KFBroadcastCompletionBlock)(BOOL success, NSError* error);
  *  @warn Do not set this value to lower than ~300 Kbps
  */
 + (void) setMaxBitrate:(double)maxBitrate;
+
+/**
+ *  Initial bitrate (combined video + audio)
+ */
++ (double) initialBitrate;
++ (void) setInitialBitrate:(double)initialBitrate;
 
 /**
  *  Whether or not to actively adjust the bitrate to network conditions.

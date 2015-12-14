@@ -20,17 +20,30 @@
 #import "Kickflip.h"
 #import "Endian.h"
 
-@interface KFRecorder()
-@property (nonatomic) double minBitrate;
+@interface KFRecorder() {
+    AVAssetWriter *_assetWriter;
+    AVAssetWriterInput *_assetWriterAudioIn;
+    AVAssetWriterInput *_assetWriterVideoIn;
+    dispatch_queue_t _movieWritingQueue;
+    BOOL _readyToRecordAudio;
+    BOOL _readyToRecordVideo;
+    NSURL *_outputFileURL;
+}
+
 @property (nonatomic) BOOL hasScreenshot;
 @property (nonatomic, strong) CLLocationManager *locationManager;
+
 @end
 
 @implementation KFRecorder
 
+- (void) dealloc {
+    [self destroySession];
+}
+
 - (id) init {
     if (self = [super init]) {
-        _minBitrate = 300 * 1000;
+        _outputFileURL = [NSURL fileURLWithPath:[NSTemporaryDirectory() stringByAppendingPathComponent:@"recording.mp4"]];
         [self setupSession];
         [self setupEncoders];
     }
@@ -44,6 +57,28 @@
         return [devices objectAtIndex:0];
     
     return nil;
+}
+
+- (void) setupSession {
+    _session = [[AVCaptureSession alloc] init];
+    _movieWritingQueue = dispatch_queue_create("Movie Writing Queue", DISPATCH_QUEUE_SERIAL);
+    _session.automaticallyConfiguresApplicationAudioSession = NO;
+    [self setupVideoCapture];
+    [self setupAudioCapture];
+    
+    // start capture and a preview layer
+    [_session startRunning];
+    
+    _previewLayer = [AVCaptureVideoPreviewLayer layerWithSession:_session];
+    _previewLayer.videoGravity = AVLayerVideoGravityResizeAspectFill;
+}
+
+- (void)destroySession {
+    [_session stopRunning];
+    
+    for (AVCaptureInput *input in [_session inputs]) {
+        [_session removeInput:input];
+    }
 }
 
 - (void) setupHLSWriterWithEndpoint:(KFS3Stream*)endpoint {
@@ -61,11 +96,19 @@
 
 - (void) setupEncoders {
     self.audioSampleRate = 44100;
-    self.videoHeight = 720;
-    self.videoWidth = 1280;
-    int audioBitrate = 64 * 1000; // 64 Kbps
-    int maxBitrate = [Kickflip maxBitrate];
-    int videoBitrate = maxBitrate - audioBitrate;
+
+    if (UIInterfaceOrientationIsPortrait([UIApplication sharedApplication].statusBarOrientation)) {
+        self.videoWidth = [Kickflip resolutionHeight];
+        self.videoHeight = [Kickflip resolutionWidth];
+    } else {
+        self.videoWidth = [Kickflip resolutionWidth];
+        self.videoHeight = [Kickflip resolutionHeight];
+    }
+    
+    int audioBitrate = 56 * 1000; // 56 Kbps
+    int initialBitrate = [Kickflip initialBitrate];
+    int videoBitrate = initialBitrate - audioBitrate;
+    
     _h264Encoder = [[KFH264Encoder alloc] initWithBitrate:videoBitrate width:self.videoWidth height:self.videoHeight];
     _h264Encoder.delegate = self;
     
@@ -75,7 +118,6 @@
 }
 
 - (void) setupAudioCapture {
-
     // create capture device with video input
     
     /*
@@ -85,7 +127,7 @@
     NSError *error = nil;
     AVCaptureDeviceInput *audioInput = [[AVCaptureDeviceInput alloc] initWithDevice:audioDevice error:&error];
     if (error) {
-        NSLog(@"Error getting audio input device: %@", error.description);
+        DDLogError(@"Error getting audio input device: %@", error.description);
     }
     if ([_session canAddInput:audioInput]) {
         [_session addInput:audioInput];
@@ -105,7 +147,7 @@
     AVCaptureDevice* videoDevice = [AVCaptureDevice defaultDeviceWithMediaType:AVMediaTypeVideo];
     AVCaptureDeviceInput* videoInput = [AVCaptureDeviceInput deviceInputWithDevice:videoDevice error:&error];
     if (error) {
-        NSLog(@"Error getting video input device: %@", error.description);
+        DDLogError(@"Error getting video input device: %@", error.description);
     }
     if ([_session canAddInput:videoInput]) {
         [_session addInput:videoInput];
@@ -114,17 +156,97 @@
     // create an output for YUV output with self as delegate
     _videoQueue = dispatch_queue_create("Video Capture Queue", DISPATCH_QUEUE_SERIAL);
     _videoOutput = [[AVCaptureVideoDataOutput alloc] init];
-    [_videoOutput setSampleBufferDelegate:self queue:_videoQueue];
-    NSDictionary *captureSettings = @{(NSString*)kCVPixelBufferPixelFormatTypeKey: @(kCVPixelFormatType_32BGRA)};
-    _videoOutput.videoSettings = captureSettings;
+    _videoOutput.videoSettings = @{ (NSString*)kCVPixelBufferPixelFormatTypeKey: @(kCVPixelFormatType_32BGRA) };
     _videoOutput.alwaysDiscardsLateVideoFrames = YES;
+    [_videoOutput setSampleBufferDelegate:self queue:_videoQueue];
     if ([_session canAddOutput:_videoOutput]) {
         [_session addOutput:_videoOutput];
     }
     _videoConnection = [_videoOutput connectionWithMediaType:AVMediaTypeVideo];
+    _videoConnection.videoOrientation = [self avOrientationForInterfaceOrientation:[UIApplication sharedApplication].statusBarOrientation];
 }
 
-#pragma mark KFEncoderDelegate method
+- (BOOL)setupAssetWriterAudioInput:(CMFormatDescriptionRef)currentFormatDescription {
+    // Create audio output settings dictionary which would be used to configure asset writer input
+    const AudioStreamBasicDescription *currentASBD = CMAudioFormatDescriptionGetStreamBasicDescription(currentFormatDescription);
+    size_t aclSize = 0;
+    const AudioChannelLayout *currentChannelLayout = CMAudioFormatDescriptionGetChannelLayout(currentFormatDescription, &aclSize);
+    
+    NSData *currentChannelLayoutData = nil;
+    // AVChannelLayoutKey must be specified, but if we don't know any better give an empty data and let AVAssetWriter decide.
+    if ( currentChannelLayout && aclSize > 0 )
+        currentChannelLayoutData = [NSData dataWithBytes:currentChannelLayout length:aclSize];
+    else
+        currentChannelLayoutData = [NSData data];
+    
+    NSDictionary *audioCompressionSettings = @{AVFormatIDKey : [NSNumber numberWithInteger:kAudioFormatMPEG4AAC],
+                                               AVSampleRateKey : [NSNumber numberWithFloat:currentASBD->mSampleRate],
+                                               AVEncoderBitRatePerChannelKey : [NSNumber numberWithInt:64000],
+                                               AVNumberOfChannelsKey : [NSNumber numberWithInteger:currentASBD->mChannelsPerFrame],
+                                               AVChannelLayoutKey : currentChannelLayoutData};
+    
+    if ([_assetWriter canApplyOutputSettings:audioCompressionSettings forMediaType:AVMediaTypeAudio]) {
+        // Intialize asset writer audio input with the above created settings dictionary
+        _assetWriterAudioIn = [AVAssetWriterInput assetWriterInputWithMediaType:AVMediaTypeAudio outputSettings:audioCompressionSettings];
+        _assetWriterAudioIn.expectsMediaDataInRealTime = YES;
+        
+        // Add asset writer input to asset writer
+        if ([_assetWriter canAddInput:_assetWriterAudioIn]) {
+            [_assetWriter addInput:_assetWriterAudioIn];
+        } else {
+            DDLogError(@"Couldn't add asset writer audio input.");
+            return NO;
+        }
+    } else {
+        DDLogError(@"Couldn't apply audio output settings.");
+        return NO;
+    }
+    
+    return YES;
+}
+
+- (BOOL)setupAssetWriterVideoInput:(CMFormatDescriptionRef)currentFormatDescription {
+    // Create video output settings dictionary which would be used to configure asset writer input
+    CGFloat bitsPerPixel;
+    CMVideoDimensions dimensions = CMVideoFormatDescriptionGetDimensions(currentFormatDescription);
+    NSUInteger numPixels = dimensions.width * dimensions.height;
+    NSUInteger bitsPerSecond;
+    
+    // Assume that lower-than-SD resolutions are intended for streaming, and use a lower bitrate
+    if ( numPixels < (640 * 480) )
+        bitsPerPixel = 4.05; // This bitrate matches the quality produced by AVCaptureSessionPresetMedium or Low.
+    else
+        bitsPerPixel = 11.4; // This bitrate matches the quality produced by AVCaptureSessionPresetHigh.
+    
+    bitsPerSecond = numPixels * bitsPerPixel;
+    
+    NSDictionary *videoCompressionSettings = @{AVVideoCodecKey : AVVideoCodecH264,
+                                               AVVideoWidthKey : [NSNumber numberWithInteger:dimensions.width],
+                                               AVVideoHeightKey : [NSNumber numberWithInteger:dimensions.height]};
+    
+    if ([_assetWriter canApplyOutputSettings:videoCompressionSettings forMediaType:AVMediaTypeVideo]) {
+        // Intialize asset writer video input with the above created settings dictionary
+        _assetWriterVideoIn = [AVAssetWriterInput assetWriterInputWithMediaType:AVMediaTypeVideo outputSettings:videoCompressionSettings];
+        _assetWriterVideoIn.expectsMediaDataInRealTime = YES;
+        _assetWriterVideoIn.transform = [self transformFromCurrentVideoOrientationToOrientation:[self avOrientationForInterfaceOrientation:[UIApplication sharedApplication].statusBarOrientation]];
+        
+        // Add asset writer input to asset writer
+        if ([_assetWriter canAddInput:_assetWriterVideoIn]) {
+            [_assetWriter addInput:_assetWriterVideoIn];
+        } else {
+            DDLogError(@"Couldn't add asset writer video input.");
+            return NO;
+        }
+    } else {
+        DDLogError(@"Couldn't apply video output settings.");
+        return NO;
+    }
+    
+    return YES;
+}
+
+#pragma mark - KFEncoderDelegate
+
 - (void) encoder:(KFEncoder*)encoder encodedFrame:(KFFrame *)frame {
     if (encoder == _h264Encoder) {
         KFVideoFrame *videoFrame = (KFVideoFrame*)frame;
@@ -134,12 +256,14 @@
     }
 }
 
-#pragma mark AVCaptureOutputDelegate method
+#pragma mark - AVCaptureOutputDelegate
+
 - (void) captureOutput:(AVCaptureOutput *)captureOutput didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer fromConnection:(AVCaptureConnection *)connection
 {
     if (!_isRecording) {
         return;
     }
+    
     // pass frame to encoders
     if (connection == _videoConnection) {
         if (!_hasScreenshot) {
@@ -149,11 +273,38 @@
             [imageData writeToFile:path atomically:NO];
             _hasScreenshot = YES;
         }
+        
         [_h264Encoder encodeSampleBuffer:sampleBuffer];
     } else if (connection == _audioConnection) {
         [_aacEncoder encodeSampleBuffer:sampleBuffer];
     }
+
+    // pass frame to disk
+    if (_saveToCameraRoll) {
+        CFRetain(sampleBuffer);
+        dispatch_async(_movieWritingQueue, ^{
+            if (_assetWriter) {
+                if (connection == _videoConnection) {
+                    if (!_readyToRecordVideo)
+                        _readyToRecordVideo = [self setupAssetWriterVideoInput:CMSampleBufferGetFormatDescription(sampleBuffer)];
+                    
+                    if ([self inputsReadyToRecord])
+                        [self writeSampleBuffer:sampleBuffer ofType:AVMediaTypeVideo];
+                } else if (connection == _audioConnection) {
+                    if (!_readyToRecordAudio)
+                        _readyToRecordAudio = [self setupAssetWriterAudioInput:CMSampleBufferGetFormatDescription(sampleBuffer)];
+                    
+                    if ([self inputsReadyToRecord])
+                        [self writeSampleBuffer:sampleBuffer ofType:AVMediaTypeAudio];
+                }
+            }
+            
+            CFRelease(sampleBuffer);
+        });
+    }
 }
+
+#pragma mark - AVCaptureOutputDelegate Utilities
 
 // Create a UIImage from sample buffer data
 - (UIImage *) imageFromSampleBuffer:(CMSampleBufferRef) sampleBuffer
@@ -196,54 +347,24 @@
     return (image);
 }
 
-- (void) setupSession {
-    _session = [[AVCaptureSession alloc] init];
-    [self setupVideoCapture];
-    [self setupAudioCapture];
-
-    // start capture and a preview layer
-    [_session startRunning];
-
-    _previewLayer = [AVCaptureVideoPreviewLayer layerWithSession:_session];
-    _previewLayer.videoGravity = AVLayerVideoGravityResizeAspectFill;
+- (void) locationManager:(CLLocationManager *)manager didUpdateLocations:(NSArray *)locations {
+    self.lastLocation = [locations lastObject];
+    [self setStreamStartLocation];
 }
 
-- (void) startRecording {
-    self.locationManager = [[CLLocationManager alloc] init];
-    self.locationManager.delegate = self;
-    [self.locationManager startUpdatingLocation];
-    [[KFAPIClient sharedClient] startNewStream:^(KFStream *endpointResponse, NSError *error) {
-        if (error) {
-            if (self.delegate && [self.delegate respondsToSelector:@selector(recorderDidStartRecording:error:)]) {
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    [self.delegate recorderDidStartRecording:self error:error];
-                });
-            }
-            return;
-        }
-        self.stream = endpointResponse;
-        [self setStreamStartLocation];
-        if ([endpointResponse isKindOfClass:[KFS3Stream class]]) {
-            KFS3Stream *s3Endpoint = (KFS3Stream*)endpointResponse;
-            s3Endpoint.streamState = KFStreamStateStreaming;
-            [self setupHLSWriterWithEndpoint:s3Endpoint];
-            
-            [[KFHLSMonitor sharedMonitor] startMonitoringFolderPath:_hlsWriter.directoryPath endpoint:s3Endpoint delegate:self];
-            
-            NSError *error = nil;
-            [_hlsWriter prepareForWriting:&error];
+- (void) setStreamStartLocation {
+    if (!self.lastLocation) {
+        return;
+    }
+    if (self.stream && !self.stream.startLocation) {
+        self.stream.startLocation = self.lastLocation;
+        [[KFAPIClient sharedClient] updateMetadataForStream:self.stream callbackBlock:^(KFStream *updatedStream, NSError *error) {
             if (error) {
-                DDLogError(@"Error preparing for writing: %@", error);
+                DDLogError(@"Error updating stream startLocation: %@", error);
             }
-            self.isRecording = YES;
-            if (self.delegate && [self.delegate respondsToSelector:@selector(recorderDidStartRecording:error:)]) {
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    [self.delegate recorderDidStartRecording:self error:nil];
-                });
-            }
-        }
-    }];
-    
+        }];
+        [self reverseGeocodeStream:self.stream];
+    }
 }
 
 - (void) reverseGeocodeStream:(KFStream*)stream {
@@ -280,56 +401,283 @@
     }];
 }
 
+- (void)writeSampleBuffer:(CMSampleBufferRef)sampleBuffer ofType:(NSString *)mediaType {
+    CMTime presentationTime = CMSampleBufferGetPresentationTimeStamp(sampleBuffer);
+    
+    if ( _assetWriter.status == AVAssetWriterStatusUnknown ) {
+        if ([_assetWriter startWriting]) {
+            [_assetWriter startSessionAtSourceTime:presentationTime];
+        } else {
+            DDLogError(@"Error writing initial buffer");
+        }
+    }
+    
+    if ( _assetWriter.status == AVAssetWriterStatusWriting ) {
+        if (mediaType == AVMediaTypeVideo) {
+            if (_assetWriterVideoIn.readyForMoreMediaData) {
+                if (![_assetWriterVideoIn appendSampleBuffer:sampleBuffer]) {
+                    DDLogError(@"Error writing video buffer");
+                }
+            }
+        } else if (mediaType == AVMediaTypeAudio) {
+            if (_assetWriterAudioIn.readyForMoreMediaData) {
+                if (![_assetWriterAudioIn appendSampleBuffer:sampleBuffer]) {
+                    DDLogError(@"Error writing audio buffer");
+                }
+            }
+        }
+    }
+    
+    if (_assetWriter.status == AVAssetWriterStatusFailed) {
+        DDLogError(@"writeSampleBuffer writer error: %@", _assetWriter.error);
+    }
+}
+
+- (void)video:(NSString *)videoPath didFinishSavingWithError:(NSError *)error contextInfo:(void *)contextInfo {
+    [self removeFile:_outputFileURL];
+}
+
+- (BOOL)inputsReadyToRecord
+{
+    return (_readyToRecordAudio && _readyToRecordVideo);
+}
+
+#pragma mark - General Utilities
+
+- (void) startRecording {
+    if ([_session isRunning]) {
+        [_session stopRunning];
+    }
+    
+    [[AVAudioSession sharedInstance] overrideOutputAudioPort:AVAudioSessionPortOverrideNone error:nil];
+    [[AVAudioSession sharedInstance] setPreferredSampleRate:44100.f error:nil];
+    
+    [_session startRunning];
+    
+    self.locationManager = [[CLLocationManager alloc] init];
+    self.locationManager.delegate = self;
+    [self.locationManager startUpdatingLocation];
+    
+    [[KFAPIClient sharedClient] startNewStream:^(KFStream *endpointResponse, NSError *error) {
+        if (error) {
+            if (self.delegate && [self.delegate respondsToSelector:@selector(recorderDidStartRecording:error:)]) {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [self.delegate recorderDidStartRecording:self error:error];
+                });
+            }
+            return;
+        }
+        self.stream = endpointResponse;
+        [self setStreamStartLocation];
+        if ([endpointResponse isKindOfClass:[KFS3Stream class]]) {
+            KFS3Stream *s3Endpoint = (KFS3Stream*)endpointResponse;
+            s3Endpoint.streamState = KFStreamStateStreaming;
+            [self setupHLSWriterWithEndpoint:s3Endpoint];
+            
+            [[KFHLSMonitor sharedMonitor] startMonitoringFolderPath:_hlsWriter.directoryPath endpoint:s3Endpoint delegate:self];
+            
+            NSError *error = nil;
+            [_hlsWriter prepareForWriting:&error];
+            if (error) {
+                DDLogError(@"Error preparing for writing: %@", error);
+            }
+            
+            self.isRecording = YES;
+            
+            if (self.delegate && [self.delegate respondsToSelector:@selector(recorderDidStartRecording:error:)]) {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [self.delegate recorderDidStartRecording:self error:nil];
+                });
+            }
+        }
+    }];
+    
+    if (_saveToCameraRoll) {
+        dispatch_async(_movieWritingQueue, ^{
+            [self removeFile:_outputFileURL];
+            NSError *error;
+            _assetWriter = [[AVAssetWriter alloc] initWithURL:_outputFileURL fileType:AVFileTypeQuickTimeMovie error:&error];
+            if (error)
+                DDLogError(@"Error creating AVAssetWriter: %@", error);
+        });
+    }
+    
+    DDLogDebug(@"AVAudioSession preferred sample rate: %f", [AVAudioSession sharedInstance].preferredSampleRate);
+    DDLogDebug(@"AVAudioSession sample rate: %f", [AVAudioSession sharedInstance].sampleRate);
+    DDLogDebug(@"AVAudioSession preferred number of channels: %i", [AVAudioSession sharedInstance].preferredInputNumberOfChannels);
+    DDLogDebug(@"AVAudioSession number of channels: %i", [AVAudioSession sharedInstance].inputNumberOfChannels);
+    DDLogDebug(@"AVAudioSession preferred buffer duration: %f", [AVAudioSession sharedInstance].preferredIOBufferDuration);
+    DDLogDebug(@"AVAudioSession buffer duration: %f", [AVAudioSession sharedInstance].IOBufferDuration);
+}
+
 - (void) stopRecording {
     [self.locationManager stopUpdatingLocation];
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        if (self.lastLocation) {
-            self.stream.endLocation = self.lastLocation;
-            [[KFAPIClient sharedClient] updateMetadataForStream:self.stream callbackBlock:^(KFStream *updatedStream, NSError *error) {
-                if (error) {
-                    DDLogError(@"Error updating stream endLocation: %@", error);
-                }
-            }];
-        }
-        [_session stopRunning];
-        self.isRecording = NO;
-        NSError *error = nil;
-        [_hlsWriter finishWriting:&error];
-        if (error) {
-            DDLogError(@"Error stop recording: %@", error);
-        }
-        [[KFAPIClient sharedClient] stopStream:self.stream callbackBlock:^(BOOL success, NSError *error) {
-            if (!success) {
-                DDLogError(@"Error stopping stream: %@", error);
-            } else {
-                DDLogVerbose(@"Stream stopped: %@", self.stream.streamID);
+    
+    if (self.lastLocation) {
+        self.stream.endLocation = self.lastLocation;
+        [[KFAPIClient sharedClient] updateMetadataForStream:self.stream callbackBlock:^(KFStream *updatedStream, NSError *error) {
+            if (error) {
+                DDLogError(@"Error updating stream endLocation: %@", error);
             }
         }];
-        if ([self.stream isKindOfClass:[KFS3Stream class]]) {
-            [[KFHLSMonitor sharedMonitor] finishUploadingContentsAtFolderPath:_hlsWriter.directoryPath endpoint:(KFS3Stream*)self.stream];
+    }
+    
+    [self destroySession];
+    
+    self.isRecording = NO;
+    
+    NSError *error = nil;
+    [_hlsWriter finishWriting:&error];
+    if (error) {
+        DDLogError(@"Error stop recording: %@", error);
+    }
+    
+    [[KFAPIClient sharedClient] stopStream:self.stream callbackBlock:^(BOOL success, NSError *error) {
+        if (!success) {
+            DDLogError(@"Error stopping stream: %@", error);
+        } else {
+            DDLogVerbose(@"Stream stopped: %@", self.stream.streamID);
         }
-        if (self.delegate && [self.delegate respondsToSelector:@selector(recorderDidFinishRecording:error:)]) {
-            dispatch_async(dispatch_get_main_queue(), ^{
-                [self.delegate recorderDidFinishRecording:self error:error];
-            });
-        }
-    });
+    }];
+    
+    if ([self.stream isKindOfClass:[KFS3Stream class]]) {
+        [[KFHLSMonitor sharedMonitor] finishUploadingContentsAtFolderPath:_hlsWriter.directoryPath endpoint:(KFS3Stream*)self.stream];
+    }
+    
+    if (self.delegate && [self.delegate respondsToSelector:@selector(recorderDidFinishRecording:error:)]) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self.delegate recorderDidFinishRecording:self error:error];
+        });
+    }
+    
+    if (_saveToCameraRoll) {
+        dispatch_async(_movieWritingQueue, ^{
+            [_assetWriter finishWritingWithCompletionHandler:^() {
+                AVAssetWriterStatus completionStatus = _assetWriter.status;
+                switch (completionStatus) {
+                    case AVAssetWriterStatusCompleted: {
+                        UISaveVideoAtPathToSavedPhotosAlbum(_outputFileURL.path, self, @selector(video:didFinishSavingWithError:contextInfo:), nil);
+                        break;
+                    }
+                    case AVAssetWriterStatusFailed: {
+                        DDLogError(@"stopRecording writer error: %@", _assetWriter.error.localizedDescription);
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                
+                _readyToRecordVideo = NO;
+                _readyToRecordAudio = NO;
+                _assetWriter = nil;
+            }];
+        });
+    }
+    
+    _hasScreenshot = NO;
+    
+    [[AVAudioSession sharedInstance] overrideOutputAudioPort:AVAudioSessionPortOverrideSpeaker error:nil];    
+}
+
+- (AVCaptureVideoOrientation)avOrientationForInterfaceOrientation:(UIInterfaceOrientation)orientation {
+    switch (orientation) {
+        case UIInterfaceOrientationPortrait:
+            return AVCaptureVideoOrientationPortrait;
+            break;
+        case UIInterfaceOrientationPortraitUpsideDown:
+            return AVCaptureVideoOrientationPortraitUpsideDown;
+            break;
+        case UIInterfaceOrientationLandscapeLeft:
+            return AVCaptureVideoOrientationLandscapeLeft;
+            break;
+        case UIInterfaceOrientationLandscapeRight:
+            return AVCaptureVideoOrientationLandscapeRight;
+            break;
+        default:
+            return AVCaptureVideoOrientationLandscapeLeft;
+            break;
+    }
+}
+
+- (CGAffineTransform)transformFromCurrentVideoOrientationToOrientation:(AVCaptureVideoOrientation)orientation {
+    CGAffineTransform transform = CGAffineTransformIdentity;
+    
+    // Calculate offsets from an arbitrary reference orientation (portrait)
+    CGFloat orientationAngleOffset = [self angleOffsetFromPortraitOrientationToOrientation:orientation];
+    CGFloat videoOrientationAngleOffset = [self angleOffsetFromPortraitOrientationToOrientation:_videoConnection.videoOrientation];
+    
+    // Find the difference in angle between the passed in orientation and the current video orientation
+    CGFloat angleOffset = orientationAngleOffset - videoOrientationAngleOffset;
+    transform = CGAffineTransformMakeRotation(angleOffset);
+    
+    return transform;
+}
+
+- (CGFloat)angleOffsetFromPortraitOrientationToOrientation:(AVCaptureVideoOrientation)orientation {
+    CGFloat angle = 0.0;
+    
+    switch (orientation) {
+        case AVCaptureVideoOrientationPortrait:
+            angle = 0.0;
+            break;
+        case AVCaptureVideoOrientationPortraitUpsideDown:
+            angle = M_PI;
+            break;
+        case AVCaptureVideoOrientationLandscapeRight:
+            angle = -M_PI_2;
+            break;
+        case AVCaptureVideoOrientationLandscapeLeft:
+            angle = M_PI_2;
+            break;
+        default:
+            break;
+    }
+    
+    return angle;
+}
+
+- (void)removeFile:(NSURL *)fileURL {
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    NSString *filePath = fileURL.path;
+    if ([fileManager fileExistsAtPath:filePath]) {
+        NSError *error;
+        BOOL success = [fileManager removeItemAtPath:filePath error:&error];
+        if (!success)
+            DDLogError(@"Error removing file: %@", error);
+    }
+}
+
+#pragma mark - KFHLSUploaderDelegate
+
+- (void) uploader:(KFHLSUploader*)uploader didUploadPartOfASegmentAtUploadSpeed:(double)uploadSpeed {
+    DDLogVerbose(@"Uploaded part of a segment @ %f kbps", uploadSpeed);
 }
 
 - (void) uploader:(KFHLSUploader *)uploader didUploadSegmentAtURL:(NSURL *)segmentURL uploadSpeed:(double)uploadSpeed numberOfQueuedSegments:(NSUInteger)numberOfQueuedSegments {
-    DDLogInfo(@"Uploaded segment %@ @ %f KB/s, numberOfQueuedSegments %d", segmentURL, uploadSpeed, numberOfQueuedSegments);
+    DDLogVerbose(@"Uploaded segment %@ @ %f kbps, numberOfQueuedSegments %d", segmentURL, uploadSpeed, numberOfQueuedSegments);
+    
+    if (self.delegate && [self.delegate respondsToSelector:@selector(recorder:didUpdateUploadSpeed:)]) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self.delegate recorder:self didUpdateUploadSpeed:uploadSpeed];
+        });
+    }
+    
     if ([Kickflip useAdaptiveBitrate]) {
-        double currentUploadBitrate = uploadSpeed * 8 * 1024; // bps
+        double currentUploadBitrate = uploadSpeed * 1024; // bps
+        double minBitrate = [Kickflip minBitrate];
         double maxBitrate = [Kickflip maxBitrate];
-
-        double newBitrate = currentUploadBitrate * 0.5;
+        
+        double newBitrate = currentUploadBitrate * 0.8;
         if (newBitrate > maxBitrate) {
             newBitrate = maxBitrate;
         }
-        if (newBitrate < _minBitrate) {
-            newBitrate = _minBitrate;
+        if (newBitrate < minBitrate) {
+            newBitrate = minBitrate;
         }
         double newVideoBitrate = newBitrate - self.aacEncoder.bitrate;
+        
+        DDLogVerbose(@"old video bitrate: %d, new video bitrate: %f", self.h264Encoder.bitrate, newVideoBitrate);
+        
         self.h264Encoder.bitrate = newVideoBitrate;
     }
 }
@@ -340,26 +688,17 @@
             [self.delegate recorder:self streamReadyAtURL:manifestURL];
         });
     }
-    DDLogVerbose(@"Manifest ready at URL: %@", manifestURL);
 }
 
-- (void) locationManager:(CLLocationManager *)manager didUpdateLocations:(NSArray *)locations {
-    self.lastLocation = [locations lastObject];
-    [self setStreamStartLocation];
+- (void)uploader:(KFHLSUploader *)uploader thumbnailReadyAtURL:(NSURL *)manifestURL {
+    
 }
 
-- (void) setStreamStartLocation {
-    if (!self.lastLocation) {
-        return;
-    }
-    if (self.stream && !self.stream.startLocation) {
-        self.stream.startLocation = self.lastLocation;
-        [[KFAPIClient sharedClient] updateMetadataForStream:self.stream callbackBlock:^(KFStream *updatedStream, NSError *error) {
-            if (error) {
-                DDLogError(@"Error updating stream startLocation: %@", error);
-            }
-        }];
-        [self reverseGeocodeStream:self.stream];
+- (void) uploaderHasFinished:(KFHLSUploader*)uploader {
+    if (self.delegate && [self.delegate respondsToSelector:@selector(recorderDidFinishUploading:)]) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self.delegate recorderDidFinishUploading:self];
+        });
     }
 }
 

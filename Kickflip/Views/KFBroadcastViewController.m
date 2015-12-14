@@ -115,7 +115,7 @@
     UIActivityViewController *activityViewController = [[UIActivityViewController alloc] initWithActivityItems:@[self.recorder.stream.kickflipURL] applicationActivities:nil];
     
     UIActivityViewControllerCompletionHandler completionHandler = ^(NSString *activityType, BOOL completed) {
-        NSLog(@"share activity: %@", activityType);
+        DDLogInfo(@"share activity: %@", activityType);
     };
     activityViewController.completionHandler = completionHandler;
     

@@ -15,7 +15,15 @@
 #import "VideoEncoder.h"
 #import "MP4Atom.h"
 
-typedef int (^encoder_handler_t)(NSArray* data, CMTimeValue ptsValue);
+
+@interface EncodedDataWrapper : NSObject
+@property (nonatomic, strong, readonly) NSData *data;
+@property (nonatomic, readonly) BOOL isKeyFrame;
+
+- (id)initWithData:(NSData*)data isKeyFrame:(BOOL)isKeyFrame;
+@end
+
+typedef int (^encoder_handler_t)(EncodedDataWrapper* data, CMTimeValue ptsValue);
 typedef int (^param_handler_t)(NSData* params);
 
 @interface AVEncoder : NSObject
@@ -28,7 +36,6 @@ typedef int (^param_handler_t)(NSData* params);
 - (void) encodeFrame:(CMSampleBufferRef) sampleBuffer;
 - (NSData*) getConfigData;
 - (void) shutdown;
-
 
 @property (readonly, atomic) int bitspersecond;
 

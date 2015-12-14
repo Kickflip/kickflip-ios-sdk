@@ -11,13 +11,10 @@
 #import "AVFoundation/AVAssetWriterInput.h"
 #import "AVFoundation/AVMediaFormat.h"
 #import "AVFoundation/AVVideoSettings.h"
+#import "Kickflip.h"
 
 @interface VideoEncoder : NSObject
-{
-    AVAssetWriter* _writer;
-    AVAssetWriterInput* _writerInput;
-    NSString* _path;
-}
+
 
 @property NSString* path;
 @property (nonatomic, readonly) NSUInteger bitrate;

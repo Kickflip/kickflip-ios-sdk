@@ -7,6 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "Kickflip.h"
 
 typedef NS_ENUM(NSUInteger, KFHLSManifestPlaylistType) {
     KFHLSManifestPlaylistTypeLive = 0,
@@ -28,6 +29,7 @@ typedef NS_ENUM(NSUInteger, KFHLSManifestPlaylistType) {
 
 - (void) finalizeManifest;
 
-- (NSString*) manifestString;
+- (NSString *) masterString;
+- (NSString *) manifestString;
 
 @end
