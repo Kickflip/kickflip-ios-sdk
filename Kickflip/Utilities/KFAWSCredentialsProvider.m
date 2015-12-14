@@ -26,7 +26,7 @@
  *
  *  *Note* This method is automatically called by the AWS Mobile SDK for iOS, and you do not need to call this method in general.
  *
- *  @return BFTask.
+ *  @return AWSTask.
  */
 - (AWSTask *)refresh {
     return [AWSTask taskWithError:[NSError errorWithDomain:@"io.kickflip.sdk" code:100 userInfo:@{NSLocalizedDescriptionKey: @"Refresh not supported"}]];

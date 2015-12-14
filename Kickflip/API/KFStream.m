@@ -41,10 +41,7 @@ static NSString * const KFStreamStateKey = @"KFStreamStateKey";
              NSStringFromSelector(@selector(startLatitude)): @"start_lat",
              NSStringFromSelector(@selector(startLongitude)): @"start_lon",
              NSStringFromSelector(@selector(endLatitude)): @"end_lat",
-             NSStringFromSelector(@selector(endLongitude)): @"end_lon",
-             NSStringFromSelector(@selector(startLocation)): [NSNull null],
-             NSStringFromSelector(@selector(endLocation)): [NSNull null],
-             NSStringFromSelector(@selector(streamState)): [NSNull null]};
+             NSStringFromSelector(@selector(endLongitude)): @"end_lon"};
 }
 
 + (NSValueTransformer *)uploadURLJSONTransformer {

@@ -163,7 +163,7 @@ static NSString * const kKFS3Key = @"kKFS3Key";
     
     DDLogDebug(@"Queueing ts... %@", fileName);
     
-    [[self.transferManager upload:uploadRequest] continueWithBlock:^id(BFTask *task) {
+    [[self.transferManager upload:uploadRequest] continueWithBlock:^id(AWSTask *task) {
         if (task.error) {
             [self s3RequestFailedForFileName:fileName withError:task.error];
         } else {
@@ -193,7 +193,7 @@ static NSString * const kKFS3Key = @"kKFS3Key";
     
     DDLogDebug(@"Queueing manifest... %@", manifestName);
     
-    [[self.s3 putObject:uploadRequest] continueWithBlock:^id(BFTask *task) {
+    [[self.s3 putObject:uploadRequest] continueWithBlock:^id(AWSTask *task) {
         if (task.error) {
             [self s3RequestFailedForFileName:manifestName withError:task.error];
         } else {

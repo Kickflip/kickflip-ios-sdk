@@ -37,7 +37,7 @@
  *
  *  *Note* This method is automatically called by the AWS Mobile SDK for iOS, and you do not need to call this method in general.
  *
- *  @return BFTask.
+ *  @return AWSTask.
  */
 - (AWSTask *)refresh;
 
