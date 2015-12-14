@@ -73,7 +73,7 @@ static NSString * const kKFStreamsCollection = @"kKFStreamsCollection";
 }
 
 - (void) setupDatabaseView {
-    YapDatabaseViewSorting *sorting = [YapDatabaseViewSorting withObjectBlock:^NSComparisonResult(YapDatabaseReadTransaction * _Nonnull transaction, NSString * _Nonnull group, NSString * _Nonnull collection1, NSString * _Nonnull key1, id  _Nonnull object1, NSString * _Nonnull collection2, NSString * _Nonnull key2, id  _Nonnull object2) {
+    YapDatabaseViewSorting *sorting = [YapDatabaseViewSorting withObjectBlock:^NSComparisonResult(NSString *group, NSString *collection1, NSString *key1, id object1, NSString *collection2, NSString *key2, id object2) {
         if ([group isEqualToString:kKFStreamsGroup]) {
             KFStream *stream1 = object1;
             KFStream *stream2 = object2;
@@ -81,8 +81,7 @@ static NSString * const kKFStreamsCollection = @"kKFStreamsCollection";
         }
         return NSOrderedSame;
     }];
-    
-    YapDatabaseViewGrouping *grouping = [YapDatabaseViewGrouping withObjectBlock:^NSString * _Nullable(YapDatabaseReadTransaction * _Nonnull transaction, NSString * _Nonnull collection, NSString * _Nonnull key, id  _Nonnull object) {
+    YapDatabaseViewGrouping *grouping = [YapDatabaseViewGrouping withObjectBlock:^NSString *(NSString *collection, NSString *key, id object) {
         if ([object isKindOfClass:[KFStream class]]) {
             KFStream *stream = object;
             // Hide streams without thumbnails for now
