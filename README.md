@@ -26,19 +26,19 @@ The quickest way to get started will be to fork the [Kickflip iOS SDK example](h
 }
 ```
 
-## Cocoapods Setup
+## CocoaPods Setup
 
-You'll need to install [Cocoapods](http://cocoapods.org) first.
+You'll need to install [CocoaPods](http://cocoapods.org) first.
     
 Add the following line to your `Podfile`:
 
     pod 'Kickflip'
 
-Then run Cocoapods to install all of the dependencies:
+Then run CocoaPods to install all of the dependencies:
 
     $ pod install
 
-As with all projects that depend on Cocoapods, make sure to open the new `.xcworkspace` file, not your `.xcodeproj` file.
+As with all projects that depend on CocoaPods, make sure to open the new `.xcworkspace` file, not your `.xcodeproj` file.
     
 ## Documentation
 
