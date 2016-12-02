@@ -10,6 +10,8 @@
 #import <AWSCore/AWSCore.h>
 #import "KFS3Stream.h"
 
+@class BFTask;
+
 @interface KFAWSCredentialsProvider : NSObject <AWSCredentialsProvider>
 
 /**
